@@ -24,31 +24,32 @@ export default function Dashboard() {
   ];
 
   return (
-    <DashboardLayout user={user}>
-      {/* Welcome text */}
-      <div className="text-center mb-10">
-        <h2 className="text-3xl font-bold mb-2">Welkom terug bij DigiGraf</h2>
-        <p className="text-gray-600 text-lg">
-          Kies uit onderstaande opties om te beginnen
-        </p>
-      </div>
+<DashboardLayout user={user}>
+  {/* Welcome text */}
+  <div className="text-center mb-6">
+    <h2 className="text-3xl font-bold mb-2">Welkom terug bij DigiGraf</h2>
+    <p className="text-gray-600 text-lg">
+      Kies uit onderstaande opties om te beginnen
+    </p>
+  </div>
 
-      {/* Menu grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-        {menuItems.map((item) => {
-          const Icon = item.icon as React.ElementType;
-          return (
-            <div
-              key={item.label}
-              className={`${item.color} text-white flex flex-col items-center justify-center p-10 rounded-2xl shadow-lg cursor-pointer transition transform hover:scale-105 hover:shadow-2xl`}
-              onClick={() => navigate(item.path)}
-            >
-              <Icon size={48} className="mb-4" />
-              <span className="text-xl font-semibold text-center">{item.label}</span>
-            </div>
-          );
-        })}
-      </div>
-    </DashboardLayout>
+  {/* Menu grid */}
+  <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-4 justify-center max-w-md mx-auto">
+    {menuItems.map((item) => {
+      const Icon = item.icon as React.ElementType;
+      return (
+        <div
+          key={item.label}
+          className={`${item.color} text-white flex flex-col items-center justify-center h-32 w-32 rounded-lg shadow-md cursor-pointer transition transform hover:scale-105 hover:shadow-lg`}
+          onClick={() => navigate(item.path)}
+        >
+          <Icon size={48} className="mb-1" />
+          <span className="text-l font-semibold text-center">{item.label}</span>
+        </div>
+      );
+    })}
+  </div>
+</DashboardLayout>
+
   );
 }

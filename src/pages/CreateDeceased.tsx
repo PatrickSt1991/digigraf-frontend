@@ -1,259 +1,167 @@
 import React, { useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
+import FormCard from "../components/FormCard";
+import FormField from "../components/FormField";
+import { useDropdownData } from '../hooks';
+import { calculateAge } from "../utils/calculateAge";
+import FuneralForm from "../components/FuneralForm";
 
 export default function CreateDeceased() {
-  const user = { name: "Test User", role: "Admin" }; // from JWT later
+  const user = { name: "Test User", role: "Admin" };
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [dob, setDob] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [dod, setDod] = useState("");
-  const [funeralType, setFuneralType] = useState("Funeral");
-  const [voorregeling, setVoorregeling] = useState(false);
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [funeralLeader, setFuneralLeader] = useState("");
-  const [notes, setNotes] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    // Deceased personal information
+    socialsecurity: "",
+    salutation: "",
+    lastName: "",
+    firstName: "",
+    dob: "",
+    placeofbirth: "",
+    age: "",
+    postalCode: "",
+    housenumber: "",
+    housenumberAddition: "",
+    street: "",
+    city: "",
+    county: "",
+    voorregeling: false,
+    homedeceased: false,
+
+    // Deceased location information
+    dateofDeath: "",
+    timeofDeath: "",
+    locationofDeath: "",
+    postalcodeofDeath: "",
+    housenumberofDeath: "",
+    housenumberadditionofDeath: "",
+    streetofDeath: "",
+    cityofDeath: "",
+    countyofDeath: "",
+    bodyFinding: "",
+    origin: "",
+
+    // Deceased medical information
+    gp: "",
+    gpPhone: "",
+    me: "",
+
+    // Funeral info
+    funeralLeader: "",
+    funeralNumber: "",
+  });
+
+  const { data: dropdownData } = useDropdownData({
+    funeralLeaders: "/api/funeralTypes",
+    bodyFindings: "/api/bodyFindings",
+    origins: "/api/origins"
+  });
+
+  const [setResult] = useState<any>(null);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+    }));
+  };
+
+const handleDateOfBirthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+  const calculatedAge = calculateAge(value, formData.dateofDeath || undefined);
+  
+  setFormData(prev => ({
+    ...prev,
+    [name]: value,
+    age: calculatedAge.toString()
+  }));
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
-      firstName,
-      lastName,
-      dob,
-      gender,
-      dod,
-      funeralType,
-      voorregeling,
-      address,
-      phone,
-      email,
-      funeralLeader,
-      notes,
-    };
-    console.log("Submit data:", data);
-    setResult(data); // for testing
+    console.log("Submit data:", formData);
+    setResult(formData);
   };
 
   return (
     <DashboardLayout user={user}>
-      <div className="p-8 max-w-8xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        {/* Left column: All your original inputs */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold mb-6">Persoonsgegevens Overledene</h1>
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-8 max-w-8xl mx-auto space-y-6">
+        {/* Top small form */}
+        <FuneralForm
+          formData={formData}
+          onChange={handleChange}
+          dropdownData={dropdownData.funeralLeaders}
+          onNext={handleSubmit}
+          readOnly={false}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Left column */}
+          <FormCard title="Persoonsgegevens Overledene">
+            <FormField label="BSN" required name="socialsecurity" value={formData.socialsecurity} onChange={handleChange} />
+            <FormField label="Aanhef" required name="salutation" value={formData.salutation} onChange={handleChange} />
+            <FormField label="Voornamen" required name="firstName" value={formData.firstName} onChange={handleChange} />
+            <FormField label="Achternaam" required name="lastName" value={formData.lastName} onChange={handleChange} />
+            <FormField label="Geboortedatum" type="date" name="dob" value={formData.dob} onChange={handleDateOfBirthChange} />
+            <FormField label="Geboorteplaats" name="placeofbirth" value={formData.placeofbirth} onChange={handleChange} />
+            <FormField label="Leeftijd" name="age" value={formData.age} onChange={handleChange} />
+            <FormField label="Postcode" required name="postalCode" value={formData.postalCode} onChange={handleChange} />
+            <FormField label="Huisnummer" required name="housenumber" value={formData.housenumber} onChange={handleChange} />
+            <FormField label="Toevoeging" name="housenumberAddition" value={formData.housenumberAddition} onChange={handleChange} />
+            <FormField label="Straat" required name="street" value={formData.street} onChange={handleChange} />
+            <FormField label="Plaats" required name="city" value={formData.city} onChange={handleChange} />
+            <FormField label="Gemeente" required name="county" value={formData.county} onChange={handleChange} />
+            <FormField label="Voorregeling">
+              <input type="checkbox" name="voorregeling" checked={formData.voorregeling} onChange={handleChange} />
+            </FormField>
+            <FormField label="Home Deceased">
+              <input type="checkbox" name="homedeceased" checked={formData.homedeceased} onChange={handleChange} />
+            </FormField>
+          </FormCard>
 
-            {/* Personal Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1 font-medium text-gray-700">
-                  BSN <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="border p-2 rounded w-full"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium text-gray-700">
-                  Aanhef <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="border p-2 rounded w-full"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1 font-medium">First Name <span className="text-red-500 ml-1">*</span></label>
-                <input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="border p-2 rounded w-full"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Last Name <span className="text-red-500 ml-1">*</span></label>
-                <input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="border p-2 rounded w-full"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block mb-1 font-medium">Date of Birth <span className="text-red-500 ml-1">*</span></label>
-                <input
-                  type="date"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  className="border p-2 rounded w-full"
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Gender</label>
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="border p-2 rounded w-full"
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Date of Death</label>
-                <input
-                  type="date"
-                  value={dod}
-                  onChange={(e) => setDod(e.target.value)}
-                  className="border p-2 rounded w-full"
-                />
-              </div>
-            </div>
-
-            {/* Funeral Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1 font-medium">Funeral Type</label>
-                <select
-                  value={funeralType}
-                  onChange={(e) => setFuneralType(e.target.value)}
-                  className="border p-2 rounded w-full"
-                >
-                  <option value="Funeral">Funeral</option>
-                  <option value="Cremation">Cremation</option>
-                </select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={voorregeling}
-                  onChange={(e) => setVoorregeling(e.target.checked)}
-                />
-                <label className="font-medium">Voorregeling</label>
-              </div>
-            </div>
-
-            {/* Contact Info */}
-            <div>
-              <label className="block mb-1 font-medium">Address</label>
-              <input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="border p-2 rounded w-full"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1 font-medium">Phone</label>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="border p-2 rounded w-full"
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Email</label>
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  className="border p-2 rounded w-full"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block mb-1 font-medium">Funeral Leader</label>
-              <input
-                value={funeralLeader}
-                onChange={(e) => setFuneralLeader(e.target.value)}
-                className="border p-2 rounded w-full"
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 font-medium">Notes</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="border p-2 rounded w-full"
-                rows={3}
-              />
-            </div>
-          </form>
-
-          {result && (
-            <div className="mt-6 bg-gray-100 p-4 rounded">
-              <h2 className="text-lg font-semibold mb-2">Submitted Data</h2>
-              <pre className="text-sm">{JSON.stringify(result, null, 2)}</pre>
-            </div>
-          )}
-        </div>
-
-        {/* Right column: Dummy info */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">Overlijdensinformatie (Dummy)</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block mb-1 font-medium">Date of Death</label>
-              <input
-                type="date"
-                value="2025-08-22"
-                className="border p-2 rounded w-full bg-gray-100"
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">Place of Death</label>
-              <input
-                value="Amsterdam Hospital"
-                className="border p-2 rounded w-full bg-gray-100"
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">Funeral Leader</label>
-              <input
-                value="John Doe"
-                className="border p-2 rounded w-full bg-gray-100"
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">Notes</label>
-              <textarea
-                value="Some placeholder notes about the deceased"
-                className="border p-2 rounded w-full bg-gray-100"
-                rows={3}
-                readOnly
-              />
-            </div>
-          </div>
-            <div className="pt-4">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+          {/* Right column */}
+          <FormCard title="Gegevens overlijden">
+            <FormField label="Datum" type="date" required name="dateofDeath" value={formData.dateofDeath} onChange={handleChange} />
+            <FormField label="Tijdstip" type="time" required name="timeofDeath" value={formData.timeofDeath} onChange={handleChange} />
+            <FormField label="Locatie" name="locationofDeath" value={formData.locationofDeath} onChange={handleChange} />
+            <FormField label="Postcode" name="postalcodeofDeath" value={formData.postalcodeofDeath} onChange={handleChange} />
+            <FormField label="Huisnummer" name="housenumberofDeath" value={formData.housenumberofDeath} onChange={handleChange} />
+            <FormField label="Toevoeging" name="housenumberadditionofDeath" value={formData.housenumberadditionofDeath} onChange={handleChange} />
+            <FormField label="Straat" name="streetofDeath" value={formData.streetofDeath} onChange={handleChange} />
+            <FormField label="Plaats" name="cityofDeath" value={formData.cityofDeath} onChange={handleChange} />
+            <FormField label="Gemeente" name="countyofDeath" value={formData.countyofDeath} onChange={handleChange} />
+            <FormField label="Lijkvinding">
+              <select
+                name="bodyFinding"
+                value={formData.bodyFinding}
+                onChange={handleChange}
+                className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
               >
-                Create Deceased
-              </button>
-            </div>
+                <option value="">Select a body finding...</option>
+                {dropdownData.bodyFindings?.map((ft) => (
+                  <option key={ft.id} value={ft.value}>
+                    {ft.label}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Herkomst">
+              <select
+                name="origin"
+                value={formData.origin}
+                onChange={handleChange}
+                className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
+              >
+                <option value="">Select a origin...</option>
+                {dropdownData.origins?.map((ft) => (
+                  <option key={ft.id} value={ft.value}>
+                    {ft.label}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+          </FormCard>
         </div>
       </div>
     </DashboardLayout>
