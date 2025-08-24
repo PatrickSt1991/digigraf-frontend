@@ -2,11 +2,13 @@ import React, { ReactNode } from "react";
 import { ReactComponent as DgLogo } from "../assets/dg.svg";
 
 interface DashboardLayoutProps {
-  user: { name: string; role: string };
   children: ReactNode;
 }
 
-export default function DashboardLayout({ user, children }: DashboardLayoutProps) {
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -20,7 +22,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
             <span className="font-bold text-lg">DigiGraf</span>
           </div>
           <div>
-            {user.name} ({user.role})
+            {user ? `${user.fullName || user.email} (${user.roles?.join(", ")})` : "Onbekend"}
           </div>
         </div>
       </header>

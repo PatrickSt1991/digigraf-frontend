@@ -74,7 +74,7 @@ export default function FuneralForm({
           <button
             type="submit"
             onClick={onNext}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition"
           >
             Volgende
           </button>

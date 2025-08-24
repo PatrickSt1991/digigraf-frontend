@@ -7,7 +7,6 @@ import { calculateAge } from "../utils/calculateAge";
 import FuneralForm from "../components/FuneralForm";
 
 export default function CreateDeceased() {
-  const user = { name: "Test User", role: "Admin" };
   const location = useLocation();
 
   const {
@@ -71,7 +70,7 @@ export default function CreateDeceased() {
   });
 
   return (
-    <DashboardLayout user={user}>
+    <DashboardLayout>
       <div className="p-8 max-w-8xl mx-auto space-y-6">
         {/* Funeral info form */}
         <FuneralForm

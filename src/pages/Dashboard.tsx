@@ -13,7 +13,6 @@ interface MenuItem {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const user = { name: "Test User", role: "Admin" };
 
   const menuItems: MenuItem[] = [
     { label: "Dossier aanmaken", icon: FaUser, path: "/create-deceased", color: "bg-red-600 hover:bg-red-700" },
@@ -24,7 +23,7 @@ export default function Dashboard() {
   ];
 
   return (
-<DashboardLayout user={user}>
+<DashboardLayout>
   {/* Welcome text */}
   <div className="text-center mb-6">
     <h2 className="text-3xl font-bold mb-2">Welkom terug bij DigiGraf</h2>
