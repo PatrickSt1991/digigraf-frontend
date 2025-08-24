@@ -60,7 +60,7 @@ export default function FuneralForm({
       </div>
 
       {/* Buttons */}
-      <div className="mt-6 flex justify-between">
+      <div className="mt-6 flex justify-end space-x-4">
         {onBack && (
           <button
             type="button"
@@ -74,7 +74,7 @@ export default function FuneralForm({
           <button
             type="submit"
             onClick={onNext}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition ml-auto"
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
           >
             Volgende
           </button>

@@ -16,7 +16,7 @@ export default function Dashboard() {
   const user = { name: "Test User", role: "Admin" };
 
   const menuItems: MenuItem[] = [
-    { label: "Dossier aanmaken", icon: FaUser, path: "/new-deceased", color: "bg-red-600 hover:bg-red-700" },
+    { label: "Dossier aanmaken", icon: FaUser, path: "/create-deceased", color: "bg-red-600 hover:bg-red-700" },
     { label: "Dossier opzoeken", icon: FaSearch, path: "/open-dossier", color: "bg-red-600 hover:bg-red-700" },
     { label: "Alle uitvaarten", icon: FaUsers, path: "/all-dossiers", color: "bg-red-600 hover:bg-red-700" },
     { label: "Uitvaart agenda", icon: FaCalendarAlt, path: "/upcoming", color: "bg-red-600 hover:bg-red-700" },
