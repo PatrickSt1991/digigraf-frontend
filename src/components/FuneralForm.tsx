@@ -1,6 +1,14 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import FormCard from "./FormCard";
 import FormField from "./FormField";
+import apiClient from "../api/apiClient";
+import { endpoints } from "../api/apiConfig";
+
+type FuneralLeader = {
+  id: string;
+  value: string;
+  label: string;
+};
 
 type FuneralFormProps = {
   formData: {
@@ -8,7 +16,6 @@ type FuneralFormProps = {
     funeralNumber: string;
   };
   onChange?: (e: React.ChangeEvent<any>) => void;
-  dropdownData?: { id: string; value: string; label: string }[];
   readOnly?: boolean;
   onNext?: (e: React.FormEvent) => void;
   onBack?: (e: React.FormEvent) => void;
@@ -17,17 +24,35 @@ type FuneralFormProps = {
 export default function FuneralForm({
   formData,
   onChange,
-  dropdownData = [],
   readOnly = false,
   onNext,
   onBack,
 }: FuneralFormProps) {
+  const [funeralLeaders, setFuneralLeaders] = useState<FuneralLeader[]>([]);
+
+  useEffect(() => {
+    if (!readOnly) {
+      const fetchLeaders = async () => {
+        try {
+          const data = await apiClient<FuneralLeader[]>(endpoints.funeralLeaders);
+          setFuneralLeaders(data);
+        } catch (err) {
+          console.error("Failed to fetch funeral leaders", err);
+        }
+      };
+
+      fetchLeaders();
+    }
+  }, [readOnly]);
+
   return (
     <FormCard title="Uitvaart">
       <div className="grid grid-cols-2 gap-8">
         <FormField label="Uitvaartverzorger aanname" required>
           {readOnly ? (
-            <div className="w-full border-0 border-b rounded-none border-gray-100">{formData.funeralLeader}</div>
+            <div className="w-full border-0 border-b rounded-none border-gray-100">
+              {formData.funeralLeader}
+            </div>
           ) : (
             <select
               name="funeralLeader"
@@ -36,7 +61,7 @@ export default function FuneralForm({
               className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
             >
               <option value="">Selecteer een uitvaartleider...</option>
-              {dropdownData.map((ft) => (
+              {funeralLeaders.map((ft) => (
                 <option key={ft.id} value={ft.value}>
                   {ft.label}
                 </option>
@@ -47,7 +72,9 @@ export default function FuneralForm({
 
         <FormField label="Uitvaart nummer" required>
           {readOnly ? (
-            <div className="w-full border-0 border-b rounded-none border-gray-100">{formData.funeralNumber}</div>
+            <div className="w-full border-0 border-b rounded-none border-gray-100">
+              {formData.funeralNumber}
+            </div>
           ) : (
             <input
               name="funeralNumber"
@@ -59,7 +86,6 @@ export default function FuneralForm({
         </FormField>
       </div>
 
-      {/* Buttons */}
       <div className="mt-6 flex justify-end space-x-4">
         {onBack && (
           <button

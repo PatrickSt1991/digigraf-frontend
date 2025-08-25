@@ -72,7 +72,6 @@ export default function CreateAdditionalInformation() {
                 <FuneralForm
                     formData={formData}
                     onChange={handleChange}
-                    dropdownData={dropdownData.funeralLeaders}
                     onNext={() => goNext(location.pathname)}
                     onBack={() => goBack(location.pathname)}
                     readOnly={true}
