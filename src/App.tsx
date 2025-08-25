@@ -1,10 +1,15 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import { CreateDeceased, CreateAdditionalInformation } from "./pages";
 
 function App() {
-  const isAuthenticated = !!localStorage.getItem("token"); // quick check for now
+  const auth = useContext(AuthContext);
+  if(!auth) throw new Error("AuthContext not fond");
+  const { user } = auth;
+  const isAuthenticated = !!user;
 
   return (
     <Router>

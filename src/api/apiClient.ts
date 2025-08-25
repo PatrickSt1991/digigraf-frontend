@@ -6,7 +6,8 @@ interface ApiOptions extends RequestInit {
 
 async function apiClient<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
     const { body, headers, ...rest } = options;
-
+console.log(API_BASE);
+console.log(endpoint);
     const res = await fetch(`${API_BASE}${endpoint}`, {
         headers: {
             "Content-Type": "application/json",
