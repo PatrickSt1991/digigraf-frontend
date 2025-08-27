@@ -1,10 +1,8 @@
 import { useLocation } from "react-router-dom";
-import DashboardLayout from "../components/DashboardLayout";
-import FormCard from "../components/FormCard";
-import FormField from "../components/FormField";
+import { DashboardLayout, FormCard, FormField, FuneralForm } from '../components'
 import { useDropdownData, useFormHandler } from '../hooks';
 import { calculateAge } from "../utils/calculateAge";
-import FuneralForm from "../components/FuneralForm";
+import { endpoints } from "../api/apiConfig";
 
 export default function CreateDeceased() {
   const location = useLocation();
@@ -62,11 +60,10 @@ export default function CreateDeceased() {
     calculateAge
   });
 
-  const { data: dropdownData } = useDropdownData({
-    salutations: "/api/salutations",
-    funeralLeaders: "/api/funeralTypes",
-    bodyFindings: "/api/bodyFindings",
-    origins: "/api/origins"
+  const { data, loading, error }   = useDropdownData({
+    salutations: endpoints.salutation,
+    bodyFindings: endpoints.bodyfindings,
+    origins: endpoints.origins,
   });
 
   return (
@@ -85,7 +82,27 @@ export default function CreateDeceased() {
           {/* Left column */}
           <FormCard title="Persoonsgegevens Overledene">
             <FormField label="BSN" required name="socialsecurity" value={formData.socialsecurity} onChange={handleChange} />
-            <FormField label="Aanhef" required name="salutation" value={formData.salutation} onChange={handleChange} />
+            <FormField label="Aanhef" required>
+              {loading ? (
+                <div>Loading...</div>
+              ) : error ? (
+                <div className="text-red-600">{error}</div>
+              ) : (
+                <select
+                  name="salutation"
+                  value={formData.salutation}
+                  onChange={handleChange}
+                  className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
+                >
+                  <option value="">Selecteer een aanhef...</option>
+                  {data.salutations.map((s: any) => (
+                    <option key={s.id} value={s.code}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </FormField>
             <FormField label="Voornamen" required name="firstName" value={formData.firstName} onChange={handleChange} />
             <FormField label="Achternaam" required name="lastName" value={formData.lastName} onChange={handleChange} />
             <FormField label="Geboortedatum" type="date" name="dob" value={formData.dob} onChange={handleDateChange} />
@@ -116,37 +133,48 @@ export default function CreateDeceased() {
             <FormField label="Straat" name="streetofDeath" value={formData.streetofDeath} onChange={handleChange} />
             <FormField label="Plaats" name="cityofDeath" value={formData.cityofDeath} onChange={handleChange} />
             <FormField label="Gemeente" name="countyofDeath" value={formData.countyofDeath} onChange={handleChange} />
-
             <FormField label="Lijkvinding">
-              <select
-                name="bodyFinding"
-                value={formData.bodyFinding}
-                onChange={handleChange}
-                className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
-              >
-                <option value="">Selecteer een lijkvinding...</option>
-                {dropdownData.bodyFindings?.map((ft) => (
-                  <option key={ft.id} value={ft.value}>
-                    {ft.label}
-                  </option>
-                ))}
-              </select>
+              {loading ? (
+                <div>Loading...</div>
+              ) : error ? (
+                <div className="text-red-600">{error}</div>
+              ) : (
+                <select
+                  name="bodyFindings"
+                  value={formData.bodyFinding}
+                  onChange={handleChange}
+                  className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
+                >
+                  <option value="">Selecteer een lijkvinding...</option>
+                  {data.bodyFindings.map((s: any) => (
+                    <option key={s.id} value={s.code}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </FormField>
 
             <FormField label="Herkomst">
-              <select
-                name="origin"
-                value={formData.origin}
-                onChange={handleChange}
-                className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
-              >
-                <option value="">Selecteer een herkomst...</option>
-                {dropdownData.origins?.map((ft) => (
-                  <option key={ft.id} value={ft.value}>
-                    {ft.label}
-                  </option>
-                ))}
-              </select>
+              {loading ? (
+                <div>Loading...</div>
+              ) : error ? (
+                <div className="text-red-600">{error}</div>
+              ) : (
+                <select
+                  name="origins"
+                  value={formData.origin}
+                  onChange={handleChange}
+                  className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
+                >
+                  <option value="">Selecteer een herkomst...</option>
+                  {data.origins.map((s: any) => (
+                    <option key={s.id} value={s.code}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </FormField>
           </FormCard>
         </div>

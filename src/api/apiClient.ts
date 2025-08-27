@@ -8,7 +8,7 @@ async function apiClient<T>(endpoint: string, options: ApiOptions = {}): Promise
     const { body, headers, ...rest } = options;
 console.log(API_BASE);
 console.log(endpoint);
-    const res = await fetch(`${API_BASE}${endpoint}`, {
+    const res = await fetch(`${endpoint}`, {
         headers: {
             "Content-Type": "application/json",
             ...headers,

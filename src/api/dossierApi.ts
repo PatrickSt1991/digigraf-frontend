@@ -1,47 +1,6 @@
 import { endpoints } from "./apiConfig";
 import apiClient from "./apiClient";
-
-export interface DeceasedDto {
-    id?: string; // Guid
-    firstName?: string;
-    lastName?: string;
-    salutation?: string;
-    dob?: string; // ISO date
-    placeOfBirth?: string;
-    postalCode?: string;
-    street?: string;
-    houseNumber?: string;
-    houseNumberAddition?: string;
-    city?: string;
-    county?: string;
-    homeDeceased?: boolean;
-}
-
-export interface DeathInfoDto {
-    id?: string; // Guid
-    dateOfDeath?: string; // ISO date
-    timeOfDeath?: string; // ISO time
-    locationOfDeath?: string;
-    postalCodeOfDeath?: string;
-    streetOfDeath?: string;
-    houseNumberOfDeath?: string;
-    houseNumberAdditionOfDeath?: string;
-    cityOfDeath?: string;
-    countyOfDeath?: string;
-    bodyFinding?: string;
-    origin?: string;
-}
-
-export interface DossierDto {
-    id?: string; // Guid
-    funeralLeader?: string;
-    funeralNumber?: string;
-    funeralType?: string;
-    voorregeling?: boolean;
-    dossierCompleted?: boolean;
-    deceased?: DeceasedDto;
-    deathInfo?: DeathInfoDto;
-}
+import { DossierDto, FuneralLeaderDto } from "../DTOs";
 
 // Create new dossier
 export async function createNewDossier(request: DossierDto): Promise<DossierDto> {
@@ -63,5 +22,11 @@ export async function updateDossier(id: string, request: Partial<DossierDto>): P
     return apiClient<DossierDto>(`${endpoints.dossier}/${id}`, {
         method: "PATCH",
         body: request,
+    });
+}
+
+export async function getFuneralLeaders(): Promise<FuneralLeaderDto[]> {
+    return apiClient<FuneralLeaderDto[]>(endpoints.funeralLeaders, {
+        method: 'GET',
     });
 }

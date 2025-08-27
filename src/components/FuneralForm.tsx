@@ -1,14 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import FormCard from "./FormCard";
 import FormField from "./FormField";
-import apiClient from "../api/apiClient";
+import { useDropdownData } from "../hooks";
+import { FuneralLeaderDto } from "../DTOs";
 import { endpoints } from "../api/apiConfig";
-
-type FuneralLeader = {
-  id: string;
-  value: string;
-  label: string;
-};
 
 type FuneralFormProps = {
   formData: {
@@ -28,22 +23,11 @@ export default function FuneralForm({
   onNext,
   onBack,
 }: FuneralFormProps) {
-  const [funeralLeaders, setFuneralLeaders] = useState<FuneralLeader[]>([]);
+  const { data, loading, error }   = useDropdownData({
+    funeralLeaders: endpoints.funeralLeaders,
+  });
 
-  useEffect(() => {
-    if (!readOnly) {
-      const fetchLeaders = async () => {
-        try {
-          const data = await apiClient<FuneralLeader[]>(endpoints.funeralLeaders);
-          setFuneralLeaders(data);
-        } catch (err) {
-          console.error("Failed to fetch funeral leaders", err);
-        }
-      };
-
-      fetchLeaders();
-    }
-  }, [readOnly]);
+  const funeralLeaders: FuneralLeaderDto[] = data.funeralLeaders || [];
 
   return (
     <FormCard title="Uitvaart">
@@ -53,6 +37,10 @@ export default function FuneralForm({
             <div className="w-full border-0 border-b rounded-none border-gray-100">
               {formData.funeralLeader}
             </div>
+          ) : loading ? (
+            <div>Loading...</div>
+          ) : error ? (
+            <div className="text-red-600">{ error }</div>
           ) : (
             <select
               name="funeralLeader"

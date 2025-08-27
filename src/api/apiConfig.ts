@@ -2,7 +2,10 @@ export const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5027
 
 
 export const endpoints = {
-    authentication: `/Auth`,
-    dossier: `/Dossier`,
-    funeralLeaders: '/DossierUtils/funeral-leaders'
+    authentication: `${API_BASE}/Auth`,
+    dossier: `${API_BASE}/Dossier`,
+    funeralLeaders: `${API_BASE}/DossierUtils/funeral-leaders`,
+    salutation: `${API_BASE}/DossierUtils/salutations`,
+    bodyfindings: `${API_BASE}/DossierUtils/bodyfindings`,
+    origins: `${API_BASE}/DossierUtils/origins`
 };

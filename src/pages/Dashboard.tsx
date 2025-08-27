@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaSearch, FaCalendarAlt, FaUsers, FaUserShield } from "react-icons/fa";
 import { IconType } from "react-icons";
-import DashboardLayout from "../components/DashboardLayout"
+import { DashboardLayout } from "../components"
 
 interface MenuItem {
   label: string;

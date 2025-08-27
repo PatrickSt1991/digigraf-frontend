@@ -2,8 +2,7 @@ import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ReactComponent as DgLogo } from "../assets/dg.svg";
 import { AuthContext } from "../context/AuthContext";
-import { endpoints } from "../api/apiConfig";
-import apiClient from "../api/apiClient";
+import { loginUser } from "../api/authenticateApi";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -21,11 +20,7 @@ export default function Login() {
 
     try 
     {
-        const data = await apiClient<{ token: string; user: any}>(`${endpoints.authentication}/login`, {
-          method: "POST",
-          body: { email, password },
-        });
-
+        const data = await loginUser(email, password);
         login(data.user, data.token);
         navigate("/");
     } catch (err: any) {
