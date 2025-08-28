@@ -4,7 +4,7 @@ import { DossierDto, FuneralLeaderDto } from "../DTOs";
 
 // Create new dossier
 export async function createNewDossier(request: DossierDto): Promise<DossierDto> {
-    return apiClient<DossierDto>(`${endpoints.dossier}/new`, {
+    return apiClient<DossierDto>(`${endpoints.deceased}/new`, {
         method: "POST",
         body: request,
     });
@@ -12,14 +12,14 @@ export async function createNewDossier(request: DossierDto): Promise<DossierDto>
 
 // Get dossier by Id
 export async function getDossier(id: string): Promise<DossierDto> {
-    return apiClient<DossierDto>(`${endpoints.dossier}/${id}`, {
+    return apiClient<DossierDto>(`${endpoints.deceased}/${id}`, {
         method: "GET",
     });
 }
 
 // Update dossier (partial update)
 export async function updateDossier(id: string, request: Partial<DossierDto>): Promise<DossierDto> {
-    return apiClient<DossierDto>(`${endpoints.dossier}/${id}`, {
+    return apiClient<DossierDto>(`${endpoints.deceased}/${id}`, {
         method: "PATCH",
         body: request,
     });

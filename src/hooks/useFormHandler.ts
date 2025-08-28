@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface UseFormHandlerProps<T extends Record<string, any> & { age: string }> {
@@ -6,7 +6,8 @@ interface UseFormHandlerProps<T extends Record<string, any> & { age: string }> {
   steps: string[];
   dateFieldName: string;
   calculateAge: (birthDate: string, deathDate?: string) => number;
-  deathDateFieldName?: string; // optional, if you want to calculate against deathDate
+  deathDateFieldName?: string;
+  fetchUrl?: string; // optional: if provided, hook fetches data
 }
 
 export const useFormHandler = <T extends Record<string, any> & { age: string }>({
@@ -14,11 +15,40 @@ export const useFormHandler = <T extends Record<string, any> & { age: string }>(
   steps,
   dateFieldName,
   calculateAge,
-  deathDateFieldName
+  deathDateFieldName,
+  fetchUrl
 }: UseFormHandlerProps<T>) => {
   const [formData, setFormData] = useState<T>(initialData);
   const [result, setResult] = useState<T | null>(null);
+  const [loading, setLoading] = useState<boolean>(!!fetchUrl);
+  const [error, setError] = useState<string | null>(null);
+
   const navigate = useNavigate();
+
+  // Fetch existing data if fetchUrl is given
+  useEffect(() => {
+    if (!fetchUrl) return;
+
+    const fetchData = async () => {
+      try {
+        const res = await fetch(fetchUrl);
+        if (!res.ok) throw new Error("Failed to fetch data");
+        const data = await res.json();
+
+        // Merge API data with initial form data
+        setFormData(prev => ({
+          ...prev,
+          ...data,
+        }));
+      } catch (err: any) {
+        setError(err.message || "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [fetchUrl]);
 
   const handleChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -36,23 +66,18 @@ export const useFormHandler = <T extends Record<string, any> & { age: string }>(
     setFormData(prev => {
       const updatedData = { ...prev, [name]: value };
       
-      // Only calculate age if we're changing the birth date and we have a valid birth date
       if (name === dateFieldName && value) {
         try {
-          // Use death date if available, otherwise calculate age as of today
           const deathDate = deathDateFieldName ? updatedData[deathDateFieldName] : undefined;
           const calculatedAge = calculateAge(value, deathDate);
-          
           if (!isNaN(calculatedAge) && calculatedAge >= 0) {
             (updatedData as any).age = calculatedAge.toString();
           }
         } catch (error) {
           console.warn('Age calculation failed:', error);
-          // Don't update age if calculation fails
         }
       }
-      
-      // If we're updating death date and we have a birth date, recalculate age
+
       if (name === deathDateFieldName && value && updatedData[dateFieldName]) {
         try {
           const calculatedAge = calculateAge(updatedData[dateFieldName], value);
@@ -63,7 +88,7 @@ export const useFormHandler = <T extends Record<string, any> & { age: string }>(
           console.warn('Age calculation failed:', error);
         }
       }
-      
+
       return updatedData;
     });
   }, [dateFieldName, deathDateFieldName, calculateAge]);
@@ -72,8 +97,7 @@ export const useFormHandler = <T extends Record<string, any> & { age: string }>(
     e?.preventDefault();
     setResult(formData);
 
-    if (goToStep)
-      navigate(goToStep);
+    if (goToStep) navigate(goToStep);
   }, [formData, navigate]);
 
   const goNext = useCallback((currentStep: string) => {
@@ -104,6 +128,8 @@ export const useFormHandler = <T extends Record<string, any> & { age: string }>(
     goNext,
     goBack,
     resetForm,
-    setFormData
+    setFormData,
+    loading,
+    error,
   };
 };

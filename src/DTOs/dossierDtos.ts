@@ -45,3 +45,7 @@ export interface FuneralLeaderDto {
   value: string;
   label: string;
 };
+
+export interface Props {
+  overledeneId: string;
+}

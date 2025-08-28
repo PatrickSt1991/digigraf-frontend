@@ -3,7 +3,7 @@ import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import { CreateDeceased, CreateAdditionalInformation } from "./pages";
+import { Deceased, AdditionalInformationDeceased, InsuranceDeceased } from "./pages";
 
 function App() {
   const auth = useContext(AuthContext);
@@ -16,7 +16,6 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
 
-        {/* Protect "/" route */}
         <Route
           path="/"
           element={
@@ -32,20 +31,26 @@ function App() {
         />
 
         <Route
-          path="/create-deceased"
+          path="/deceased/:overledeneId?"
           element={
-              isAuthenticated ? <CreateDeceased /> : <Navigate to="/login" replace />
+              isAuthenticated ? <Deceased /> : <Navigate to="/login" replace />
           }
         />
 
         <Route 
-          path="/additional-information"
+          path="/additional-information/:overledeneId?"
           element={
-            isAuthenticated ? <CreateAdditionalInformation /> : <Navigate to="/login" replace />
+            isAuthenticated ? <AdditionalInformationDeceased /> : <Navigate to="/login" replace />
           }
         />
 
-        { /* Add other pages latere, e.g., /open-dossier, /all-dossiers, /admin */}
+        <Route 
+          path="/insurance-information/:overledeneId?"
+          element={
+            isAuthenticated ? <InsuranceDeceased /> : <Navigate to="/login" replace />
+          }
+        />
+
       </Routes>
     </Router>
   );

@@ -7,7 +7,10 @@ type Props = {
   onChange?: (e: React.ChangeEvent<any>) => void;
   type?: string;
   required?: boolean;
-  children?: React.ReactNode; // <-- allow children like <select> or <input type="checkbox">
+  children?: React.ReactNode;
+  className?: string;
+  multiline?: boolean;
+  rows?: number;
 };
 
 export default function FormField({
@@ -18,7 +21,12 @@ export default function FormField({
   type = "text",
   required,
   children,
+  className = "",
+  multiline = false,
+  rows = 4,
 }: Props) {
+  const baseInputClasses = "w-full border-0 border-b border-gray-300 rounded-none hover:border-gray-400 focus:ring-0 focus:border-blue-600 outline-none disabled:border-gray-200 disabled:bg-transparent disabled:text-gray-500 aria-invalid:border-red-500 aria-invalid:focus:border-red-600";
+  
   return (
     <div className="flex flex-col gap-1">
       <label className="font-medium">
@@ -28,6 +36,15 @@ export default function FormField({
 
       {children ? (
         children
+      ) : multiline ? (
+        <textarea
+          name={name}
+          value={value ?? ""}
+          onChange={onChange}
+          required={required}
+          rows={rows}
+          className={`${baseInputClasses} resize-y align-top ${className}`} // <-- Added resize-y and align-top
+        />
       ) : (
         <input
           type={type}
@@ -35,11 +52,7 @@ export default function FormField({
           value={value ?? ""}
           onChange={onChange}
           required={required}
-          className="w-full border-0 border-b border-gray-300 rounded-none
-         hover:border-gray-400
-         focus:ring-0 focus:border-blue-600 outline-none
-         disabled:border-gray-200 disabled:bg-transparent disabled:text-gray-500
-         aria-invalid:border-red-500 aria-invalid:focus:border-red-600"
+          className={`${baseInputClasses} ${className}`}
         />
       )}
     </div>
