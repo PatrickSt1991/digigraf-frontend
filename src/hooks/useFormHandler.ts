@@ -1,16 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface UseFormHandlerProps<T extends Record<string, any> & { age: string }> {
+interface UseFormHandlerProps<T extends Record<string, any> & { age?: string }> {
   initialData: T;
   steps: string[];
-  dateFieldName: string;
-  calculateAge: (birthDate: string, deathDate?: string) => number;
+  dateFieldName?: string;
+  calculateAge?: (birthDate: string, deathDate?: string) => number;
   deathDateFieldName?: string;
   fetchUrl?: string; // optional: if provided, hook fetches data
 }
 
-export const useFormHandler = <T extends Record<string, any> & { age: string }>({
+export const useFormHandler = <T extends Record<string, any> & { age?: string }>({
   initialData,
   steps,
   dateFieldName,
@@ -62,30 +62,33 @@ export const useFormHandler = <T extends Record<string, any> & { age: string }>(
 
   const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     setFormData(prev => {
       const updatedData = { ...prev, [name]: value };
-      
-      if (name === dateFieldName && value) {
-        try {
-          const deathDate = deathDateFieldName ? updatedData[deathDateFieldName] : undefined;
-          const calculatedAge = calculateAge(value, deathDate);
-          if (!isNaN(calculatedAge) && calculatedAge >= 0) {
-            (updatedData as any).age = calculatedAge.toString();
-          }
-        } catch (error) {
-          console.warn('Age calculation failed:', error);
-        }
-      }
 
-      if (name === deathDateFieldName && value && updatedData[dateFieldName]) {
-        try {
-          const calculatedAge = calculateAge(updatedData[dateFieldName], value);
-          if (!isNaN(calculatedAge) && calculatedAge >= 0) {
-            (updatedData as any).age = calculatedAge.toString();
+      // only run age calculation if both props exist
+      if (dateFieldName && calculateAge) {
+        if (name === dateFieldName && value) {
+          try {
+            const deathDate = deathDateFieldName ? updatedData[deathDateFieldName] : undefined;
+            const calculatedAge = calculateAge(value, deathDate);
+            if (!isNaN(calculatedAge) && calculatedAge >= 0) {
+              (updatedData as any).age = calculatedAge.toString();
+            }
+          } catch (error) {
+            console.warn('Age calculation failed:', error);
           }
-        } catch (error) {
-          console.warn('Age calculation failed:', error);
+        }
+
+        if (deathDateFieldName && name === deathDateFieldName && value && updatedData[dateFieldName]) {
+          try {
+            const calculatedAge = calculateAge(updatedData[dateFieldName], value);
+            if (!isNaN(calculatedAge) && calculatedAge >= 0) {
+              (updatedData as any).age = calculatedAge.toString();
+            }
+          } catch (error) {
+            console.warn('Age calculation failed:', error);
+          }
         }
       }
 

@@ -75,11 +75,7 @@ export default function Deceased() {
     goNext,
   });
 
-  const {
-    data,
-    loading: dropdownLoading,
-    error: dropdownError,
-  } = useDropdownData({
+  const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
     salutations: endpoints.salutation,
     bodyFindings: endpoints.bodyfindings,
     origins: endpoints.origins,
@@ -95,7 +91,7 @@ export default function Deceased() {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={ handleNext }
+          onNext={() => goNext(location.pathname)} //handleNext = prod
           onBack={() => goBack(location.pathname)}
           readOnly={false}
         />
@@ -111,10 +107,10 @@ export default function Deceased() {
               onChange={handleChange}
             />
             <FormField label="Aanhef" required>
-              {dropdownLoading ? (
+              {dropdownLoading.salutations  ? (
                 <div>Loading...</div>
-              ) : dropdownError ? (
-                <div className="text-red-600">{dropdownError}</div>
+              ) : dropdownErrors.salutations  ? (
+                <div className="text-red-600">{ dropdownErrors.salutations }</div>
               ) : (
                 <select
                   name="salutation"
@@ -123,7 +119,7 @@ export default function Deceased() {
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer een aanhef...</option>
-                  {data.salutations.map((s: any) => (
+                  {data.salutations?.map((s: any) => (
                     <option key={s.id} value={s.code}>
                       {s.label}
                     </option>
@@ -284,10 +280,10 @@ export default function Deceased() {
               onChange={handleChange}
             />
             <FormField label="Lijkvinding">
-              {dropdownLoading ? (
+              {dropdownLoading.bodyFindings ? (
                 <div>Loading...</div>
-              ) : dropdownError ? (
-                <div className="text-red-600">{dropdownError}</div>
+              ) : dropdownErrors.bodyFindings ? (
+                <div className="text-red-600">{ dropdownErrors.bodyFindings }</div>
               ) : (
                 <select
                   name="bodyFinding"
@@ -296,7 +292,7 @@ export default function Deceased() {
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer een lijkvinding...</option>
-                  {data.bodyFindings.map((s: any) => (
+                  {data.bodyFindings?.map((s: any) => (
                     <option key={s.id} value={s.code}>
                       {s.label}
                     </option>
@@ -306,10 +302,10 @@ export default function Deceased() {
             </FormField>
 
             <FormField label="Herkomst">
-              {dropdownLoading ? (
+              {dropdownLoading.origins ? (
                 <div>Loading...</div>
-              ) : dropdownError ? (
-                <div className="text-red-600">{dropdownError}</div>
+              ) : dropdownErrors.origins ? (
+                <div className="text-red-600">{ dropdownErrors.origins }</div>
               ) : (
                 <select
                   name="origin"
@@ -318,7 +314,7 @@ export default function Deceased() {
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer een herkomst...</option>
-                  {data.origins.map((s: any) => (
+                  {data.origins?.map((s: any) => (
                     <option key={s.id} value={s.code}>
                       {s.label}
                     </option>

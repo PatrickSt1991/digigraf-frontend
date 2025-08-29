@@ -73,7 +73,7 @@ export default function AdditionalInformationDeceased() {
     goNext,
   });
 
-  const { data, loading, error } = useDropdownData({
+  const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
     maritialstatuses: endpoints.maritalstatuses,
     salutations: endpoints.salutation,
   });
@@ -85,7 +85,7 @@ export default function AdditionalInformationDeceased() {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={handleNext}
+          onNext={() => goNext(location.pathname)} //handleNext = prod
           onBack={() => goBack(location.pathname)}
           readOnly={true}
         />
@@ -98,10 +98,10 @@ export default function AdditionalInformationDeceased() {
           {/* Left column */}
           <FormCard title="Extra Gegevens Overledene">
             <FormField label="Burgelijkestaat">
-              {loading ? (
+              {dropdownLoading.maritalstatus ? (
                 <div>Loading...</div>
-              ) : error ? (
-                <div className="text-red-600">{error}</div>
+              ) : dropdownErrors.maritalstatus ? (
+                <div className="text-red-600">{ dropdownErrors.maritalstatus }</div>
               ) : (
                 <select
                   name="maritalstatus"
@@ -110,7 +110,7 @@ export default function AdditionalInformationDeceased() {
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer een burgelijkestaat...</option>
-                  {data.maritialstatuses.map((ms: any) => (
+                  {data.maritialstatuses?.map((ms: any) => (
                     <option key={ms.id} value={ms.code}>
                       {ms.label}
                     </option>
@@ -161,10 +161,10 @@ export default function AdditionalInformationDeceased() {
           <FormCard title="Persoonsgegevens Opdrachtgever">
             <FormField label="BSN" name="socialsecurity" value={formData.socialsecurity} onChange={handleChange} />
             <FormField label="Aanhef" required>
-              {loading ? (
+              {dropdownLoading.salutations ? (
                 <div>Loading...</div>
-              ) : error ? (
-                <div className="text-red-600">{error}</div>
+              ) : dropdownErrors.salutations ? (
+                <div className="text-red-600">{ dropdownErrors.salutations }</div>
               ) : (
                 <select
                   name="salutation"

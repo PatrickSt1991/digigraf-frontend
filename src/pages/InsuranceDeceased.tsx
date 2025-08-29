@@ -3,7 +3,6 @@ import { useLocation, useParams } from "react-router-dom";
 import { DashboardLayout, FormCard, FormField, FuneralForm } from "../components";
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../hooks";
 import { endpoints } from "../api/apiConfig";
-import apiClient from "../api/apiClient";
 import { InsuranceEntry } from "../DTOs";
 
 export default function InsuranceDeceased() {
@@ -26,37 +25,35 @@ export default function InsuranceDeceased() {
       insuranceEntries: [] as InsuranceEntry[],
       age: "",
     },
-    steps: ["/additional-information", "/insurance-information", "/the-next-page", "/success-deceased"],
-    dateFieldName: "dob",
-    calculateAge: () => 0,
-    // hydrate from API when editing an existing deceased record
-    // Expecting the API to return: { insuranceEntries: InsuranceEntry[] }
+    steps: [
+      "/additional-information",
+      "/insurance-information",
+      "/layout-information",
+      "/success-deceased",
+    ],
     fetchUrl: overledeneId
       ? `${endpoints.deceased}/${overledeneId}/insurances`
       : undefined,
-      
   });
 
-  const saveurl = overledeneId 
+  const saveUrl = overledeneId
     ? `${endpoints.insuranceDeceased}?overledeneId=${overledeneId}`
     : endpoints.insuranceDeceased;
 
-  //`${endpoints.insuranceDeceased}?overledeneId=${overledeneId}`,
   const handleNext = useSaveAndNext({
     formData,
-    endpoint: saveurl,
+    endpoint: saveUrl,
     id: overledeneId,
     goNext,
   });
 
-  const { data, loading, error } = useDropdownData({
+  const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
     insuranceCompanies: endpoints.insuranceCompanies,
   });
 
-  // If there are no entries after hydration and dropdowns are loaded,
-  // seed one empty entry per company so the user can fill them.
+  // Always seed 5 default entries on first render
   useEffect(() => {
-    if (!initializedRef.current && !formLoading && !loading && !formError && !error && data.insuranceCompanies) {
+    if (!initializedRef.current && !formLoading) {
       const entries: InsuranceEntry[] = Array.from({ length: 5 }).map(() => ({
         insuranceCompanyId: "",
         policyNumber: "",
@@ -65,8 +62,7 @@ export default function InsuranceDeceased() {
       setFormData(prev => ({ ...prev, insuranceEntries: entries }));
       initializedRef.current = true;
     }
-  }, [formLoading, loading, formError, error, data.insuranceCompanies, setFormData]);
-
+  }, [formLoading, setFormData]);
 
   const handleEntryChange = (
     index: number,
@@ -76,31 +72,19 @@ export default function InsuranceDeceased() {
     const updated = [...formData.insuranceEntries];
     updated[index] = {
       ...updated[index],
-      [field]:
-        field === "premium"
-          ? value === ""
-            ? undefined
-            : Number(value)
-          : value,
+      [field]: field === "premium" ? (value === "" ? undefined : Number(value)) : value,
     };
-    setFormData((prev) => ({ ...prev, insuranceEntries: updated }));
+    setFormData(prev => ({ ...prev, insuranceEntries: updated }));
   };
 
   const addEntry = () => {
-    const newEntry: InsuranceEntry = {
-      insuranceCompanyId: "",
-      policyNumber: "",
-      premium: undefined,
-    };
-    setFormData((prev) => ({
-      ...prev,
-      insuranceEntries: [...prev.insuranceEntries, newEntry],
-    }));
+    const newEntry: InsuranceEntry = { insuranceCompanyId: "", policyNumber: "", premium: undefined };
+    setFormData(prev => ({ ...prev, insuranceEntries: [...prev.insuranceEntries, newEntry] }));
   };
 
   const removeEntry = (index: number) => {
     const updated = formData.insuranceEntries.filter((_, i) => i !== index);
-    setFormData((prev) => ({ ...prev, insuranceEntries: updated }));
+    setFormData(prev => ({ ...prev, insuranceEntries: updated }));
   };
 
   return (
@@ -109,7 +93,7 @@ export default function InsuranceDeceased() {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={handleNext}
+          onNext={() => goNext(location.pathname)}
           onBack={() => goBack(location.pathname)}
           readOnly={true}
         />
@@ -124,20 +108,18 @@ export default function InsuranceDeceased() {
               className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border rounded"
             >
               <FormField label="Verzekeringsmaatschappij" required>
-                {loading ? (
+                {dropdownLoading.insuranceCompanies ? (
                   <div>Loading...</div>
-                ) : error ? (
-                  <div className="text-red-600">{error}</div>
+                ) : dropdownErrors.insuranceCompanies ? (
+                  <div className="text-red-600">{dropdownErrors.insuranceCompanies}</div>
                 ) : (
                   <select
                     value={entry.insuranceCompanyId}
-                    onChange={(e) =>
-                      handleEntryChange(index, "insuranceCompanyId", e.target.value)
-                    }
+                    onChange={e => handleEntryChange(index, "insuranceCompanyId", e.target.value)}
                     className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                   >
                     <option value="">Selecteer een maatschappij...</option>
-                    {data.insuranceCompanies?.map((c: any) => (
+                    {(data.insuranceCompanies || []).map((c: any) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -150,9 +132,7 @@ export default function InsuranceDeceased() {
                 <input
                   type="text"
                   value={entry.policyNumber}
-                  onChange={(e) =>
-                    handleEntryChange(index, "policyNumber", e.target.value)
-                  }
+                  onChange={e => handleEntryChange(index, "policyNumber", e.target.value)}
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                   placeholder="Voer polisnummer in..."
                 />
@@ -164,7 +144,7 @@ export default function InsuranceDeceased() {
                   step="0.01"
                   min="0"
                   value={entry.premium ?? ""}
-                  onChange={(e) => handleEntryChange(index, "premium", e.target.value)}
+                  onChange={e => handleEntryChange(index, "premium", e.target.value)}
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                   placeholder="0.00"
                 />

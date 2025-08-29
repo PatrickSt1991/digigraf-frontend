@@ -1,9 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import { Deceased, AdditionalInformationDeceased, InsuranceDeceased } from "./pages";
+import { Login, Dashboard, Deceased, AdditionalInformationDeceased, InsuranceDeceased } from "./pages";
+import LayoutDeceased from "./pages/LayoutDeceased";
 
 function App() {
   const auth = useContext(AuthContext);
@@ -48,6 +47,13 @@ function App() {
           path="/insurance-information/:overledeneId?"
           element={
             isAuthenticated ? <InsuranceDeceased /> : <Navigate to="/login" replace />
+          }
+        />
+
+        <Route
+          path="/layout-information/:overledeneId?"
+          element={
+            isAuthenticated ? <LayoutDeceased /> : <Navigate to="/login" replace />
           }
         />
 

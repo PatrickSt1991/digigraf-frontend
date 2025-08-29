@@ -23,8 +23,8 @@ export default function FuneralForm({
   onNext,
   onBack,
 }: FuneralFormProps) {
-  const { data, loading, error }   = useDropdownData({
-    funeralLeaders: endpoints.funeralLeaders,
+  const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
+      funeralLeaders: endpoints.funeralLeaders,
   });
 
   const funeralLeaders: FuneralLeaderDto[] = data.funeralLeaders || [];
@@ -37,10 +37,10 @@ export default function FuneralForm({
             <div className="w-full border-0 border-b rounded-none border-gray-100">
               {formData.funeralLeader}
             </div>
-          ) : loading ? (
+          ) : dropdownLoading.funeralLeaders ? (
             <div>Loading...</div>
-          ) : error ? (
-            <div className="text-red-600">{ error }</div>
+          ) : dropdownErrors.funeralLeaders ? (
+            <div className="text-red-600">{ dropdownErrors.funeralLeaders }</div>
           ) : (
             <select
               name="funeralLeader"
