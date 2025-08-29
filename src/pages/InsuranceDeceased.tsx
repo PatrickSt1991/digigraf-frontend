@@ -51,7 +51,7 @@ export default function InsuranceDeceased() {
     insuranceCompanies: endpoints.insuranceCompanies,
   });
 
-  // Always seed 5 default entries on first render
+  // Always seed 5 default entries on first render, after dropdown load or error
   useEffect(() => {
     if (!initializedRef.current && !formLoading) {
       const entries: InsuranceEntry[] = Array.from({ length: 5 }).map(() => ({
@@ -108,9 +108,9 @@ export default function InsuranceDeceased() {
               className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border rounded"
             >
               <FormField label="Verzekeringsmaatschappij" required>
-                {dropdownLoading.insuranceCompanies ? (
+                {dropdownLoading ? (
                   <div>Loading...</div>
-                ) : dropdownErrors.insuranceCompanies ? (
+                ) : dropdownErrors?.insuranceCompanies ? (
                   <div className="text-red-600">{dropdownErrors.insuranceCompanies}</div>
                 ) : (
                   <select
@@ -119,7 +119,7 @@ export default function InsuranceDeceased() {
                     className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                   >
                     <option value="">Selecteer een maatschappij...</option>
-                    {(data.insuranceCompanies || []).map((c: any) => (
+                    {(data?.insuranceCompanies || []).map((c: any) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>

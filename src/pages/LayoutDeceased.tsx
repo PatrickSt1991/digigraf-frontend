@@ -7,14 +7,7 @@ export default function LayoutDeceased() {
   const location = useLocation();
   const { overledeneId } = useParams<{ overledeneId: string }>();
 
-  const {
-    formData,
-    handleChange,
-    goNext,
-    goBack,
-    loading,
-    error,
-  } = useFormHandler({
+  const { formData, handleChange, goNext, goBack, loading, error } = useFormHandler({
     initialData: {
       funeralLeader: "",
       funeralNumber: "",
@@ -44,160 +37,103 @@ export default function LayoutDeceased() {
     fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
   });
 
-  const saveUrl = overledeneId
-    ? `${endpoints.deceased}?overledeneId=${overledeneId}`
-    : endpoints.deceased;
+  const saveUrl = overledeneId ? `${endpoints.deceased}?overledeneId=${overledeneId}` : endpoints.deceased;
 
-  const handleNext = useSaveAndNext({
-    formData,
-    endpoint: saveUrl,
-    id: overledeneId,
-    goNext,
-  });
+  const handleNext = useSaveAndNext({ formData, endpoint: saveUrl, id: overledeneId, goNext });
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
     coffinTypes: endpoints.coffins,
-    funeralLeaders: endpoints.funeralLeaders,
-    caretakers: endpoints.caretakers,
     coffinLengths: endpoints.coffinlenghts,
+    caretakers: endpoints.caretakers,
   });
 
   if (loading) return <div>Loading layout deceased data...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
 
-  const renderSelect = (
-    key: string,
-    value: string,
-    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void,
-    placeholder: string
-  ) => {
-    if (dropdownLoading[key]) return <div>Loading...</div>;
-    if (dropdownErrors[key]) return <div className="text-red-600">{dropdownErrors[key]}</div>;
-    return (
-      <select
-        name={key}
-        value={value}
-        onChange={onChange}
-        className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
-      >
-        <option value="">{placeholder}</option>
-        {(data[key] || []).map((item: any) => (
-          <option key={item.id} value={item.code}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-    );
-  };
-
   return (
     <DashboardLayout>
       <div className="p-8 max-w-8xl mx-auto space-y-6">
-        <FuneralForm
-          formData={formData}
-          onChange={handleChange}
-          onNext={() => goNext(location.pathname)}
-          onBack={() => goBack(location.pathname)}
-          readOnly={true}
-        />
+        <FuneralForm formData={formData} onChange={handleChange} onNext={() => goNext(location.pathname)} onBack={() => goBack(location.pathname)} readOnly={true} />
 
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <FormCard title="Opbaren Overledene">
             <FormField label="Opbaring te" required name="layoutLocation" value={formData.layoutLocation} onChange={handleChange} />
 
             <FormField label="Uitvaartkist" required>
-              {renderSelect("coffinTypes", formData.coffinType, handleChange, "Selecteer Uitvaartkist...")}
+              {dropdownLoading.coffinTypes ? (
+                <div>Loading...</div>
+              ) : dropdownErrors.coffinTypes ? (
+                <div className="text-red-600">{dropdownErrors.coffinTypes}</div>
+              ) : (
+                <select name="coffinType" value={formData.coffinType} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
+                  <option value="">Selecteer Uitvaartkist...</option>
+                  {data.coffinTypes?.map((c: any) => <option key={c.id} value={c.code}>{c.label}</option>)}
+                </select>
+              )}
             </FormField>
 
             <FormField label="Omschrijving" required name="coffinDescription" multiline rows={6} value={formData.coffinDescription} onChange={handleChange} />
 
             <FormField label="Lengte" required>
-              {renderSelect("coffinLengths", formData.coffinLength, handleChange, "Selecteer lengte...")}
+              {dropdownLoading.coffinLengths ? (
+                <div>Loading...</div>
+              ) : dropdownErrors.coffinLengths ? (
+                <div className="text-red-600">{dropdownErrors.coffinLengths}</div>
+              ) : (
+                <select name="coffinLength" value={formData.coffinLength} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
+                  <option value="">Selecteer lengte...</option>
+                  {data.coffinLengths?.map((c: any) => <option key={c.id} value={c.code}>{c.label}</option>)}
+                </select>
+              )}
             </FormField>
 
-            <FormField label="Nabestanden bezocht">
-              <select
-                name="relativesVisited"
-                value={formData.relativesVisited}
-                onChange={handleChange}
-                className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
-              >
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
-
-            <FormField label="Verzorger" required>
-              {renderSelect("caretakers", formData.firstCaregiver, handleChange, "Selecteer Verzorger...")}
+            <FormField label="Verzorger 1" required>
+              {dropdownLoading.caretakers ? (
+                <div>Loading...</div>
+              ) : dropdownErrors.caretakers ? (
+                <div className="text-red-600">{dropdownErrors.caretakers}</div>
+              ) : (
+                <select name="firstCaregiver" value={formData.firstCaregiver} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
+                  <option value="">Selecteer Verzorger...</option>
+                  {data.caretakers?.map((c: any) => <option key={c.id} value={c.code}>{c.label}</option>)}
+                </select>
+              )}
             </FormField>
             <FormField label="Start" name="firstCaregiverStartTime" value={formData.firstCaregiverStartTime} onChange={handleChange} />
             <FormField label="Eind" name="firstCaregiverEndTime" value={formData.firstCaregiverEndTime} onChange={handleChange} />
 
-            <FormField label="Verzorger" required>
-              {renderSelect("caretakers", formData.secondCaregiver, handleChange, "Selecteer Verzorger...")}
+            <FormField label="Verzorger 2" required>
+              {dropdownLoading.caretakers ? (
+                <div>Loading...</div>
+              ) : dropdownErrors.caretakers ? (
+                <div className="text-red-600">{dropdownErrors.caretakers}</div>
+              ) : (
+                <select name="secondCaregiver" value={formData.secondCaregiver} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
+                  <option value="">Selecteer Verzorger...</option>
+                  {data.caretakers?.map((c: any) => <option key={c.id} value={c.code}>{c.label}</option>)}
+                </select>
+              )}
             </FormField>
             <FormField label="Start" name="secondCaregiverStartTime" value={formData.secondCaregiverStartTime} onChange={handleChange} />
             <FormField label="Eind" name="secondCaregiverEndTime" value={formData.secondCaregiverEndTime} onChange={handleChange} />
 
-            <FormField label="Verzorger" required>
-              {renderSelect("caretakers", formData.thirdCaregiver, handleChange, "Selecteer Verzorger...")}
+            <FormField label="Verzorger 3" required>
+              {dropdownLoading.caretakers ? (
+                <div>Loading...</div>
+              ) : dropdownErrors.caretakers ? (
+                <div className="text-red-600">{dropdownErrors.caretakers}</div>
+              ) : (
+                <select name="thirdCaregiver" value={formData.thirdCaregiver} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
+                  <option value="">Selecteer Verzorger...</option>
+                  {data.caretakers?.map((c: any) => <option key={c.id} value={c.code}>{c.label}</option>)}
+                </select>
+              )}
             </FormField>
             <FormField label="Start" name="thirdCaregiverStartTime" value={formData.thirdCaregiverStartTime} onChange={handleChange} />
             <FormField label="Eind" name="thirdCaregiverEndTime" value={formData.thirdCaregiverEndTime} onChange={handleChange} />
-
-            <FormField label="Koelvoorziening thuis">
-              <select name="coolingHome" value={formData.coolingHome} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
-
-            <FormField label="Kleding aanwezig">
-              <select name="clothingPresent" value={formData.clothingPresent} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
-
-            <FormField label="Kleding retour">
-              <select name="clothingReturn" value={formData.clothingReturn} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
-
-            <FormField label="Sieraden">
-              <select name="juwerly" value={formData.juwerly} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
-
-            <FormField label="Sieraden omschrijving" required name="juwerlyDescription" multiline rows={6} value={formData.juwerlyDescription} onChange={handleChange} />
-
-            <FormField label="Sieraden retour">
-              <select name="juwerlyReturn" value={formData.juwerlyReturn} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
-
-            <FormField label="Extra informatie" required name="additionalInformation" multiline rows={6} value={formData.additionalInformation} onChange={handleChange} />
           </FormCard>
         </div>
       </div>
-      </DashboardLayout>
-    );
+    </DashboardLayout>
+  );
 }
