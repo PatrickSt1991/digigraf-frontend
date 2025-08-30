@@ -108,9 +108,9 @@ export default function InsuranceDeceased() {
               className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border rounded"
             >
               <FormField label="Verzekeringsmaatschappij" required>
-                {dropdownLoading ? (
+                {dropdownLoading.insuranceCompanies ? (
                   <div>Loading...</div>
-                ) : dropdownErrors?.insuranceCompanies ? (
+                ) : dropdownErrors.insuranceCompanies ? (
                   <div className="text-red-600">{dropdownErrors.insuranceCompanies}</div>
                 ) : (
                   <select
@@ -119,15 +119,12 @@ export default function InsuranceDeceased() {
                     className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                   >
                     <option value="">Selecteer een maatschappij...</option>
-                    {(data?.insuranceCompanies || []).map((c: any) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
+                    {(data.insuranceCompanies || []).map((c: any) => (
+                      <option key={c.id} value={c.id}>{c.label ?? c.name ?? c.value}</option>
                     ))}
                   </select>
                 )}
               </FormField>
-
               <FormField label="Polisnummer" required>
                 <input
                   type="text"

@@ -3,6 +3,7 @@ import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 import { Login, Dashboard, Deceased, AdditionalInformationDeceased, InsuranceDeceased } from "./pages";
 import LayoutDeceased from "./pages/LayoutDeceased";
+import FuneralDeceased from "./pages/FuneralDeceased";
 
 function App() {
   const auth = useContext(AuthContext);
@@ -54,6 +55,13 @@ function App() {
           path="/layout-information/:overledeneId?"
           element={
             isAuthenticated ? <LayoutDeceased /> : <Navigate to="/login" replace />
+          }
+        />
+
+        <Route
+          path="/funeral-information/:overledeneId?"
+          element={
+            isAuthenticated ? <FuneralDeceased /> : <Navigate to="/login" replace />
           }
         />
 
