@@ -1,5 +1,5 @@
 import { useLocation, useParams } from "react-router-dom";
-import { DashboardLayout, FormCard, FormField, FuneralForm } from "../components";
+import { DashboardLayout, FormCard, FormField, FuneralForm, TitleCard } from "../components";
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../hooks";
 import { endpoints } from "../api/apiConfig";
 
@@ -47,7 +47,7 @@ export default function FuneralDeceased() {
             funeralLeader: "",
             funeralNumber: "",
         },
-        steps: ["/layout-information", "/funeral-information", "/the-next-step", "/success-deceased"],
+        steps: ["/layout-information", "/funeral-information", "/funeral-documents", "/success-deceased"],
         fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
     });
 
@@ -65,8 +65,8 @@ export default function FuneralDeceased() {
     const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
         salutations: endpoints.salutation,
     });
-// THE LAYOUT NEEDS TO BE DONE
-  return (
+
+    return (
     <DashboardLayout>
       <div className="p-8 max-w-8xl mx-auto space-y-6">
 
@@ -83,7 +83,8 @@ export default function FuneralDeceased() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Left column */}
-          <FormCard title="Uitvaart Overledene">
+          <FormCard title="">
+            <TitleCard title="Condoleance Informatie"/>
             <FormField label="Condoleance">
               <select
                 name="condoleances"
@@ -100,6 +101,7 @@ export default function FuneralDeceased() {
             <FormField label="Datum" type="date" name="dateCondoleances" value={formData.dateCondolences} onChange={handleChange} />
             <FormField label="Tijd" type="time" name="timeCondoleances" value={formData.timeCondolences} onChange={handleChange} />
             <FormField label="Consumpties" name="condolencesConsumptions" value={formData.condolencesConsumptions} onChange={handleChange} />
+            <TitleCard title="Uitvaart Informatie" className="pt-4"/>
             <FormField label="Begrafenis / Crematie" name="funeralType" value={formData.funeralType} onChange={handleChange} />
             <FormField label="Begraafplaats" name="firstparent" value={formData.cemetery} onChange={handleChange} />
             <FormField label="Graf nummer" name="graveNumber" value={formData.graveNumber} onChange={handleChange} />
@@ -112,6 +114,7 @@ export default function FuneralDeceased() {
 
           {/* Right Column */}
           <FormCard title="">
+            <TitleCard title="Dienst Informatie"/>
             <FormField label="Dienst te" name="serviceLocation" value={formData.serviceLocation} onChange={handleChange} />
             <FormField label="Datum" type="date" name="serviceDate" value={formData.serviceDate} onChange={handleChange} />
             <FormField label="Tijd" type="time" name="serviceTime" value={formData.serviceTime} onChange={handleChange} />
@@ -143,6 +146,7 @@ export default function FuneralDeceased() {
             <FormField label="PowerPoint"  name="powerpoint" value={formData.powerpoint} onChange={handleChange} />
             <FormField label="Consumpties" name="serviceConsumptions" value={formData.serviceConsumptions} onChange={handleChange} />
             <FormField label="Muziekstuk" required name="music" value={formData.music} onChange={handleChange} />
+            <TitleCard title="Asbestemming Informatie" className="pt-4"/>
             <FormField label="Asbestemming">
               {dropdownLoading.ashdestinations ? (
                 <div>Loading...</div>
