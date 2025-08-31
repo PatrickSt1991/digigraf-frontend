@@ -1,4 +1,4 @@
-export interface DeceasedDto {
+export interface Deceased {
     id?: string; // Guid
     firstName?: string;
     lastName?: string;
@@ -36,7 +36,7 @@ export interface DossierDto {
     funeralType?: string;
     voorregeling?: boolean;
     dossierCompleted?: boolean;
-    deceased?: DeceasedDto;
+    deceased?: Deceased;
     deathInfo?: DeathInfoDto;
 }
 

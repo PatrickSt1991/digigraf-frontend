@@ -1,6 +1,6 @@
 import { endpoints } from "./apiConfig";
 import apiClient from "./apiClient";
-import { DossierDto, FuneralLeaderDto } from "../DTOs";
+import { DossierDto, FuneralLeaderDto } from "../types";
 
 // Create new dossier
 export async function createNewDossier(request: DossierDto): Promise<DossierDto> {

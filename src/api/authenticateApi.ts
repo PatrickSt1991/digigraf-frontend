@@ -1,10 +1,10 @@
 import { endpoints } from "./apiConfig";
 import apiClient from "./apiClient";
-import { AuthResponseDto } from "../DTOs";
+import { AuthResponse } from "../types";
 
 
-export async function loginUser(email: string, password: string): Promise<AuthResponseDto> {
-  return apiClient<AuthResponseDto>(`${endpoints.authentication}/login`, {
+export async function loginUser(email: string, password: string): Promise<AuthResponse> {
+  return apiClient<AuthResponse>(`${endpoints.authentication}/login`, {
     method: "POST",
     body: { email, password },
   });

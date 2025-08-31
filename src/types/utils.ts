@@ -1,4 +1,4 @@
-export interface SalutationDto {
+export interface Salutation {
     id: string;
     code: string;
     label: string;

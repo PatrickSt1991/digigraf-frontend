@@ -2,7 +2,7 @@ import React from "react";
 import FormCard from "./FormCard";
 import FormField from "./FormField";
 import { useDropdownData } from "../hooks";
-import { FuneralLeaderDto } from "../DTOs";
+import { FuneralLeaderDto } from "../types";
 import { endpoints } from "../api/apiConfig";
 
 type FuneralFormProps = {

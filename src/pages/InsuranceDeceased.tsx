@@ -3,7 +3,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { DashboardLayout, FormCard, FormField, FuneralForm } from "../components";
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../hooks";
 import { endpoints } from "../api/apiConfig";
-import { InsuranceEntry } from "../DTOs";
+import { InsuranceEntry } from "../types";
 
 export default function InsuranceDeceased() {
   const location = useLocation();

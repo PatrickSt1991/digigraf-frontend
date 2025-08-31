@@ -4,4 +4,4 @@ export { default as FormCard } from './FormCard';
 export { default as FuneralForm } from './FuneralForm'
 export { default as FormRow } from './FormRow'
 export { default as TitleCard } from './TitleCard'
-export { DocumentEditor } from './DocumentEditor'
+export { DocumentEditorModal } from './DocumentEditorModal'
