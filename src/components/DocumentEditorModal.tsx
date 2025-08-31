@@ -1,6 +1,23 @@
-import { useState, useEffect } from "react";
-import ReactQuill from "react-quill-new";
+import { useState, useEffect, useRef, useCallback } from "react";
+import ReactQuill, { Quill } from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+
+// Define the Divider embed class
+const Embed = Quill.import('blots/embed') as any;
+
+class Divider extends Embed {
+  static create(value: any) {
+    const node = super.create(value);
+    node.setAttribute('style', 'border: 0; border-top: 1px solid rgba(0,0,0,.1); margin-top:10px; margin-bottom:10px;');
+    return node;
+  }
+  
+  static blotName = 'divider';
+  static tagName = 'hr';
+}
+
+// Register the custom embed
+Quill.register({ 'formats/hr': Divider });
 
 interface DocumentEditorModalProps {
   isOpen: boolean;
@@ -22,6 +39,7 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
   onSave,
 }) => {
   const [bodyContent, setBodyContent] = useState(initialContent);
+  const quillRef = useRef<ReactQuill | null>(null);
 
   // Sync bodyContent whenever a new template is loaded
   useEffect(() => {
@@ -32,11 +50,52 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
     onSave(bodyContent);
   };
 
+  // Divider toolbar handler
+  const dividerToolbarHandler = useCallback(() => {
+    if (!quillRef.current) return;
+    const quill = quillRef.current.getEditor();
+
+    // Exception handling when there is no focus
+    let index = (quill.getSelection() || {}).index;
+    if (index === undefined || index < 0) index = quill.getLength();
+
+    quill.insertEmbed(index, 'divider', 'null', 'user');
+    quill.setSelection(index + 1, index + 1);
+  }, []);
+
+  const modules = {
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ align: [] }],
+        [{ color: [] }, { background: [] }],
+        ["image"],
+        ["clean"],
+        ["blockquote"],
+        ["divider"], // Custom divider button
+      ],
+      handlers: {
+        divider: dividerToolbarHandler,
+      },
+    },
+  };
+
+  // Allow your blots
+  const formats = [
+    'header', 'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet', 'align', 'color', 'background',
+    'image', 'blockquote', 'divider'
+  ];
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-4/5 max-w-4xl p-6 relative">
+      <div
+        className="bg-white rounded-xl shadow-xl w-[80vw] h-[80vh] min-w-[400px] min-h-[300px] p-6 relative flex flex-col resize overflow-auto"
+      >
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
 
         {header && (
@@ -46,9 +105,22 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           </div>
         )}
 
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col">
           <label className="block font-semibold mb-2">Body:</label>
-          <ReactQuill theme="snow" value={bodyContent} onChange={setBodyContent} />
+          <div
+            className="resize overflow-auto border rounded p-1"
+            style={{ minHeight: "200px", minWidth: "300px" }}
+          >
+            <ReactQuill
+              ref={quillRef}
+              theme="snow"
+              value={bodyContent}
+              modules={modules}
+              formats={formats}
+              onChange={setBodyContent}
+              style={{ height: "100%", width: "100%" }}
+            />
+          </div>
         </div>
 
         {footer && (
@@ -62,10 +134,26 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           <button onClick={onClose} className="px-4 py-2 rounded-xl border">
             Cancel
           </button>
-          <button onClick={handleSave} className="px-4 py-2 rounded-xl bg-green-600 text-white">
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 rounded-xl bg-green-600 text-white"
+          >
             Save
           </button>
         </div>
+
+        {/* Add custom CSS for the divider button */}
+        <style>{`
+          .ql-divider::before {
+            content: "HR";
+            font-size: 10px;
+            font-weight: bold;
+          }
+          .ql-divider {
+            width: auto !important;
+            padding: 3px 6px !important;
+          }
+        `}</style>
       </div>
     </div>
   );
