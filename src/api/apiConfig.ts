@@ -18,4 +18,6 @@ export const endpoints = {
     coffinlenghts: `${API_BASE}/DossierUtils/coffins-length`,
     insuranceCompanies: `${API_BASE}/Insurance/companies`,
     insuranceDeceased: `${API_BASE}/dummy`,
+    invoiceDeceased: `${API_BASE}/invoice`,
+    invoiceExcel: `${API_BASE}/invoice/generate-excel`,
 };

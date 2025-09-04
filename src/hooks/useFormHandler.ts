@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { InvoiceFormData } from '../types/invoiceTypes';
 
 interface UseFormHandlerProps<T extends Record<string, any> & { age?: string }> {
   initialData: T;
@@ -50,15 +51,24 @@ export const useFormHandler = <T extends Record<string, any> & { age?: string }>
     fetchData();
   }, [fetchUrl]);
 
-  const handleChange = useCallback((
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target;
-    setFormData((prev) => ({
+const handleChange = useCallback((
+  eOrObj: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> | Partial<InvoiceFormData>
+) => {
+  if ("target" in eOrObj) {
+    const { name, value, type } = eOrObj.target;
+    setFormData(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      [name]: type === "checkbox" ? (eOrObj.target as HTMLInputElement).checked : value,
     }));
-  }, []);
+  } else {
+    // object update
+    setFormData(prev => ({
+      ...prev,
+      ...eOrObj,
+    }));
+  }
+}, []);
+
 
   const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

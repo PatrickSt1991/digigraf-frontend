@@ -5,7 +5,7 @@ import { DashboardLayout, FormCard, FuneralForm, DocumentEditorModal } from "../
 import { useFormHandler } from "../hooks";
 import { endpoints } from "../api/apiConfig";
 
-export default function FuneralDocuments() {
+export default function DeceasedDocuments() {
   const { overledeneId } = useParams<{ overledeneId: string }>();
   const location = useLocation();
 
@@ -23,7 +23,7 @@ export default function FuneralDocuments() {
     templates?: DocumentTemplate[];
   }>({
     initialData: { funeralLeader: "", funeralNumber: "", templates: [] },
-    steps: ["/funeral-information", "/funeral-documents", "/next-step", "/success-deceased"],
+    steps: ["/funeral-information", "/funeral-documents", "/invoice", "/success-deceased"],
     fetchUrl: overledeneId
       ? `${endpoints.documentsdeceased}/${overledeneId}`
       : `${endpoints.documentsdefault}`,
@@ -70,16 +70,13 @@ console.log(updatedSections);
     }
   };
 
-console.log("Opening template:", activeTemplate);
-console.log("Body section:", activeTemplate?.sections.find(s => s.label === "Body"));
-
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-6xl mx-auto space-y-6">
+      <div className="p-8 max-w-8xl mx-auto space-y-6">
         <FuneralForm
           formData={formData}
           onChange={handleChange}
@@ -88,53 +85,61 @@ console.log("Body section:", activeTemplate?.sections.find(s => s.label === "Bod
           readOnly={true}
         />
 
-        {(formData.templates || []).map(template => (
-          <FormCard key={template.id} title={template.title}>
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => openEditor(template)}
-                className="px-4 py-2 rounded-xl bg-green-600 text-white"
-              >
-                {template.overledeneId ? "Edit" : "Create"}
-              </button>
+        <div className="grid grid-cols-3 gap-4">
+          {(formData.templates || []).map(template => (
+            <FormCard key={template.id} title={template.title}>
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => openEditor(template)}
+                  className="px-4 py-2 rounded-xl border border-green-600 bg-green-600 text-white hover:bg-green-700 transition"
+                >
+                  {template.overledeneId ? "Bewerken" : "Openen"}
+                </button>
 
-              {template.overledeneId && (
-                <>
-                  <button className="px-4 py-2 rounded-xl border">Print</button>
-                  <button className="px-4 py-2 rounded-xl border">Email</button>
-                </>
-              )}
-            </div>
-          </FormCard>
-        ))}
+                {template.overledeneId && (
+                  <>
+                    <button className="px-4 py-2 rounded-xl border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200 hover:text-gray-900 transition">
+                      Printen
+                    </button>
+                    <button className="px-4 py-2 rounded-xl border border-blue-500 bg-blue-500 text-white hover:bg-blue-600 transition">
+                      Email
+                    </button>
+                  </>
+                )}
+              </div>
+            </FormCard>
+          ))}
+        </div>
 
-        <FormCard title="">
+        
           {(!formData.templates || formData.templates.length === 0) && (
-            <div>No document templates found for this deceased.</div>
+            <FormCard title="">
+              <div>No document templates found for this deceased.</div>
+            </FormCard>
           )}
-        </FormCard>
-<DocumentEditorModal
-  isOpen={modalOpen}
-  onClose={() => setModalOpen(false)}
-  title={activeTemplate?.title || ""}
-  initialContent={
-    activeTemplate?.sections.find(
-      s => s.label?.trim().toLowerCase() === "body"
-    )?.value || ""
-  }
-  header={
-    activeTemplate?.sections.find(
-      s => s.label?.trim().toLowerCase() === "header"
-    )?.value
-  }
-  footer={
-    activeTemplate?.sections.find(
-      s => s.label?.trim().toLowerCase() === "footer"
-    )?.value
-  }
-  onSave={handleSave}
-  key={activeTemplate?.id} // Add this key to force re-render when template changes
-/>
+        
+          <DocumentEditorModal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            title={activeTemplate?.title || ""}
+            initialContent={
+              activeTemplate?.sections.find(
+                s => s.label?.trim().toLowerCase() === "body"
+              )?.value || ""
+            }
+            header={
+              activeTemplate?.sections.find(
+                s => s.label?.trim().toLowerCase() === "header"
+              )?.value
+            }
+            footer={
+              activeTemplate?.sections.find(
+                s => s.label?.trim().toLowerCase() === "footer"
+              )?.value
+            }
+            onSave={handleSave}
+            key={activeTemplate?.id} // Add this key to force re-render when template changes
+          />
       </div>
     </DashboardLayout>
   );
