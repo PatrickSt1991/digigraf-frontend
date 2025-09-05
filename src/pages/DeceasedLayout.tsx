@@ -52,7 +52,7 @@ export default function LayoutDeceased() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-8xl mx-auto space-y-6">
+      <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
         <FuneralForm formData={formData} onChange={handleChange} onNext={() => goNext(location.pathname)} onBack={() => goBack(location.pathname)} readOnly={true} />
 
         <div className="grid grid-cols-1 gap-4">

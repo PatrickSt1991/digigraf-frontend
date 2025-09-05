@@ -80,7 +80,7 @@ export default function AdditionalInformationDeceased() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-8xl mx-auto space-y-6">
+      <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
         {/* Additional information deceased form */}
         <FuneralForm
           formData={formData}

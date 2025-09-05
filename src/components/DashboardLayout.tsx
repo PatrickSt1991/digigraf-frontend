@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 pt-20 bg-gray-100">
+      <main className="flex-1 pt-15 bg-gray-100">
         {children}
       </main>
     </div>

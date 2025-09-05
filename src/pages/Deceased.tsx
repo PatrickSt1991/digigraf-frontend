@@ -86,7 +86,7 @@ export default function Deceased() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-8xl mx-auto space-y-6">
+      <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
         {/* Funeral info form */}
         <FuneralForm
           formData={formData}
