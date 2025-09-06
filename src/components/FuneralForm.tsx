@@ -14,6 +14,7 @@ type FuneralFormProps = {
   readOnly?: boolean;
   onNext?: (e: React.FormEvent) => void;
   onBack?: (e: React.FormEvent) => void;
+  onComplete?: (e: React.FormEvent) => void;
 };
 
 export default function FuneralForm({
@@ -22,6 +23,7 @@ export default function FuneralForm({
   readOnly = false,
   onNext,
   onBack,
+  onComplete,
 }: FuneralFormProps) {
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
       funeralLeaders: endpoints.funeralLeaders,
@@ -91,6 +93,15 @@ export default function FuneralForm({
             className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition"
           >
             Volgende
+          </button>
+        )}
+        {onComplete && (
+          <button
+            type="submit"
+            onClick={onNext}
+            className="py-2 px-6 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+          >
+            Afronden
           </button>
         )}
       </div>

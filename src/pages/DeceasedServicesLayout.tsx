@@ -56,7 +56,7 @@ const initialFormData = {
   isNotificationEnabled: false,
 };
 
-export default function FuneralServicesLayout() {
+export default function DeceasedServicesLayout() {
   const { deceasedId } = useParams<{ deceasedId: string }>();
   const location = useLocation();
 
@@ -65,17 +65,6 @@ export default function FuneralServicesLayout() {
     steps: ["/deceaded-invoice", "/deceased-services", "/the-next-step-final-step", "/success-deceased"],
     fetchUrl: deceasedId ? `${newEndpoints.deceased}/${deceasedId}` : undefined,
   });
-
-/*
-Complete instead of of handlenext
-<button
-  onClick={() => goNext(location.pathname)}
-  className="py-2 px-6 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
->
-  Afronden
-</button>
-
-*/
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
     stoneSuppliers: newEndpoints.stoneSuppliers,
@@ -104,8 +93,8 @@ Complete instead of of handlenext
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={() => goNext(location.pathname)}
           onBack={() => goBack(location.pathname)}
+          onComplete={() => goNext(location.pathname)}
           readOnly={true}
         />
 
