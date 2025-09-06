@@ -56,7 +56,7 @@ export default function AdditionalInformationDeceased() {
       funeralLeader: "",
       funeralNumber: "",
     },
-    steps: ["/deceased","/additional-information","/insurance-information","/success-deceased"],
+    steps: ["/deceased","/deceased-information","/deceased-insurance","/success-deceased"],
     dateFieldName: "dob",
     calculateAge,
     fetchUrl: overledeneId ? `${endpoints.additional}/${overledeneId}` : undefined,

@@ -28,7 +28,7 @@ export default function DeceasedInvoice() {
 
   const { formData, handleChange, goNext, goBack, loading, error } = useFormHandler<DeceasedInvoiceFormData>({
     initialData,
-    steps: ["/funeral-documents", "/invoice", "/the-next-page", "/success-deceased"],
+    steps: ["/deceased-documents", "/deceaded-invoice", "/deceased-services", "/success-deceased"],
     fetchUrl: overledeneId ? `${endpoints.invoiceDeceased}/${overledeneId}` : undefined,
   });
 
@@ -41,7 +41,7 @@ export default function DeceasedInvoice() {
 
   // Recalculate subtotal & total whenever priceComponents or discountAmount changes
   useEffect(() => {
-    const subtotal = formData.priceComponents.reduce((sum, pc) => sum + pc.bedrag * pc.aantal, 0);
+    const subtotal = formData.priceComponents.reduce((sum, pc) => sum + (Number(pc.bedrag) || 0) * (Number(pc.aantal) || 0),0);
     const total = subtotal - formData.discountAmount;
     handleChange({ subtotal, total });
   }, [formData.priceComponents, formData.discountAmount]);
@@ -50,7 +50,11 @@ export default function DeceasedInvoice() {
     const updatedComponents = [...formData.priceComponents];
     updatedComponents[idx] = {
       ...updatedComponents[idx],
-      [key]: key === "bedrag" || key === "aantal" ? Number(value) : value,
+      [key]: key === "bedrag" || key === "aantal" 
+        ? value === ""
+          ? ""
+          : Number(value) 
+        : value,
     };
     handleChange({ priceComponents: updatedComponents });
   };
@@ -87,7 +91,7 @@ export default function DeceasedInvoice() {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={() => goNext(location.pathname)} //handleNext
+          onNext={() => goNext(location.pathname)}
           onBack={() => goBack(location.pathname)}
           readOnly={true}
         />

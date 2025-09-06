@@ -47,7 +47,7 @@ export default function FuneralDeceased() {
             funeralLeader: "",
             funeralNumber: "",
         },
-        steps: ["/layout-information", "/funeral-information", "/funeral-documents", "/success-deceased"],
+        steps: ["/deceased-layout", "/deceased-funeral", "/deceased-documents", "/success-deceased"],
         fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
     });
 

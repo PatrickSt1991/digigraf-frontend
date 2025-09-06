@@ -33,7 +33,7 @@ export default function LayoutDeceased() {
       juwerlyReturn: "",
       additionalInformation: "",
     },
-    steps: ["/insurance-information", "/layout-information", "/funeral-information", "/success-deceased"],
+    steps: ["/deceased-insurance", "/deceased-layout", "/deceased-funeral", "/success-deceased"],
     fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
   });
 

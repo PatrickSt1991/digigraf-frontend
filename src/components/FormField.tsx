@@ -11,6 +11,7 @@ type Props = {
   className?: string;
   multiline?: boolean;
   rows?: number;
+  checked?: boolean;
 };
 
 export default function FormField({

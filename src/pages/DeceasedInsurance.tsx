@@ -26,9 +26,9 @@ export default function InsuranceDeceased() {
       age: "",
     },
     steps: [
-      "/additional-information",
-      "/insurance-information",
-      "/layout-information",
+      "/deceased-information",
+      "/deceased-insurance",
+      "/deceased-layout",
       "/success-deceased",
     ],
     fetchUrl: overledeneId

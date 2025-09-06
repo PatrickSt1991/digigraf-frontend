@@ -57,7 +57,7 @@ export default function Deceased() {
       funeralLeader: "",
       funeralNumber: "",
     },
-    steps: ["/dashboard", "/deceased", "/additional-information", "/success-deceased"],
+    steps: ["/dashboard", "/deceased", "/deceased-information", "/success-deceased"],
     dateFieldName: "dob",
     deathDateFieldName: "dateofDeath",
     calculateAge,

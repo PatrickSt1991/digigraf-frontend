@@ -23,7 +23,7 @@ export default function DeceasedDocuments() {
     templates?: DocumentTemplate[];
   }>({
     initialData: { funeralLeader: "", funeralNumber: "", templates: [] },
-    steps: ["/funeral-information", "/funeral-documents", "/invoice", "/success-deceased"],
+    steps: ["/deceased-funeral", "/deceased-documents", "/deceaded-invoice", "/success-deceased"],
     fetchUrl: overledeneId
       ? `${endpoints.documentsdeceased}/${overledeneId}`
       : `${endpoints.documentsdefault}`,
