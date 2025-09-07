@@ -1,29 +1,48 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useContext } from "react";
-import { AuthContext } from "./context/AuthContext";
-import { Login, Dashboard, Deceased, AdditionalInformationDeceased, InsuranceDeceased, DeceasedLayout, DeceasedFuneral, 
-  DeceasedDocuments, DeceasedInvoice, DeceasedServicesLayout  } from "./pages";
+import { Login } from "./pages";
+import {
+  Dashboard,
+  Deceased,
+  AdditionalInformationDeceased,
+  InsuranceDeceased,
+  DeceasedLayout,
+  DeceasedFuneral,
+  DeceasedDocuments,
+  DeceasedInvoice,
+  DeceasedServicesLayout
+} from "./pages/user";
+import {
+  AdminDashboard,
+  AdminOverledenen,
+} from "./pages/admin";
+import { RequireUser } from "./routes/RequireUser";
+import { RequireAdmin } from "./routes/RequireAdmin";
 
 function App() {
-  const auth = useContext(AuthContext);
-  if(!auth) throw new Error("AuthContext not fond");
-  const { user } = auth;
-  const isAuthenticated = !!user;
-
   return (
     <Router>
       <Routes>
+        {/* Public */}
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={ isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace /> } />
-        <Route path="/dashboard" element={ isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace /> } />
-        <Route path="/deceased/:overledeneId?" element={ isAuthenticated ? <Deceased /> : <Navigate to="/login" replace /> } />
-        <Route path="/deceased-information/:overledeneId?" element={ isAuthenticated ? <AdditionalInformationDeceased /> : <Navigate to="/login" replace /> } />
-        <Route path="/deceased-insurance/:overledeneId?" element={ isAuthenticated ? <InsuranceDeceased /> : <Navigate to="/login" replace /> } />
-        <Route path="/deceased-layout/:overledeneId?" element={ isAuthenticated ? <DeceasedLayout /> : <Navigate to="/login" replace /> } />
-        <Route path="/deceased-funeral/:overledeneId?" element={ isAuthenticated ? <DeceasedFuneral /> : <Navigate to="/login" replace /> } />
-        <Route path="/deceased-documents/:overledeneId?" element={ isAuthenticated ? <DeceasedDocuments /> : <Navigate to="/login" replace /> } />
-        <Route path="/deceaded-invoice/:overledeneId?" element={ isAuthenticated ? <DeceasedInvoice /> : <Navigate to="/login" replace /> } />
-        <Route path="/deceased-services/:overledeneId?" element={ isAuthenticated ? <DeceasedServicesLayout /> : <Navigate to="/login" replace /> } />
+
+        {/* User routes (all require authentication) */}
+        <Route path="/" element={<RequireUser><Dashboard /></RequireUser>} />
+        <Route path="/dashboard" element={<RequireUser><Dashboard /></RequireUser>} />
+        <Route path="/deceased/:overledeneId?" element={<RequireUser><Deceased /></RequireUser>} />
+        <Route path="/deceased-information/:overledeneId?" element={<RequireUser><AdditionalInformationDeceased /></RequireUser>} />
+        <Route path="/deceased-insurance/:overledeneId?" element={<RequireUser><InsuranceDeceased /></RequireUser>} />
+        <Route path="/deceased-layout/:overledeneId?" element={<RequireUser><DeceasedLayout /></RequireUser>} />
+        <Route path="/deceased-funeral/:overledeneId?" element={<RequireUser><DeceasedFuneral /></RequireUser>} />
+        <Route path="/deceased-documents/:overledeneId?" element={<RequireUser><DeceasedDocuments /></RequireUser>} />
+        <Route path="/deceased-invoice/:overledeneId?" element={<RequireUser><DeceasedInvoice /></RequireUser>} />
+        <Route path="/deceased-services/:overledeneId?" element={<RequireUser><DeceasedServicesLayout /></RequireUser>} />
+
+        {/* Admin routes */}
+        <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+        <Route path="/admin/overledenen" element={<RequireAdmin><AdminOverledenen /></RequireAdmin>} />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

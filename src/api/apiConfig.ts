@@ -21,3 +21,8 @@ export const endpoints = {
     invoiceDeceased: `${API_BASE}/invoice`,
     invoiceExcel: `${API_BASE}/invoice/generate-excel`,
 };
+
+export const adminEndpoints = {
+    deceased: `${API_BASE}/admin/deceased`,
+    insuranceCompanies: `${API_BASE}/admin/insurance/companies`,
+};

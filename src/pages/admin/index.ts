@@ -1,0 +1,5 @@
+export { default as AdminDashboard } from './AdminDashboard'
+export { default as AdminOverledenen } from './AdminOverledenen'
+//export { default as AdminVerzekeraars } from './AdminVerzekeraars'
+//export { default as AdminFacturen } from './AdminFacturen'
+//export { default as AdminSteenhouwerij } from './AdminSteenhouwerij'

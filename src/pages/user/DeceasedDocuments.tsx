@@ -1,9 +1,9 @@
 import { useParams, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { DocumentTemplate, Section } from "../types";
-import { DashboardLayout, FormCard, FuneralForm, DocumentEditorModal } from "../components";
-import { useFormHandler } from "../hooks";
-import { endpoints } from "../api/apiConfig";
+import { DocumentTemplate, Section } from "../../types";
+import { DashboardLayout, FormCard, FuneralForm, DocumentEditorModal } from "../../components";
+import { useFormHandler } from "../../hooks";
+import { endpoints } from "../../api/apiConfig";
 
 export default function DeceasedDocuments() {
   const { overledeneId } = useParams<{ overledeneId: string }>();

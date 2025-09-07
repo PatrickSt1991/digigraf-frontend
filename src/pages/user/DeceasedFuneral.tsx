@@ -1,7 +1,7 @@
 import { useLocation, useParams } from "react-router-dom";
-import { DashboardLayout, FormCard, FormField, FuneralForm, TitleCard } from "../components";
-import { useDropdownData, useFormHandler, useSaveAndNext } from "../hooks";
-import { endpoints } from "../api/apiConfig";
+import { DashboardLayout, FormCard, FormField, FuneralForm, TitleCard } from "../../components";
+import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
+import { endpoints } from "../../api/apiConfig";
 
 export default function FuneralDeceased() {
     const location = useLocation();

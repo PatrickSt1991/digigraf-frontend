@@ -1,6 +1,6 @@
-import { DashboardLayout, FormCard, FormField, FormRow, FuneralForm } from "../components";
-import { useDropdownData, useFormHandler } from "../hooks";
-import { endpoints } from "../api/apiConfig";
+import { DashboardLayout, FormCard, FormField, FormRow, FuneralForm } from "../../components";
+import { useDropdownData, useFormHandler } from "../../hooks";
+import { endpoints } from "../../api/apiConfig";
 import { useParams, useLocation } from "react-router-dom";
 
 // Assume these are the new endpoints based on the XAML file

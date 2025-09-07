@@ -1,9 +1,9 @@
 import { useLocation, useParams } from "react-router-dom";
 import { useEffect } from "react";
-import { DashboardLayout, FormCard, FuneralForm, FormField } from "../components";
-import { useDropdownData, useFormHandler, useSaveAndNext } from "../hooks";
-import { endpoints } from "../api/apiConfig";
-import { InvoiceFormData, PriceComponent } from "../types";
+import { DashboardLayout, FormCard, FuneralForm, FormField } from "../../components";
+import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
+import { endpoints } from "../../api/apiConfig";
+import { InvoiceFormData, PriceComponent } from "../../types";
 
 // Extend InvoiceFormData to include funeralLeader & funeralNumber
 type DeceasedInvoiceFormData = InvoiceFormData & {
