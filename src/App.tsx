@@ -13,6 +13,7 @@ import {
 } from "./pages/user";
 import {
   AdminDashboard,
+  AdminEmployee,
   AdminOverledenen,
 } from "./pages/admin";
 import { RequireUser } from "./routes/RequireUser";
@@ -40,6 +41,7 @@ function App() {
         {/* Admin routes */}
         <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
         <Route path="/admin/overledenen" element={<RequireAdmin><AdminOverledenen /></RequireAdmin>} />
+        <Route path="/admin/employees" element={<RequireAdmin><AdminEmployee /></RequireAdmin>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
