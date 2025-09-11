@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DashboardLayout } from "../../components";
 import { Link } from 'react-router-dom';
 import { FaUsers, FaPlus, FaEdit, FaTrash, FaSearch, FaEnvelope, FaPhone, FaUser, FaChartLine, FaArrowLeft, FaTachometerAlt } from 'react-icons/fa';
 
@@ -329,10 +330,11 @@ const EmployeeManagement: React.FC = () => {
   };
 
   return (
+    <DashboardLayout>
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-10">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4 h-full">
               {/* Back Button */}
@@ -550,6 +552,7 @@ const EmployeeManagement: React.FC = () => {
         )}
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 
