@@ -2,46 +2,48 @@ import React, { useState } from 'react';
 import { DashboardLayout } from "../../components";
 import { Link } from 'react-router-dom';
 import { FaUsers, FaPlus, FaEdit, FaTrash, FaSearch, FaEnvelope, FaPhone, FaUser, FaChartLine, FaArrowLeft, FaTachometerAlt } from 'react-icons/fa';
-import { Employee } from '../../types';
+import { InsuranceCompany } from '../../types';
 
 const EmployeeManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'add' | 'edit'>('overview');
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedInsurance, setSelectedInsurance] = useState<InsuranceCompany | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'deactivated'>('all');
 
-  const [employees, setEmployees] = useState<Employee[]>([
+  const [insuranceCompanies, setInsuranceCompanies] = useState<InsuranceCompany[]>([
     {
-      id: '1',
-      status: 'active',
-      initials: 'J.D.',
-      firstName: 'Jan',
-      lastName: 'Doe',
-      tussenvoegsel: 'de',
-      fullName: 'Jan de Doe',
-      birthPlace: 'Amsterdam',
-      birthDate: '1985-05-15',
-      email: 'j.doe@company.nl',
-      mobile: '06-12345678',
-      role: 'Uitvaartbegeleider',
-      department: 'Begeleiding',
-      startDate: '2020-01-15'
+        id: '1',
+        status: 'active',
+        name: 'Zorgverzekeraar A',
+        herkomst: true,
+        insurance: true,
+        membership: true,
+        package: false,
+        correspondanceType: 'address',
+        address: 'Straatnaam 1',
+        houseNumber: '1',
+        postalCode: '1234 AB',
+        city: 'Amsterdam',
+        country: 'Nederland',
+        phone: '020-1234567',
+        billingAddress: true,
+        billingType: 'Opdrachtgever'
     },
     {
-      id: '2',
-      status: 'inactive',
-      initials: 'M.S.',
-      firstName: 'Maria',
-      lastName: 'Smith',
-      tussenvoegsel: 'van',
-      fullName: 'Maria van Smith',
-      birthPlace: 'Rotterdam',
-      birthDate: '1982-08-22',
-      email: 'm.smith@company.nl',
-      mobile: '06-87654321',
-      role: 'Administratief',
-      department: 'Administratie',
-      startDate: '2019-03-01'
+        id: '2',
+        status: 'inactive',
+        name: 'Zorgverzekeraar B',
+        herkomst: false,
+        insurance: true,
+        membership: false,
+        package: true,
+        correspondanceType: 'mailbox',
+        mailboxname: 'Postbus 123',
+        mailboxaddress: '1234 AB Amsterdam',
+        country: 'Nederland',
+        phone: '010-7654321',
+        billingAddress: false,
+        billingType: 'Vereniging'
     }
   ]);
 
@@ -73,10 +75,9 @@ const EmployeeManagement: React.FC = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
+  const filteredEmployees = insuranceCompanies.filter(ico => {
+    const matchesSearch = ico.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || ico.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -473,7 +474,7 @@ const EmployeeManagement: React.FC = () => {
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => {
-                                setSelectedEmployee(employee);
+                                setSelectedInsurance(employee);
                                 setActiveTab('edit');
                               }}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -517,19 +518,19 @@ const EmployeeManagement: React.FC = () => {
           />
         )}
 
-        {activeTab === 'edit' && selectedEmployee && (
+        {activeTab === 'edit' && selectedInsurance && (
           <EmployeeForm
-            employee={selectedEmployee}
+            employee={selectedInsurance}
             onSave={(updatedEmployee) => {
               setEmployees(employees.map(emp => 
                 emp.id === updatedEmployee.id ? updatedEmployee : emp
               ));
               setActiveTab('overview');
-              setSelectedEmployee(null);
+              setSelectedInsurance(null);
             }}
             onCancel={() => {
               setActiveTab('overview');
-              setSelectedEmployee(null);
+              setSelectedInsurance(null);
             }}
           />
         )}
