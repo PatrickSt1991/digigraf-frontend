@@ -136,8 +136,8 @@ const LicenseManagement: React.FC = () => {
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-            <div className="flex items-center justify-between h-16 mt-10">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 mt-10">
+            <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-4 h-full">
                 {/* Back Button */}
                 <Link
@@ -145,12 +145,18 @@ const LicenseManagement: React.FC = () => {
                   className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Back to dashboard"
                 >
-                  <FaArrowLeft size={16} />
+                  {(() => {
+                    const ArrowIcon = FaArrowLeft as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                    return <ArrowIcon size={16} />;
+                  })()}
                 </Link>
                 
                 <div className="flex items-center gap-3 h-full">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <FaShieldAlt className="text-white" size={24} />
+                    {(() => {
+                      const ShieldIcon = FaShieldAlt as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <ShieldIcon className="text-white" size={24} />;
+                    })()}
                   </div>
                   <div className="flex flex-col justify-center">
                     <h1 className="text-2xl font-bold text-gray-900">License Management</h1>
@@ -173,9 +179,15 @@ const LicenseManagement: React.FC = () => {
                     </h2>
                   </div>
                   {licenseInfo?.isValid ? (
-                    <FaCheckCircle className="w-8 h-8 text-white" />
+                    (() => {
+                      const CheckIcon = FaCheckCircle as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <CheckIcon className="w-8 h-8 text-white" />;
+                    })()
                   ) : (
-                    <FaTimesCircle className="w-8 h-8 text-white" />
+                    (() => {
+                      const TimesIcon = FaTimesCircle as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <TimesIcon className="w-8 h-8 text-white" />;
+                    })()
                   )}
                 </div>
               </div>
@@ -185,7 +197,10 @@ const LicenseManagement: React.FC = () => {
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <FaUsers className="w-5 h-5 text-gray-400" />
+                      {(() => {
+                        const UsersIcon = FaUsers as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                        return <UsersIcon className="w-5 h-5 text-gray-400" />;
+                      })()}
                       <span className="text-gray-700 font-medium">User Seats</span>
                     </div>
                     <span className="text-gray-700 font-semibold">
@@ -207,14 +222,20 @@ const LicenseManagement: React.FC = () => {
 
                   {isOverLimit && licenseInfo?.message && (
                     <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-                      <FaExclamationTriangle className="w-4 h-4" />
+                      {(() => {
+                        const AlertIcon = FaExclamationTriangle as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                        return <AlertIcon className="w-4 h-4" />;
+                      })()}
                       {licenseInfo.message}
                     </p>
                   )}
                   
                   {isNearLimit && !isOverLimit && (
                     <p className="text-yellow-600 text-sm mt-2 flex items-center gap-1">
-                      <FaExclamationTriangle className="w-4 h-4" />
+                      {(() => {
+                        const AlertIcon = FaExclamationTriangle as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                        return <AlertIcon className="w-4 h-4" />;
+                      })()}
                       You're approaching your user limit.
                     </p>
                   )}
@@ -224,7 +245,10 @@ const LicenseManagement: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-1">
-                      <FaShieldAlt className="w-4 h-4 text-gray-400" />
+                      {(() => {
+                        const ShieldIcon = FaShieldAlt as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                        return <ShieldIcon className="w-4 h-4 text-gray-400" />;
+                      })()}
                       <p className="text-gray-500 text-sm">Status</p>
                     </div>
                     <p className={`font-semibold ${licenseInfo?.isValid ? 'text-green-600' : 'text-red-600'}`}>
@@ -234,7 +258,10 @@ const LicenseManagement: React.FC = () => {
                   
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-1">
-                      <FaAward className="w-4 h-4 text-gray-400" />
+                      {(() => {
+                        const AwardIcon = FaAward as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                        return <AwardIcon className="w-4 h-4 text-gray-400" />;
+                      })()}
                       <p className="text-gray-500 text-sm">Can Add</p>
                     </div>
                     <p className={`font-semibold ${licenseInfo?.canAddUsers ? 'text-green-600' : 'text-red-600'}`}>
@@ -247,7 +274,10 @@ const LicenseManagement: React.FC = () => {
                 {licenseInfo?.expiresAt && (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
                     <div className="flex items-center gap-2 mb-1">
-                      <FaCalendarAlt className="w-4 h-4 text-gray-400" />
+                      {(() => {
+                        const CalendarIcon = FaCalendarAlt as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                        return <CalendarIcon className="w-4 h-4 text-gray-400" />;
+                      })()}
                       <p className="text-gray-500 text-sm">Expires</p>
                     </div>
                     <p className="text-gray-700 font-medium">
@@ -291,7 +321,10 @@ const LicenseManagement: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <FaUpload className="w-4 h-4" />
+                    {(() => {
+                      const UploadIcon = FaUpload as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <UploadIcon className="w-4 h-4" />;
+                    })()}
                     Upload File
                   </div>
                 </button>
@@ -304,7 +337,10 @@ const LicenseManagement: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <FaKey className="w-4 h-4" />
+                    {(() => {
+                      const KeyIcon = FaKey as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <KeyIcon className="w-4 h-4" />;
+                    })()}
                     Enter Key
                   </div>
                 </button>
@@ -318,9 +354,15 @@ const LicenseManagement: React.FC = () => {
                     : 'bg-red-50 border border-red-200'
                 }`}>
                   {message.type === 'success' ? (
-                    <FaCheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    (() => {
+                      const CheckIcon = FaCheckCircle as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <CheckIcon className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />;
+                    })()
                   ) : (
-                    <FaExclamationTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    (() => {
+                      const AlertIcon = FaExclamationTriangle as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <AlertIcon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />;
+                    })()
                   )}
                   <p className={message.type === 'success' ? 'text-green-700' : 'text-red-700'}>
                     {message.text}
@@ -336,7 +378,10 @@ const LicenseManagement: React.FC = () => {
                   </label>
                   
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
-                    <FaUpload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    {(() => {
+                      const UploadIcon = FaUpload as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <UploadIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />;
+                    })()}
                     
                     <input
                       type="file"
@@ -411,8 +456,8 @@ const LicenseManagement: React.FC = () => {
           <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
             <p className="text-gray-600">
               Need to upgrade or having issues? Contact{' '}
-              <a href="mailto:license@yourcompany.com" className="text-blue-600 hover:text-blue-700 font-medium">
-                license@yourcompany.com
+              <a href="mailto:patrick@madebypatrick.nl" className="text-blue-600 hover:text-blue-700 font-medium">
+                patrick@madebypatrick.nl
               </a>
             </p>
           </div>
