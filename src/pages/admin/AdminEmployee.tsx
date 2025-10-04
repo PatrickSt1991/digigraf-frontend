@@ -24,7 +24,6 @@ const EmployeeManagement: React.FC = () => {
       email: 'j.doe@company.nl',
       mobile: '06-12345678',
       role: 'Uitvaartbegeleider',
-      department: 'Begeleiding',
       startDate: '2020-01-15'
     },
     {
@@ -40,7 +39,6 @@ const EmployeeManagement: React.FC = () => {
       email: 'm.smith@company.nl',
       mobile: '06-87654321',
       role: 'Administratief',
-      department: 'Administratie',
       startDate: '2019-03-01'
     }
   ]);
@@ -96,7 +94,6 @@ const EmployeeManagement: React.FC = () => {
       email: '',
       mobile: '',
       role: '',
-      department: '',
       startDate: new Date().toISOString().split('T')[0]
     });
 
@@ -117,7 +114,6 @@ const EmployeeManagement: React.FC = () => {
         email: formData.email || '',
         mobile: formData.mobile || '',
         role: formData.role || '',
-        department: formData.department || '',
         startDate: formData.startDate || ''
       };
       onSave(fullEmployee);
@@ -264,18 +260,6 @@ const EmployeeManagement: React.FC = () => {
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 placeholder="Uitvaartbegeleider"
-              />
-            </div>
-
-            {/* Department Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Afdeling</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                placeholder="Begeleiding"
               />
             </div>
 
@@ -463,7 +447,6 @@ const EmployeeManagement: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">{employee.role}</div>
-                            <div className="text-sm text-gray-500">{employee.department}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

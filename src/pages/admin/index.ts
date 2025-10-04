@@ -1,3 +1,5 @@
 export { default as AdminDashboard } from './AdminDashboard'
 export { default as AdminOverledenen } from './AdminOverledenen'
 export { default as AdminEmployee } from './AdminEmployee'
+export { default as AdminInsurance } from './AdminInsurance'
+export { default as AdminLicense } from './AdminLicense'

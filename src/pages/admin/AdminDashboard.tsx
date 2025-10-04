@@ -15,7 +15,7 @@ interface AdminCard {
 export default function AdminDashboard() {
   const cards: AdminCard[] = [
     { title: "Werknemers", description: "Voeg nieuwe werknemers toe of bewerk bestaande.", path: "/admin/employees", icon: FaUsers, category: 'management' },
-    { title: "Verzekeraars", description: "Voeg nieuwe verzekeraars toe of bewerk bestaande.", path: "/admin/verzekeraars", icon: FaBuilding, category: 'management' },
+    { title: "Verzekeraars", description: "Voeg nieuwe verzekeraars toe of bewerk bestaande.", path: "/admin/insurance", icon: FaBuilding, category: 'management' },
     { title: "Leveranciers", description: "Voeg nieuwe leveranciers toe of bewerk bestaande.", path: "/admin/suppliers", icon: FaTruck, category: 'management' },
     { title: "Financieel", description: "Bekijk en exporteer financiële gegevens van overledenen.", path: "/admin/facturen", icon: FaFileInvoiceDollar, category: 'financial' },
     { title: "Prijsafspraken", description: "Voeg nieuwe prijsafspraken toe of bewerk bestaande.", path: "/admin/pricecomponents", icon: FaMoneyBillWave, category: 'financial' },
@@ -23,7 +23,7 @@ export default function AdminDashboard() {
     { title: "Uitvaartkisten", description: "Voeg nieuwe uitvaartkisten toe of bewerk bestaande.", path: "/admin/coffins", icon: GiCoffin, category: 'inventory' },
     { title: "Asbestemming", description: "Voeg nieuwe asbestemmingen toe of bewerk bestaande.", path: "/admin/ashes", icon: FaBox, category: 'inventory' },
     { title: "Rouwbrieven", description: "Voeg nieuwe rouwbrieven toe of bewerk bestaande.", path: "/admin/letters", icon: FaScroll, category: 'inventory' },
-    { title: "Algemene Instellingen", description: "Systeem instellingen beheren.", path: "/admin/steenhouwerij", icon: FaCog, category: 'settings' },
+    { title: "Algemene Instellingen", description: "Systeem instellingen beheren.", path: "/admin/licenses", icon: FaCog, category: 'settings' },
   ];
 
   const getCategoryColor = (category: string) => {

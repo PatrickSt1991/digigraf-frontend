@@ -11,7 +11,6 @@ export interface Employee {
   email: string;
   mobile: string;
   role: string;
-  department: string;
   startDate: string;
   avatar?: string;
 }

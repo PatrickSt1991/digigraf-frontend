@@ -15,6 +15,8 @@ import {
   AdminDashboard,
   AdminEmployee,
   AdminOverledenen,
+  AdminInsurance,
+  AdminLicense
 } from "./pages/admin";
 import { RequireUser } from "./routes/RequireUser";
 import { RequireAdmin } from "./routes/RequireAdmin";
@@ -42,6 +44,8 @@ function App() {
         <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
         <Route path="/admin/overledenen" element={<RequireAdmin><AdminOverledenen /></RequireAdmin>} />
         <Route path="/admin/employees" element={<RequireAdmin><AdminEmployee /></RequireAdmin>} />
+        <Route path="/admin/insurance" element={<RequireAdmin><AdminInsurance /></RequireAdmin>} />
+        <Route path="/admin/licenses" element={<RequireAdmin><AdminLicense /></RequireAdmin>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

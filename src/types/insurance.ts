@@ -14,6 +14,7 @@ export interface InsuranceCompany {
     city?: string;
     country?: string;
     phone?: string;
+    email?: string;
     mailboxname?: string;
     mailboxaddress?: string;
     billingAddress?: boolean;
