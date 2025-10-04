@@ -1,5 +1,8 @@
 # DigiGraf-Frontend
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) 
+[![Commercial License](https://img.shields.io/badge/Commercial-Paid-blue.svg)](LICENSE-COMMERCIAL.md)
+
 ## License
 
 This project is **dual-licensed**:
