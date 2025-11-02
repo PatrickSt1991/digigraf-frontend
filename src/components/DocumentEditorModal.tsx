@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { useResizable } from "../hooks/useResizable";
@@ -23,32 +23,38 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
   onSave,
 }) => {
   const [bodyContent, setBodyContent] = useState(initialContent);
-  const modalRef = useRef<HTMLDivElement>(null);
-
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const [maxWidth, setMaxWidth] = useState<number | undefined>(undefined);
 
-  // 🔹 After first render, lock maxWidth = initial width
-  useEffect(() => {
-    if (modalRef.current) {
-      setMaxWidth(modalRef.current.offsetWidth);
-    }
-  }, [isOpen]);
-
-  // Use hook with dynamic maxWidth
+  // 🧩 Track both modal and resize target
   const { targetRef, startResizing } = useResizable({
     minHeight: 300,
     minWidth: 400,
     maxHeight: 900,
-    maxWidth, // will be set to initial width
+    maxWidth,
   });
 
+  // ✅ Stable combined ref (avoids re-creation on each render)
+  const combinedRef = useCallback((el: HTMLDivElement | null) => {
+    targetRef.current = el;
+    modalRef.current = el;
+  }, [targetRef]);
+
+  // ✅ Lock width after opening
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      setMaxWidth(modalRef.current.offsetWidth);
+    }
+  }, [isOpen]);
+
+  // ✅ Update content when initialContent changes
   useEffect(() => {
     setBodyContent(initialContent);
   }, [initialContent]);
 
   const handleSave = () => onSave(bodyContent);
 
-  const handleEditorChange = (event: any, editor: any) => {
+  const handleEditorChange = (_: any, editor: any) => {
     setBodyContent(editor.getData());
   };
 
@@ -57,12 +63,8 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div
-        ref={(el) => {
-          targetRef.current = el;
-          modalRef.current = el;
-        }}
-        className="bg-white rounded-xl shadow-xl p-6 relative flex flex-col overflow-hidden"
-        style={{ width: "90vw", height: "95vh", minWidth: "400px", minHeight: "300px" }}
+        ref={combinedRef}
+        className="bg-white rounded-xl shadow-xl p-6 relative flex flex-col overflow-hidden w-[90vw] md:w-[70vw] h-[90vh] min-w-[400px] min-h-[300px]"
       >
         {/* Title */}
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
@@ -74,10 +76,11 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           </div>
         )}
 
-        {/* 🔹 Editor container (scrollable) */}
+        {/* Editor container */}
         <div className="flex-1 flex flex-col overflow-hidden mb-4">
           <div className="flex-1 overflow-auto border rounded">
             <CKEditor
+              key={isOpen ? "open" : "closed"} // prevents CKEditor re-mount warning
               editor={ClassicEditor}
               data={bodyContent}
               onChange={handleEditorChange}
@@ -115,7 +118,7 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           </div>
         </div>
 
-        {/* Footer pinned */}
+        {/* Optional footer */}
         {footer && (
           <div className="bg-gray-100 p-3 rounded mb-4">
             <div dangerouslySetInnerHTML={{ __html: footer }} />
@@ -124,12 +127,15 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
 
         {/* Buttons */}
         <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl border">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl border hover:bg-gray-100"
+          >
             Sluiten
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 rounded-xl bg-green-600 text-white"
+            className="px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700"
           >
             Opslaan
           </button>

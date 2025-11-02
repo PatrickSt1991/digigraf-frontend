@@ -3,7 +3,7 @@ import { useRef } from "react";
 export const useResizable = (
   options?: { minHeight?: number; maxHeight?: number; minWidth?: number; maxWidth?: number }
 ) => {
-  const targetRef = useRef<HTMLDivElement>(null);
+  const targetRef = useRef<HTMLDivElement | null>(null);
 
   const startResizing = (e: React.MouseEvent) => {
     e.preventDefault();

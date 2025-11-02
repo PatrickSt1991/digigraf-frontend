@@ -1,9 +1,10 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaSearch, FaCalendarAlt, FaUsers, FaUserShield } from "react-icons/fa";
 import { IconType } from "react-icons";
 import { DashboardLayout } from "../../components"
 import { AuthContext } from "../../context/AuthContext";
+import SearchModal from "../../modals/user/SearchModal";
 
 interface MenuItem {
   label: string;
@@ -13,6 +14,7 @@ interface MenuItem {
 }
 
 export default function Dashboard() {
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const navigate = useNavigate();
   const auth = useContext(AuthContext);
   if (!auth) throw new Error("AuthContext not found");
@@ -52,7 +54,13 @@ export default function Dashboard() {
             <div
               key={item.label}
               className={`${item.color} text-white flex flex-col items-center justify-center h-32 w-32 rounded-lg shadow-md cursor-pointer transition transform hover:scale-105 hover:shadow-lg`}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                if (item.label === "Dossier opzoeken") {
+                  setSearchModalOpen(true);
+                } else {
+                  navigate(item.path);
+                }
+              }}
             >
               <Icon size={48} className="mb-1" />
               <span className="text-l font-semibold text-center">{item.label}</span>
@@ -60,6 +68,15 @@ export default function Dashboard() {
           );
         })}
       </div>
+      
+      <SearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        onSearch={(criteria) => {
+          console.log("Zoekcriteria:", criteria);
+          // TODO: implement search logic or navigation
+        }}
+      />
     </DashboardLayout>
   );
 }

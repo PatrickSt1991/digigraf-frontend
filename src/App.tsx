@@ -9,7 +9,9 @@ import {
   DeceasedFuneral,
   DeceasedDocuments,
   DeceasedInvoice,
-  DeceasedServicesLayout
+  DeceasedServicesLayout,
+  UpcomingFunerals,
+  AllFunerals
 } from "./pages/user";
 import {
   AdminDashboard,
@@ -39,6 +41,8 @@ function App() {
         <Route path="/deceased-documents/:overledeneId?" element={<RequireUser><DeceasedDocuments /></RequireUser>} />
         <Route path="/deceased-invoice/:overledeneId?" element={<RequireUser><DeceasedInvoice /></RequireUser>} />
         <Route path="/deceased-services/:overledeneId?" element={<RequireUser><DeceasedServicesLayout /></RequireUser>} />
+        <Route path="/upcoming" element={<RequireUser><UpcomingFunerals /></RequireUser>} />
+        <Route path="/all-dossiers" element={<RequireUser><AllFunerals /></RequireUser>} />
 
         {/* Admin routes */}
         <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
