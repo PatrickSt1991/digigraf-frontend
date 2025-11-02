@@ -23,7 +23,7 @@ export default function DeceasedDocuments() {
     templates?: DocumentTemplate[];
   }>({
     initialData: { funeralLeader: "", funeralNumber: "", templates: [] },
-    steps: ["/deceased-funeral", "/deceased-documents", "/deceaded-invoice", "/success-deceased"],
+    steps: ["/deceased-funeral", "/deceased-documents", "/deceased-invoice", "/success-deceased"],
     fetchUrl: overledeneId
       ? `${endpoints.documentsdeceased}/${overledeneId}`
       : `${endpoints.documentsdefault}`,
@@ -70,17 +70,13 @@ console.log(updatedSections);
     }
   };
 
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-600">{error}</div>;
-
   return (
     <DashboardLayout>
       <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={() => goNext(location.pathname)}
+          onNext={() => goNext(location.pathname)}  //handleNext = prod
           onBack={() => goBack(location.pathname)}
           readOnly={true}
         />

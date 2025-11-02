@@ -159,8 +159,8 @@ const LicenseManagement: React.FC = () => {
                     })()}
                   </div>
                   <div className="flex flex-col justify-center">
-                    <h1 className="text-2xl font-bold text-gray-900">License Management</h1>
-                    <p className="text-gray-600">Manage your licenses and user limits</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Licentiebeheer</h1>
+                    <p className="text-gray-600">Beheer uw licenties en gebruikerslimieten</p>
                   </div>
                 </div>
               </div>
@@ -173,9 +173,9 @@ const LicenseManagement: React.FC = () => {
               <div className={`p-6 ${isOverLimit ? 'bg-red-600' : isNearLimit ? 'bg-yellow-500' : 'bg-gradient-to-r from-blue-600 to-blue-700'}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-white/80 text-sm font-medium mb-1">Current Plan</p>
+                    <p className="text-white/80 text-sm font-medium mb-1">Huidig ​​plan</p>
                     <h2 className="text-2xl font-bold text-white capitalize">
-                      {licenseInfo?.plan || 'Free'}
+                      {licenseInfo?.plan || 'Gratis'}
                     </h2>
                   </div>
                   {licenseInfo?.isValid ? (
@@ -201,7 +201,7 @@ const LicenseManagement: React.FC = () => {
                         const UsersIcon = FaUsers as unknown as React.ComponentType<{ size?: number; className?: string }>;
                         return <UsersIcon className="w-5 h-5 text-gray-400" />;
                       })()}
-                      <span className="text-gray-700 font-medium">User Seats</span>
+                      <span className="text-gray-700 font-medium">Gebruikers</span>
                     </div>
                     <span className="text-gray-700 font-semibold">
                       {licenseInfo?.currentUsers || 0} / {licenseInfo?.maxUsers || 10}
@@ -252,7 +252,7 @@ const LicenseManagement: React.FC = () => {
                       <p className="text-gray-500 text-sm">Status</p>
                     </div>
                     <p className={`font-semibold ${licenseInfo?.isValid ? 'text-green-600' : 'text-red-600'}`}>
-                      {licenseInfo?.isValid ? 'Active' : 'Inactive'}
+                      {licenseInfo?.isValid ? 'Actief' : 'Inactief'}
                     </p>
                   </div>
                   
@@ -262,10 +262,10 @@ const LicenseManagement: React.FC = () => {
                         const AwardIcon = FaAward as unknown as React.ComponentType<{ size?: number; className?: string }>;
                         return <AwardIcon className="w-4 h-4 text-gray-400" />;
                       })()}
-                      <p className="text-gray-500 text-sm">Can Add</p>
+                      <p className="text-gray-500 text-sm">Mag toevoegen</p>
                     </div>
                     <p className={`font-semibold ${licenseInfo?.canAddUsers ? 'text-green-600' : 'text-red-600'}`}>
-                      {licenseInfo?.canAddUsers ? 'Yes' : 'No'}
+                      {licenseInfo?.canAddUsers ? 'Ja' : 'Nee'}
                     </p>
                   </div>
                 </div>
@@ -308,7 +308,7 @@ const LicenseManagement: React.FC = () => {
 
             {/* Upload/Activate License */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Activate License</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Licentie activeren</h2>
 
               {/* Mode Toggle */}
               <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-lg">
@@ -325,7 +325,7 @@ const LicenseManagement: React.FC = () => {
                       const UploadIcon = FaUpload as unknown as React.ComponentType<{ size?: number; className?: string }>;
                       return <UploadIcon className="w-4 h-4" />;
                     })()}
-                    Upload File
+                    Licentie uploaden
                   </div>
                 </button>
                 <button
@@ -341,7 +341,7 @@ const LicenseManagement: React.FC = () => {
                       const KeyIcon = FaKey as unknown as React.ComponentType<{ size?: number; className?: string }>;
                       return <KeyIcon className="w-4 h-4" />;
                     })()}
-                    Enter Key
+                    Licentie invoeren
                   </div>
                 </button>
               </div>
@@ -374,7 +374,7 @@ const LicenseManagement: React.FC = () => {
               {uploadMode === 'file' && (
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-3">
-                    Select License File (.lic)
+                    Selecteer licentie bestand (.lic)
                   </label>
                   
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
@@ -395,7 +395,7 @@ const LicenseManagement: React.FC = () => {
                       htmlFor="license-file"
                       className="cursor-pointer inline-block bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg transition-colors"
                     >
-                      Choose File
+                      Kies bestand
                     </label>
                     
                     {selectedFile && (
@@ -410,7 +410,7 @@ const LicenseManagement: React.FC = () => {
                     disabled={!selectedFile || uploading}
                     className="w-full mt-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-sm"
                   >
-                    {uploading ? 'Uploading...' : 'Activate License'}
+                    {uploading ? 'Uploaden...' : 'Activeer Licentie'}
                   </button>
                 </div>
               )}
@@ -419,13 +419,13 @@ const LicenseManagement: React.FC = () => {
               {uploadMode === 'key' && (
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-3">
-                    Enter License Key
+                    Licentie activeren
                   </label>
                   
                   <textarea
                     value={licenseKey}
                     onChange={(e) => setLicenseKey(e.target.value)}
-                    placeholder="Paste your license key here..."
+                    placeholder="Plak hier uw licentiesleutel..."
                     className="w-full bg-white text-gray-700 border border-gray-300 rounded-lg p-4 font-mono text-sm min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
 
@@ -434,19 +434,18 @@ const LicenseManagement: React.FC = () => {
                     disabled={!licenseKey.trim() || uploading}
                     className="w-full mt-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-sm"
                   >
-                    {uploading ? 'Activating...' : 'Activate License'}
+                    {uploading ? 'Activeren...' : 'Licentie activeren'}
                   </button>
                 </div>
               )}
 
               {/* Instructions */}
               <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-gray-700 font-semibold mb-3">How to activate:</h3>
+                <h3 className="text-gray-700 font-semibold mb-3">Hoe te activeren:</h3>
                 <ol className="text-gray-500 text-sm space-y-2 list-decimal list-inside">
-                  <li>Receive license file (.lic) or key from vendor</li>
-                  <li>Upload file or paste key above</li>
-                  <li>License will be validated and activated</li>
-                  <li>Restart may be required for changes to take effect</li>
+                  <li>Ontvang licentiebestand (.lic) of sleutel van leverancier</li>
+                  <li>Upload bestand of plak sleutel hierboven</li>
+                  <li>Licentie wordt gevalideerd en geactiveerd</li>
                 </ol>
               </div>
             </div>
@@ -455,9 +454,9 @@ const LicenseManagement: React.FC = () => {
           {/* Contact Support */}
           <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
             <p className="text-gray-600">
-              Need to upgrade or having issues? Contact{' '}
-              <a href="mailto:patrick@madebypatrick.nl" className="text-blue-600 hover:text-blue-700 font-medium">
-                patrick@madebypatrick.nl
+              Moet u upgraden of ondervindt u problemen? Neem contact op{' '}
+              <a href="mailto:digi-graf@madebypatrick.nl" className="text-blue-600 hover:text-blue-700 font-medium">
+                digi-graf@madebypatrick.nl
               </a>
             </p>
           </div>

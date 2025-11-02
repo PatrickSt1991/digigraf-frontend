@@ -5,3 +5,10 @@ export interface Salutation {
     description?: string;
     is_active?: boolean;
 }
+
+export interface FuneralType {
+    id: string;
+    name: string;
+    description?: string;
+    is_active?: boolean;
+}

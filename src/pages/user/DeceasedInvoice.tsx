@@ -5,7 +5,6 @@ import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 import { InvoiceFormData, PriceComponent } from "../../types";
 
-// Extend InvoiceFormData to include funeralLeader & funeralNumber
 type DeceasedInvoiceFormData = InvoiceFormData & {
   funeralLeader: string;
   funeralNumber: string;
@@ -28,7 +27,7 @@ export default function DeceasedInvoice() {
 
   const { formData, handleChange, goNext, goBack, loading, error } = useFormHandler<DeceasedInvoiceFormData>({
     initialData,
-    steps: ["/deceased-documents", "/deceaded-invoice", "/deceased-services", "/success-deceased"],
+    steps: ["/deceased-documents", "/deceased-invoice", "/deceased-services", "/success-deceased"],
     fetchUrl: overledeneId ? `${endpoints.invoiceDeceased}/${overledeneId}` : undefined,
   });
 
@@ -81,8 +80,8 @@ export default function DeceasedInvoice() {
     window.open(url, "_blank");
   };
 
-  if (loading) return <div>Loading invoice data...</div>;
-  if (error) return <div className="text-red-600">{error}</div>;
+  //if (loading) return <div>Loading invoice data...</div>;
+  //if (error) return <div className="text-red-600">{error}</div>;
 
   return (
     <DashboardLayout>

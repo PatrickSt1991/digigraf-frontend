@@ -18,6 +18,7 @@ export default function AllFunerals() {
   const [filteredFunerals, setFilteredFunerals] = useState<Funeral[]>([]);
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
@@ -75,6 +76,16 @@ export default function AllFunerals() {
         funeralLeader: "Mevr. T. Jansen",
         type: "crematie"
       },
+      {
+        id: 6,
+        firstName: "Jan",
+        lastName: "Vermeulen",
+        date: "2023-10-15",
+        time: "14:00",
+        location: "Aula Centrum, Utrecht",
+        funeralLeader: "Dhr. R. Bakker",
+        type: "begrafenis"
+      },
     ]);
   }, []);
 
@@ -87,11 +98,17 @@ export default function AllFunerals() {
       f.funeralLeader.toLowerCase().includes(search.toLowerCase())
     );
 
+    if (selectedYear) {
+      filtered = filtered.filter(f => {
+        const date = new Date(f.date);
+        return date.getFullYear().toString() === selectedYear;
+      });
+    }
+
     if (selectedMonth) {
       filtered = filtered.filter(f => {
         const date = new Date(f.date);
-        const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-        return monthYear === selectedMonth;
+        return (date.getMonth() + 1).toString() === selectedMonth;
       });
     }
 
@@ -109,19 +126,29 @@ export default function AllFunerals() {
     });
 
     setFilteredFunerals(filtered);
-  }, [search, funerals, selectedMonth, selectedType, sortBy]);
+  }, [search, funerals, selectedYear, selectedMonth, selectedType, sortBy]);
 
-  // Get unique months for filter
-  const months = Array.from(new Set(funerals.map(f => {
-    const date = new Date(f.date);
-    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-  }))).sort();
+  // Get unique years and months for filters
+  const years = Array.from(new Set(funerals.map(f => new Date(f.date).getFullYear().toString()))).sort((a, b) => parseInt(b) - parseInt(a));
+    const months = Array.from({ length: 12 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: new Date(2024, i, 1).toLocaleDateString('nl-NL', { month: 'long' })
+    }));
 
-  const getMonthName = (monthString: string) => {
-    const [year, month] = monthString.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
-  };
+  // Reset month when year changes and no funerals in that year-month combination
+  useEffect(() => {
+    if (selectedYear && selectedMonth) {
+      const hasFuneralsInMonth = funerals.some(f => {
+        const date = new Date(f.date);
+        return date.getFullYear().toString() === selectedYear && 
+               (date.getMonth() + 1).toString() === selectedMonth;
+      });
+      
+      if (!hasFuneralsInMonth) {
+        setSelectedMonth("");
+      }
+    }
+  }, [selectedYear, funerals]);
 
   return (
     <DashboardLayout>
@@ -172,24 +199,47 @@ export default function AllFunerals() {
 
           {/* Expandable Filters */}
           {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200 grid md:grid-cols-2 gap-6">
+            <div className="mt-4 pt-4 border-t border-gray-200 grid md:grid-cols-3 gap-6">
+              {/* Year Filter */}
+              <div>
+                <label className="block text-sm font-semibold mb-3 text-gray-700">
+                  Jaar
+                </label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="">Alle jaren</option>
+                  {years.map(year => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Month Filter */}
               <div>
                 <label className="block text-sm font-semibold mb-3 text-gray-700">
-                  Maand filter
+                  Maand
                 </label>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  disabled={!selectedYear}
                 >
                   <option value="">Alle maanden</option>
                   {months.map(month => (
-                    <option key={month} value={month}>
-                      {getMonthName(month)}
+                    <option key={month.value} value={month.value}>
+                      {month.label}
                     </option>
                   ))}
                 </select>
+                {!selectedYear && (
+                  <p className="text-xs text-gray-500 mt-1">Selecteer eerst een jaar</p>
+                )}
               </div>
 
               {/* Type Filter */}
@@ -211,7 +261,7 @@ export default function AllFunerals() {
           )}
 
           {/* Active filters */}
-          {(search || selectedMonth || selectedType) && (
+          {(search || selectedYear || selectedMonth || selectedType) && (
             <div className="mt-3 flex flex-wrap gap-2">
               {search && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-red-100 text-red-800">
@@ -221,10 +271,21 @@ export default function AllFunerals() {
                   </button>
                 </span>
               )}
-              {selectedMonth && (
+              {selectedYear && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                  Maand: {getMonthName(selectedMonth)}
-                  <button onClick={() => setSelectedMonth("")} className="ml-2 hover:text-blue-900">
+                  Jaar: {selectedYear}
+                  <button onClick={() => {
+                    setSelectedYear("");
+                    setSelectedMonth("");
+                  }} className="ml-2 hover:text-blue-900">
+                    ×
+                  </button>
+                </span>
+              )}
+              {selectedMonth && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                  Maand: {months.find(m => m.value === selectedMonth)?.label}
+                  <button onClick={() => setSelectedMonth("")} className="ml-2 hover:text-purple-900">
                     ×
                   </button>
                 </span>
@@ -240,6 +301,7 @@ export default function AllFunerals() {
               <button
                 onClick={() => {
                   setSearch("");
+                  setSelectedYear("");
                   setSelectedMonth("");
                   setSelectedType("");
                 }}

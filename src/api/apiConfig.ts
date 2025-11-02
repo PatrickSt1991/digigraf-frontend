@@ -12,6 +12,7 @@ export const endpoints = {
     funeralLeaders: `${API_BASE}/DossierUtils/funeral-leaders`,
     caretakers: `${API_BASE}/DossierUtils/caretakers`,
     salutation: `${API_BASE}/DossierUtils/salutations`,
+    funeralTypes: `${API_BASE}/funeral/types`,
     bodyfindings: `${API_BASE}/DossierUtils/bodyfindings`,
     origins: `${API_BASE}/DossierUtils/origins`,
     maritalstatuses: `${API_BASE}/DossierUtils/maritalstatus`,
