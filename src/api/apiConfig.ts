@@ -24,6 +24,13 @@ export const endpoints = {
     invoiceExcel: `${API_BASE}/invoice/generate-excel`,
 };
 
+export const licenseEndpoints = {
+    license: `${API_BASE}/license`,
+    licenseInfo: `${API_BASE}/license/info`,
+    licenseUpload: `${API_BASE}/license/upload`,
+    licenseValidateKey: `${API_BASE}/license/validate-key`,
+};
+
 export const adminEndpoints = {
     deceased: `${API_BASE}/admin/deceased`,
     insuranceCompanies: `${API_BASE}/admin/insurance/companies`,

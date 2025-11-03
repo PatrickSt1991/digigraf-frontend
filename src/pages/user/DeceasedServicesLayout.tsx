@@ -62,7 +62,7 @@ export default function DeceasedServicesLayout() {
 
   const { formData, handleChange, goNext, goBack, loading, error } = useFormHandler({
     initialData: initialFormData,
-    steps: ["/deceaded-invoice", "/deceased-services", "/the-next-step-final-step", "/success-deceased"],
+    steps: ["/deceased-invoice", "/deceased-services", "/the-next-step-final-step", "/success-deceased"],
     fetchUrl: deceasedId ? `${newEndpoints.deceased}/${deceasedId}` : undefined,
   });
 
