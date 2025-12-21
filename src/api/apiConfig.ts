@@ -1,6 +1,5 @@
 export const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5027/api";
 
-
 export const endpoints = {
     authentication: `${API_BASE}/Auth`,
     upcoming: `${API_BASE}/upcoming-funerals`,
@@ -22,6 +21,9 @@ export const endpoints = {
     insuranceDeceased: `${API_BASE}/dummy`,
     invoiceDeceased: `${API_BASE}/invoice`,
     invoiceExcel: `${API_BASE}/invoice/generate-excel`,
+    suppliers: `${API_BASE}/DossierUtils/suppliers`,
+    suppliertypes: `${API_BASE}/DossierUtils/supplier-types`,
+    employees: `${API_BASE}/employees`,
 };
 
 export const licenseEndpoints = {

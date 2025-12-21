@@ -417,10 +417,6 @@ const EmployeeManagement: React.FC = () => {
                   const ArrowIcon = FaArrowLeft as unknown as React.ComponentType<{ size?: number; className?: string }>;
                   return <ArrowIcon size={16} />;
                 })()}
-                {(() => {
-                  const DashIcon = FaTachometerAlt as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                  return <DashIcon size={16} />;
-                })()}
               </Link>
               
               <div className="flex items-center gap-3 h-full">

@@ -83,7 +83,7 @@ const LicenseManagement: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 mt-10 flex items-center gap-4">
             <Link to="/admin" className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">

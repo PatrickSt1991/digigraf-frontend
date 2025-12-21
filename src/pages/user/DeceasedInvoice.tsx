@@ -114,7 +114,7 @@ export default function DeceasedInvoice() {
                   >
                     <option value="">Selecteer verzekeraar...</option>
                     {data.insurers?.map(i => (
-                      <option key={i.id} value={i.value}>{i.value}</option>
+                      <option key={i.id} value={i.label}>{i.label}</option>
                     ))}
                   </select>
                 )}

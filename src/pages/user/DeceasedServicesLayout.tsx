@@ -1,16 +1,7 @@
+import { useLocation, useParams } from "react-router-dom";
 import { DashboardLayout, FormCard, FormField, FormRow, FuneralForm } from "../../components";
 import { useDropdownData, useFormHandler } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
-import { useParams, useLocation } from "react-router-dom";
-
-// Assume these are the new endpoints based on the XAML file
-const newEndpoints = {
-  ...endpoints,
-  stoneSuppliers: "/api/stone-suppliers",
-  flowerSuppliers: "/api/flower-suppliers",
-  urnSuppliers: "/api/urn-suppliers",
-  employees: "/api/employees",
-};
 
 const initialFormData = {
   funeralLeader: "",
@@ -63,15 +54,33 @@ export default function DeceasedServicesLayout() {
   const { formData, handleChange, goNext, goBack, loading, error } = useFormHandler({
     initialData: initialFormData,
     steps: ["/deceased-invoice", "/deceased-services", "/the-next-step-final-step", "/success-deceased"],
-    fetchUrl: deceasedId ? `${newEndpoints.deceased}/${deceasedId}` : undefined,
+    fetchUrl: deceasedId ? `${endpoints.deceased}/${deceasedId}` : undefined,
   });
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
-    stoneSuppliers: newEndpoints.stoneSuppliers,
-    flowerSuppliers: newEndpoints.flowerSuppliers,
-    urnSuppliers: newEndpoints.urnSuppliers,
-    employees: newEndpoints.employees,
+    suppliers: endpoints.suppliers,
+    employees: endpoints.employees,
   });
+
+  const stoneSuppliers =
+    data.suppliers?.filter(
+      (s: any) => s.type?.code === "Steenhouwer"
+    ) ?? [];
+
+  const flowerSuppliers = 
+    data.suppliers?.filter(
+      (s: any) => s.type?.code === "Bloemen"
+    ) ?? [];
+
+  const coffinSuppliers = 
+    data.suppliers?.filter(
+      (s: any) => s.type?.code === "Kisten"
+    ) ?? [];
+
+  const urnSuppliers =
+    data.suppliers?.filter(
+      (s: any) => s.type?.code === "UrnAndGedenksieraden"
+    ) ?? [];
 
   if (loading) return <div>Loading data...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
@@ -118,7 +127,7 @@ export default function DeceasedServicesLayout() {
               onChange={handleChange}
             />
             <FormField label="Leverancier" required>
-              {dropdownLoading.stoneSuppliers ? (
+              {dropdownLoading.suppliers ? (
                 <div>Loading...</div>
               ) : dropdownErrors.stoneSuppliers ? (
                 <div className="text-red-600">{dropdownErrors.stoneSuppliers}</div>
@@ -130,8 +139,11 @@ export default function DeceasedServicesLayout() {
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer Leverancier...</option>
-                  {data.stoneSuppliers?.map((s: any) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
+
+                  {stoneSuppliers.map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
                   ))}
                 </select>
               )}
@@ -217,8 +229,10 @@ export default function DeceasedServicesLayout() {
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer Leverancier...</option>
-                  {data.flowerSuppliers?.map((s: any) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
+                  {flowerSuppliers.map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
                   ))}
                 </select>
               )}
@@ -289,8 +303,10 @@ export default function DeceasedServicesLayout() {
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer Leverancier...</option>
-                  {data.urnSuppliers?.map((s: any) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
+                  {urnSuppliers.map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
                   ))}
                 </select>
               )}
