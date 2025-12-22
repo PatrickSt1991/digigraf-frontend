@@ -1,16 +1,17 @@
-export interface Employee {
+export interface AdminEmployee {
   id: string;
-  status: 'active' | 'inactive' | 'deactivated';
+  status: 'active' | 'inactive';
   initials: string;
   firstName: string;
   lastName: string;
-  tussenvoegsel: string;
+  tussenvoegsel?: string;
   fullName: string;
-  birthPlace: string;
+  birthPlace?: string;
   birthDate: string;
   email: string;
   mobile: string;
   role: string;
   startDate: string;
-  avatar?: string;
+  hasLogin: boolean;
+  loginIsActive: boolean | null;
 }

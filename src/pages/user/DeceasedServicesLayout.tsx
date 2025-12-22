@@ -164,7 +164,7 @@ export default function DeceasedServicesLayout() {
                 >
                   <option value="">Selecteer Werknemer...</option>
                   {data.employees?.map((e: any) => (
-                    <option key={e.id} value={e.id}>{e.displayName}</option>
+                    <option key={e.id} value={e.id}>{e.fullName}</option>
                   ))}
                 </select>
               )}
@@ -327,7 +327,7 @@ export default function DeceasedServicesLayout() {
                 >
                   <option value="">Selecteer Werknemer...</option>
                   {data.employees?.map((e: any) => (
-                    <option key={e.id} value={e.id}>{e.displayName}</option>
+                    <option key={e.id} value={e.id}>{e.fullName}</option>
                   ))}
                 </select>
               )}
@@ -354,7 +354,7 @@ export default function DeceasedServicesLayout() {
                     >
                       <option value="">Selecteer Personeel...</option>
                       {data.employees?.map((e: any) => (
-                        <option key={e.id} value={e.id}>{e.displayName}</option>
+                        <option key={e.id} value={e.id}>{e.fullName}</option>
                       ))}
                     </select>
                   )}

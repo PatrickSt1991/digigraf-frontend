@@ -1,47 +1,94 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from "../../components";
 import { Link } from 'react-router-dom';
-import { FaUsers, FaPlus, FaEdit, FaTrash, FaSearch, FaEnvelope, FaPhone, FaUser, FaChartLine, FaArrowLeft, FaTachometerAlt } from 'react-icons/fa';
-import { Employee } from '../../types';
+import {
+  FaUsers,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaSearch,
+  FaEnvelope,
+  FaPhone,
+  FaUser,
+  FaChartLine,
+  FaArrowLeft
+} from 'react-icons/fa';
+
+import { AdminEmployee } from '../../types';
+import { getEmployees } from '../../api/adminApi';
 
 const EmployeeManagement: React.FC = () => {
+  const handleCreateLogin = (employee: AdminEmployee) => {
+    // TEMP: FE-only simulation
+    setEmployees(prev =>
+      prev.map(e =>
+        e.id === employee.id
+          ? { ...e, hasLogin: true, loginIsActive: true }
+          : e
+      )
+    );
+  };
+
+  const handleBlockLogin = (employee: AdminEmployee) => {
+    setEmployees(prev =>
+      prev.map(e =>
+        e.id === employee.id
+          ? { ...e, loginIsActive: false }
+          : e
+      )
+    );
+  };
+
+  const handleUnblockLogin = (employee: AdminEmployee) => {
+    setEmployees(prev =>
+      prev.map(e =>
+        e.id === employee.id
+          ? { ...e, loginIsActive: true }
+          : e
+      )
+    );
+  };
+
   const [activeTab, setActiveTab] = useState<'overview' | 'add' | 'edit'>('overview');
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<AdminEmployee | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'deactivated'>('all');
 
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: '1',
-      status: 'active',
-      initials: 'J.D.',
-      firstName: 'Jan',
-      lastName: 'Doe',
-      tussenvoegsel: 'de',
-      fullName: 'Jan de Doe',
-      birthPlace: 'Amsterdam',
-      birthDate: '1985-05-15',
-      email: 'j.doe@company.nl',
-      mobile: '06-12345678',
-      role: 'Uitvaartbegeleider',
-      startDate: '2020-01-15'
-    },
-    {
-      id: '2',
-      status: 'inactive',
-      initials: 'M.S.',
-      firstName: 'Maria',
-      lastName: 'Smith',
-      tussenvoegsel: 'van',
-      fullName: 'Maria van Smith',
-      birthPlace: 'Rotterdam',
-      birthDate: '1982-08-22',
-      email: 'm.smith@company.nl',
-      mobile: '06-87654321',
-      role: 'Administratief',
-      startDate: '2019-03-01'
-    }
-  ]);
+  const [employees, setEmployees] = useState<AdminEmployee[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState<boolean>(true);
+  const [employeesError, setEmployeesError] = useState<string | null>(null);
+
+  // Load employees from API
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoadingEmployees(true);
+      setEmployeesError(null);
+
+      try {
+        const data = await getEmployees();
+        if (!cancelled) {
+          setEmployees(data ?? []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setEmployeesError((err as Error).message ?? 'Kon werknemers niet laden.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingEmployees(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -71,40 +118,54 @@ const EmployeeManagement: React.FC = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(emp => {
+      const fullName = (emp.fullName ?? '').toLowerCase();
+      const email = (emp.email ?? '').toLowerCase();
 
-  const EmployeeForm = ({ employee, onSave, onCancel }: { 
-    employee?: Employee; 
-    onSave: (emp: Employee) => void; 
-    onCancel: () => void; 
-  }) => {
-    const [formData, setFormData] = useState<Partial<Employee>>(employee || {
-      status: 'active',
-      initials: '',
-      firstName: '',
-      lastName: '',
-      tussenvoegsel: '',
-      birthPlace: '',
-      birthDate: '',
-      email: '',
-      mobile: '',
-      role: '',
-      startDate: new Date().toISOString().split('T')[0]
+      const matchesSearch =
+        fullName.includes(searchTerm.toLowerCase()) ||
+        email.includes(searchTerm.toLowerCase());
+
+      const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
+      return matchesSearch && matchesStatus;
     });
+  }, [employees, searchTerm, statusFilter]);
+
+const EmployeeForm = ({
+  employee,
+  onSave,
+  onCancel
+}: {
+  employee?: AdminEmployee;
+  onSave: (emp: AdminEmployee) => void;
+  onCancel: () => void;
+}) => {
+    const [formData, setFormData] = useState<Partial<AdminEmployee>>(
+      employee || {
+        status: 'active',
+        initials: '',
+        firstName: '',
+        lastName: '',
+        tussenvoegsel: '',
+        birthPlace: '',
+        birthDate: '',
+        email: '',
+        mobile: '',
+        role: '',
+        startDate: new Date().toISOString().split('T')[0]
+      }
+    );
 
     const handleSave = () => {
-      const employeeId = employee?.id || Date.now().toString();
+      const employeeId = employee?.id || crypto.randomUUID();
       const employeeFullName = `${formData.firstName} ${formData.tussenvoegsel || ''} ${formData.lastName}`.trim();
-      
-      const fullEmployee: Employee = {
+
+      const fullEmployee: AdminEmployee = {
         id: employeeId,
         fullName: employeeFullName,
         status: formData.status || 'active',
+
         initials: formData.initials || '',
         firstName: formData.firstName || '',
         lastName: formData.lastName || '',
@@ -114,8 +175,12 @@ const EmployeeManagement: React.FC = () => {
         email: formData.email || '',
         mobile: formData.mobile || '',
         role: formData.role || '',
-        startDate: formData.startDate || ''
+        startDate: formData.startDate || '',
+
+        hasLogin: employee?.hasLogin ?? false,
+        loginIsActive: employee?.loginIsActive ?? null
       };
+
       onSave(fullEmployee);
     };
 
@@ -130,7 +195,7 @@ const EmployeeManagement: React.FC = () => {
             {employee ? 'Werknemer Bewerken' : 'Nieuwe Werknemer'}
           </h2>
         </div>
-        
+
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="md:col-span-3">
@@ -138,7 +203,7 @@ const EmployeeManagement: React.FC = () => {
                 Persoonlijke Gegevens
               </h3>
             </div>
-            
+
             {/* Status Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -298,222 +363,281 @@ const EmployeeManagement: React.FC = () => {
 
   return (
     <DashboardLayout>
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-10">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4 h-full">
-              {/* Back Button */}
-              <Link
-                to="/admin"
-                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Terug naar dashboard"
-              >
-                {(() => {
-                  const ArrowIcon = FaArrowLeft as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                  return <ArrowIcon size={16} />;
-                })()}
-              </Link>
-              
-              <div className="flex items-center gap-3 h-full">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-10">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center gap-4 h-full">
+                {/* Back Button */}
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Terug naar dashboard"
+                >
                   {(() => {
-                    const UsersIcon = FaUsers as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                    return <UsersIcon className="text-white" size={24} />;
+                    const ArrowIcon = FaArrowLeft as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                    return <ArrowIcon size={16} />;
                   })()}
-                </div>
-                <div className="flex flex-col justify-center">
-                  <h1 className="text-2xl font-bold text-gray-900">Werknemers Beheer</h1>
-                  <p className="text-gray-600">Beheer alle werknemers en hun gegevens</p>
+                </Link>
+
+                <div className="flex items-center gap-3 h-full">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    {(() => {
+                      const UsersIcon = FaUsers as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <UsersIcon className="text-white" size={24} />;
+                    })()}
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <h1 className="text-2xl font-bold text-gray-900">Werknemers Beheer</h1>
+                    <p className="text-gray-600">Beheer alle werknemers en hun gegevens</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-3 h-full items-center">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === 'overview' 
-                    ? 'bg-blue-100 text-blue-700 font-medium' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Overzicht
-              </button>
-              <button
-                onClick={() => setActiveTab('add')}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
-              >
-                {(() => {
-                  const PlusIcon = FaPlus as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                  return <PlusIcon size={16} />;
-                })()}
-                Nieuwe Werknemer
-              </button>
+
+              <div className="flex gap-3 h-full items-center">
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === 'overview'
+                      ? 'bg-blue-100 text-blue-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Overzicht
+                </button>
+                <button
+                  onClick={() => setActiveTab('add')}
+                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
+                >
+                  {(() => {
+                    const PlusIcon = FaPlus as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                    return <PlusIcon size={16} />;
+                  })()}
+                  Nieuwe Werknemer
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Content */}
-        {activeTab === 'overview' && (
-          <>
-            {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between h-16">
-                <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                  <div className="relative flex-1 max-w-md">
-                    {(() => {
-                      const SearchIcon = FaSearch as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                      return <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />;
-                    })()}
-                    <input
-                      type="text"
-                      placeholder="Zoek werknemers..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+          {/* Content */}
+          {activeTab === 'overview' && (
+            <>
+              {/* Filters */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between h-16">
+                  <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                    <div className="relative flex-1 max-w-md">
+                      {(() => {
+                        const SearchIcon = FaSearch as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                        return (
+                          <SearchIcon
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            size={16}
+                          />
+                        );
+                      })()}
+                      <input
+                        type="text"
+                        placeholder="Zoek werknemers..."
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+
+                    <select
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value as any)}
+                    >
+                      <option value="all">Alle statussen</option>
+                      <option value="active">Actief</option>
+                      <option value="inactive">Inactief</option>
+                      <option value="deactivated">Gedeactiveerd</option>
+                    </select>
                   </div>
-                  <select
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as any)}
-                  >
-                    <option value="all">Alle statussen</option>
-                    <option value="active">Actief</option>
-                    <option value="inactive">Inactief</option>
-                    <option value="deactivated">Gedeactiveerd</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  {(() => {
-                    const ChartIcon = FaChartLine as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                    return <ChartIcon size={16} />;
-                  })()}
-                  {filteredEmployees.length} werknemers
-                </div>
-              </div>
-            </div>
 
-            {/* Employee Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Werknemer</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Functie</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {filteredEmployees.map((employee) => (
-                      <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                              {employee.initials}
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{employee.fullName}</div>
-                              <div className="text-sm text-gray-500">{employee.birthPlace}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-sm text-gray-900">
-                              {(() => {
-                                const EmailIcon = FaEnvelope as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                                return <EmailIcon size={12} className="text-gray-400" />;
-                              })()}
-                              {employee.email}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              {(() => {
-                                const PhoneIcon = FaPhone as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                                return <PhoneIcon size={12} className="text-gray-400" />;
-                              })()}
-                              {employee.mobile}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{employee.role}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getStatusBadge(employee.status)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => {
-                                setSelectedEmployee(employee);
-                                setActiveTab('edit');
-                              }}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Bewerken"
-                            >
-                              {(() => {
-                                const EditIcon = FaEdit as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                                return <EditIcon size={16} />;
-                              })()}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEmployees(employees.filter(emp => emp.id !== employee.id));
-                              }}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Verwijderen"
-                            >
-                              {(() => {
-                                const TrashIcon = FaTrash as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                                return <TrashIcon size={16} />;
-                              })()}
-                            </button>
-                          </div>
-                        </td>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    {(() => {
+                      const ChartIcon = FaChartLine as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <ChartIcon size={16} />;
+                    })()}
+                    {filteredEmployees.length} werknemers
+                  </div>
+                </div>
+
+                {loadingEmployees && (
+                  <div className="mt-4 text-sm text-gray-600">Werknemers laden...</div>
+                )}
+
+                {!loadingEmployees && employeesError && (
+                  <div className="mt-4 text-sm text-red-600">{employeesError}</div>
+                )}
+              </div>
+
+              {/* Employee Table */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Werknemer</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Functie</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Login</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+
+                    <tbody className="divide-y divide-gray-200">
+                      {filteredEmployees.map((employee) => (
+                        <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                {employee.initials}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{employee.fullName}</div>
+                                <div className="text-sm text-gray-500">{employee.birthPlace}</div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 text-sm text-gray-900">
+                                {(() => {
+                                  const EmailIcon = FaEnvelope as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                                  return <EmailIcon size={12} className="text-gray-400" />;
+                                })()}
+                                {employee.email}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                {(() => {
+                                  const PhoneIcon = FaPhone as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                                  return <PhoneIcon size={12} className="text-gray-400" />;
+                                })()}
+                                {employee.mobile}
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{employee.role}</div>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(employee.status)}
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="flex items-center justify-center gap-2">
+
+                              {/* Edit employee */}
+                              <button
+                                onClick={() => {
+                                  setSelectedEmployee(employee);
+                                  setActiveTab('edit');
+                                }}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Werknemer bewerken"
+                              >
+                                <FaEdit size={16} />
+                              </button>
+
+                              {/* Login actions */}
+                              {!employee.hasLogin && (
+                                <button
+                                  onClick={() => handleCreateLogin(employee)}
+                                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                  title="Login aanmaken"
+                                >
+                                  <FaUser size={16} />
+                                </button>
+                              )}
+
+                              {employee.hasLogin && employee.loginIsActive && (
+                                <button
+                                  onClick={() => handleBlockLogin(employee)}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Login blokkeren"
+                                >
+                                  <FaTrash size={16} />
+                                </button>
+                              )}
+
+                              {employee.hasLogin && !employee.loginIsActive && (
+                                <button
+                                  onClick={() => handleUnblockLogin(employee)}
+                                  className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
+                                  title="Login deblokkeren"
+                                >
+                                  <FaUser size={16} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {employee.hasLogin ? (
+                              employee.loginIsActive ? (
+                                <span className="text-green-600 text-sm">Actief</span>
+                              ) : (
+                                <span className="text-red-600 text-sm">Geblokkeerd</span>
+                              )
+                            ) : (
+                              <span className="text-gray-400 text-sm">Geen login</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+
+                      {!loadingEmployees && !employeesError && filteredEmployees.length === 0 && (
+                        <tr>
+                          <td className="px-6 py-6 text-sm text-gray-500" colSpan={5}>
+                            Geen werknemers gevonden.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {activeTab === 'add' && (
-          <EmployeeForm
-            onSave={(newEmployee) => {
-              setEmployees([...employees, newEmployee]);
-              setActiveTab('overview');
-            }}
-            onCancel={() => setActiveTab('overview')}
-          />
-        )}
+          {activeTab === 'add' && (
+            <EmployeeForm
+              onSave={(newEmployee) => {
+                // Local-only add (until you add API create)
+                setEmployees([...employees, newEmployee]);
+                setActiveTab('overview');
+              }}
+              onCancel={() => setActiveTab('overview')}
+            />
+          )}
 
-        {activeTab === 'edit' && selectedEmployee && (
-          <EmployeeForm
-            employee={selectedEmployee}
-            onSave={(updatedEmployee) => {
-              setEmployees(employees.map(emp => 
-                emp.id === updatedEmployee.id ? updatedEmployee : emp
-              ));
-              setActiveTab('overview');
-              setSelectedEmployee(null);
-            }}
-            onCancel={() => {
-              setActiveTab('overview');
-              setSelectedEmployee(null);
-            }}
-          />
-        )}
+          {activeTab === 'edit' && selectedEmployee && (
+            <EmployeeForm
+              employee={selectedEmployee}
+              onSave={(updatedEmployee) => {
+                // Local-only edit (until you add API update)
+                setEmployees(employees.map(emp =>
+                  emp.id === updatedEmployee.id ? updatedEmployee : emp
+                ));
+                setActiveTab('overview');
+                setSelectedEmployee(null);
+              }}
+              onCancel={() => {
+                setActiveTab('overview');
+                setSelectedEmployee(null);
+              }}
+            />
+          )}
+        </div>
       </div>
-    </div>
     </DashboardLayout>
   );
 };

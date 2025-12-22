@@ -23,7 +23,7 @@ export const endpoints = {
     invoiceExcel: `${API_BASE}/invoice/generate-excel`,
     suppliers: `${API_BASE}/DossierUtils/suppliers`,
     suppliertypes: `${API_BASE}/DossierUtils/supplier-types`,
-    employees: `${API_BASE}/employees`,
+    employees: `${API_BASE}/Employee/employees`,
 };
 
 export const licenseEndpoints = {
@@ -36,4 +36,5 @@ export const licenseEndpoints = {
 export const adminEndpoints = {
     deceased: `${API_BASE}/admin/deceased`,
     insuranceCompanies: `${API_BASE}/admin/insurance/companies`,
+    employees: `${API_BASE}/employee/employeesadmin`,
 };
