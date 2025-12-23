@@ -24,6 +24,7 @@ export const endpoints = {
     suppliers: `${API_BASE}/DossierUtils/suppliers`,
     suppliertypes: `${API_BASE}/DossierUtils/supplier-types`,
     employees: `${API_BASE}/Employee/employees`,
+    employeesOverview: `${API_BASE}/Employee/overview`,
 };
 
 export const licenseEndpoints = {
@@ -37,4 +38,13 @@ export const adminEndpoints = {
     deceased: `${API_BASE}/admin/deceased`,
     insuranceCompanies: `${API_BASE}/admin/insurance/companies`,
     employees: `${API_BASE}/employee/employeesadmin`,
+    employeesRoles: `${API_BASE}/employee/employeeRoles`,
+
+    createEmployee: `${API_BASE}/employee/createEmployee`,
+    updateEmployee: (id: string) => `${API_BASE}/employee/updateEmployee/${id}`,
+    getEmployee: (id: string) => `${API_BASE}/employee/getEmployee/${id}`,
+
+    createLogin: (id: string) => `${API_BASE}/employee/createLogin/${id}`,
+    blockLogin: (id: string) => `${API_BASE}/employee/blockLogin/${id}`,
+    unblockLogin: (id: string) => `${API_BASE}/employee/unblockLogin/${id}`,
 };

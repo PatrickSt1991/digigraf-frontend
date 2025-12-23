@@ -1,13 +1,9 @@
-import { API_BASE } from "./apiConfig";
-
 interface ApiOptions extends RequestInit {
     body?: any;
 }
 
 async function apiClient<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
     const { body, headers, ...rest } = options;
-console.log(API_BASE);
-console.log(endpoint);
     const res = await fetch(`${endpoint}`, {
         headers: {
             "Content-Type": "application/json",
@@ -22,9 +18,11 @@ console.log(endpoint);
         throw new Error(errorText || `API error: ${res.status}`);
     }
 
-    if (res.status === 204) return {} as T;
+    if (res.status === 204) return undefined as T;
 
-    return res.json() as Promise<T>;
+    const text = await res.text();
+    return text ? JSON.parse(text) as T : undefined as T;
+
 }
 
 export default apiClient;

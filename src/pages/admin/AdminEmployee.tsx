@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { DashboardLayout } from "../../components";
 import { Link } from 'react-router-dom';
 import {
   FaUsers,
@@ -11,626 +10,415 @@ import {
   FaPhone,
   FaUser,
   FaChartLine,
-  FaArrowLeft
+  FaArrowLeft,
 } from 'react-icons/fa';
 
-import { AdminEmployee } from '../../types';
-import { getEmployees } from '../../api/adminApi';
+import { DashboardLayout } from '../../components';
+import {
+  AdminEmployee,
+  EmployeeDto,
+  EmployeeStatus,
+  RoleDto,
+} from '../../types';
+import {
+  blockLogin,
+  createEmployee,
+  createLogin,
+  getEmployeeRoles,
+  getEmployees,
+  unblockLogin,
+  updateEmployee,
+} from '../../api/adminApi';
+
+type StatusFilter = 'all' | EmployeeStatus;
+
+/* -------------------------------------------------------------------------- */
+/*                               MAIN COMPONENT                               */
+/* -------------------------------------------------------------------------- */
 
 const EmployeeManagement: React.FC = () => {
-  const handleCreateLogin = (employee: AdminEmployee) => {
-    // TEMP: FE-only simulation
-    setEmployees(prev =>
-      prev.map(e =>
-        e.id === employee.id
-          ? { ...e, hasLogin: true, loginIsActive: true }
-          : e
-      )
-    );
-  };
+  const [activeTab, setActiveTab] =
+    useState<'overview' | 'add' | 'edit'>('overview');
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<AdminEmployee | null>(null);
+  const [roles, setRoles] = useState<RoleDto[]>([]);
 
-  const handleBlockLogin = (employee: AdminEmployee) => {
-    setEmployees(prev =>
-      prev.map(e =>
-        e.id === employee.id
-          ? { ...e, loginIsActive: false }
-          : e
-      )
-    );
-  };
-
-  const handleUnblockLogin = (employee: AdminEmployee) => {
-    setEmployees(prev =>
-      prev.map(e =>
-        e.id === employee.id
-          ? { ...e, loginIsActive: true }
-          : e
-      )
-    );
-  };
-
-  const [activeTab, setActiveTab] = useState<'overview' | 'add' | 'edit'>('overview');
-  const [selectedEmployee, setSelectedEmployee] = useState<AdminEmployee | null>(null);
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'deactivated'>('all');
 
   const [employees, setEmployees] = useState<AdminEmployee[]>([]);
-  const [loadingEmployees, setLoadingEmployees] = useState<boolean>(true);
+  const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [employeesError, setEmployeesError] = useState<string | null>(null);
 
-  // Load employees from API
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] =
+    useState<StatusFilter>('all');
+
+  /* -------------------------------------------------------------------------- */
+  /*                                DATA LOADING                                */
+  /* -------------------------------------------------------------------------- */
+  useEffect(() => {
+    getEmployeeRoles()
+      .then(setRoles)
+      .catch(err => console.error('Failed to load roles', err));
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
-    const load = async () => {
-      setLoadingEmployees(true);
-      setEmployeesError(null);
-
+    const loadEmployees = async () => {
       try {
+        setLoadingEmployees(true);
         const data = await getEmployees();
-        if (!cancelled) {
-          setEmployees(data ?? []);
-        }
+        if (!cancelled) setEmployees(data ?? []);
       } catch (err) {
         if (!cancelled) {
-          setEmployeesError((err as Error).message ?? 'Kon werknemers niet laden.');
+          setEmployeesError(
+            (err as Error).message ?? 'Kon werknemers niet laden.'
+          );
         }
       } finally {
-        if (!cancelled) {
-          setLoadingEmployees(false);
-        }
+        if (!cancelled) setLoadingEmployees(false);
       }
     };
 
-    load();
-
+    loadEmployees();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            Actief
-          </span>
-        );
-      case 'inactive':
-        return (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 flex items-center gap-1">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-            Inactief
-          </span>
-        );
-      case 'deactivated':
-        return (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 flex items-center gap-1">
-            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-            Gedeactiveerd
-          </span>
-        );
-      default:
-        return null;
+  /* -------------------------------------------------------------------------- */
+  /*                                   HELPERS                                  */
+  /* -------------------------------------------------------------------------- */
+
+  const toEmployeeDto = (emp: AdminEmployee): EmployeeDto => ({
+    id: emp.id,
+    isActive: emp.status === 'active',
+    initials: emp.initials,
+    firstName: emp.firstName,
+    lastName: emp.lastName,
+    tussenvoegsel: emp.tussenvoegsel,
+    birthPlace: emp.birthPlace,
+    birthDate: emp.birthDate ?? null,
+    email: emp.email,
+    mobile: emp.mobile,
+    roleId: emp.roleId,
+    startDate: emp.startDate ?? null,
+  });
+
+  const fromEmployeeDto = (
+    dto: EmployeeDto,
+    login?: { hasLogin: boolean; loginIsActive: boolean | null }
+  ): AdminEmployee => ({
+    id: dto.id,
+    status: dto.isActive ? 'active' : 'inactive',
+
+    initials: dto.initials,
+    firstName: dto.firstName,
+    lastName: dto.lastName,
+    tussenvoegsel: dto.tussenvoegsel,
+    fullName: `${dto.firstName} ${dto.tussenvoegsel ?? ''} ${dto.lastName}`
+      .replace(/\s+/g, ' ')
+      .trim(),
+
+    birthPlace: dto.birthPlace,
+    birthDate: dto.birthDate ?? undefined,
+
+    email: dto.email,
+    mobile: dto.mobile,
+    roleId: dto.roleId,
+    startDate: dto.startDate ?? undefined,
+
+    hasLogin: login?.hasLogin ?? false,
+    loginIsActive: login?.loginIsActive ?? null,
+  });
+
+  const getStatusBadge = (
+    hasLogin: boolean,
+    loginIsActive: boolean | null
+  ) => {
+    let label: 'Actief' | 'Geblokkeerd' | 'Geen login';
+    let classes: string;
+
+    if (!hasLogin) {
+      label = 'Geen login';
+      classes = 'bg-gray-100 text-gray-800';
+    } else if (loginIsActive) {
+      label = 'Actief';
+      classes = 'bg-green-100 text-green-800';
+    } else {
+      label = 'Geblokkeerd';
+      classes = 'bg-red-100 text-red-800';
     }
+
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${classes}`}>
+        {label}
+      </span>
+    );
   };
 
+  /* -------------------------------------------------------------------------- */
+  /*                                  FILTERING                                 */
+  /* -------------------------------------------------------------------------- */
+
   const filteredEmployees = useMemo(() => {
-    return employees.filter(emp => {
-      const fullName = (emp.fullName ?? '').toLowerCase();
-      const email = (emp.email ?? '').toLowerCase();
-
+    return employees.filter((e) => {
       const matchesSearch =
-        fullName.includes(searchTerm.toLowerCase()) ||
-        email.includes(searchTerm.toLowerCase());
+        e.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
+      const matchesStatus =
+        statusFilter === 'all' || e.status === statusFilter;
+
       return matchesSearch && matchesStatus;
     });
   }, [employees, searchTerm, statusFilter]);
 
-const EmployeeForm = ({
-  employee,
-  onSave,
-  onCancel
-}: {
-  employee?: AdminEmployee;
-  onSave: (emp: AdminEmployee) => void;
-  onCancel: () => void;
-}) => {
-    const [formData, setFormData] = useState<Partial<AdminEmployee>>(
-      employee || {
-        status: 'active',
-        initials: '',
-        firstName: '',
-        lastName: '',
-        tussenvoegsel: '',
-        birthPlace: '',
-        birthDate: '',
-        email: '',
-        mobile: '',
-        role: '',
-        startDate: new Date().toISOString().split('T')[0]
-      }
-    );
+  /* -------------------------------------------------------------------------- */
+  /*                               LOGIN ACTIONS                                */
+  /* -------------------------------------------------------------------------- */
 
-    const handleSave = () => {
-      const employeeId = employee?.id || crypto.randomUUID();
-      const employeeFullName = `${formData.firstName} ${formData.tussenvoegsel || ''} ${formData.lastName}`.trim();
-
-      const fullEmployee: AdminEmployee = {
-        id: employeeId,
-        fullName: employeeFullName,
-        status: formData.status || 'active',
-
-        initials: formData.initials || '',
-        firstName: formData.firstName || '',
-        lastName: formData.lastName || '',
-        tussenvoegsel: formData.tussenvoegsel || '',
-        birthPlace: formData.birthPlace || '',
-        birthDate: formData.birthDate || '',
-        email: formData.email || '',
-        mobile: formData.mobile || '',
-        role: formData.role || '',
-        startDate: formData.startDate || '',
-
-        hasLogin: employee?.hasLogin ?? false,
-        loginIsActive: employee?.loginIsActive ?? null
-      };
-
-      onSave(fullEmployee);
-    };
-
-    return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 h-16 flex items-center">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            {(() => {
-              const UserIcon = FaUser as unknown as React.ComponentType<{ size?: number; className?: string }>;
-              return <UserIcon size={20} className="text-blue-600" />;
-            })()}
-            {employee ? 'Werknemer Bewerken' : 'Nieuwe Werknemer'}
-          </h2>
-        </div>
-
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="md:col-span-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200 h-12 flex items-center">
-                Persoonlijke Gegevens
-              </h3>
-            </div>
-
-            {/* Status Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-              >
-                <option value="active">Actief</option>
-                <option value="inactive">Inactief</option>
-                <option value="deactivated">Gedeactiveerd</option>
-              </select>
-            </div>
-
-            {/* Initials Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Initialen</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.initials}
-                onChange={(e) => setFormData({ ...formData, initials: e.target.value })}
-                placeholder="J.D."
-              />
-            </div>
-
-            {/* First Name Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Voornaam *</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                placeholder="Jan"
-                required
-              />
-            </div>
-
-            {/* Tussenvoegsel Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tussenvoegsel</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.tussenvoegsel}
-                onChange={(e) => setFormData({ ...formData, tussenvoegsel: e.target.value })}
-                placeholder="de, van, van der"
-              />
-            </div>
-
-            {/* Last Name Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Achternaam *</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                placeholder="Doe"
-                required
-              />
-            </div>
-
-            {/* Birth Place Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Geboorteplaats</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.birthPlace}
-                onChange={(e) => setFormData({ ...formData, birthPlace: e.target.value })}
-                placeholder="Amsterdam"
-              />
-            </div>
-
-            {/* Birth Date Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Geboortedatum</label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.birthDate}
-                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-              />
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-              <input
-                type="email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="j.doe@company.nl"
-                required
-              />
-            </div>
-
-            {/* Mobile Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mobiel</label>
-              <input
-                type="tel"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.mobile}
-                onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                placeholder="06-12345678"
-              />
-            </div>
-
-            {/* Role Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                placeholder="Uitvaartbegeleider"
-              />
-            </div>
-
-            {/* Start Date Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Startdatum</label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Annuleren
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all"
-            >
-              {employee ? 'Bijwerken' : 'Toevoegen'}
-            </button>
-          </div>
-        </div>
-      </div>
+  const updateEmployeeLocal = (
+    id: string,
+    updater: (e: AdminEmployee) => AdminEmployee
+  ) => {
+    setEmployees((prev) =>
+      prev.map((e) => (e.id === id ? updater(e) : e))
     );
   };
 
+  const handleCreateLogin = async (emp: AdminEmployee) => {
+    await createLogin(emp.id);
+    updateEmployeeLocal(emp.id, (e) => ({
+      ...e,
+      hasLogin: true,
+      loginIsActive: true,
+    }));
+  };
+
+  const handleBlockLogin = async (emp: AdminEmployee) => {
+    await blockLogin(emp.id);
+    updateEmployeeLocal(emp.id, (e) => ({
+      ...e,
+      loginIsActive: false,
+    }));
+  };
+
+  const handleUnblockLogin = async (emp: AdminEmployee) => {
+    await unblockLogin(emp.id);
+    updateEmployeeLocal(emp.id, (e) => ({
+      ...e,
+      loginIsActive: true,
+    }));
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    RENDER                                  */
+  /* -------------------------------------------------------------------------- */
+
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+      <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-7xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-10">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-4 h-full">
-                {/* Back Button */}
-                <Link
-                  to="/admin"
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Terug naar dashboard"
-                >
-                  {(() => {
-                    const ArrowIcon = FaArrowLeft as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                    return <ArrowIcon size={16} />;
-                  })()}
-                </Link>
 
-                <div className="flex items-center gap-3 h-full">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    {(() => {
-                      const UsersIcon = FaUsers as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                      return <UsersIcon className="text-white" size={24} />;
-                    })()}
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <h1 className="text-2xl font-bold text-gray-900">Werknemers Beheer</h1>
-                    <p className="text-gray-600">Beheer alle werknemers en hun gegevens</p>
-                  </div>
+          {/* -------------------------------- HEADER ------------------------------- */}
+          <div className="bg-white rounded-xl border p-6 flex justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/admin" className="p-2 hover:bg-gray-100 rounded">
+                <FaArrowLeft />
+              </Link>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                  <FaUsers />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">Werknemers Beheer</h1>
+                  <p className="text-sm text-gray-600">
+                    Beheer alle werknemers
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-3 h-full items-center">
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    activeTab === 'overview'
-                      ? 'bg-blue-100 text-blue-700 font-medium'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  Overzicht
-                </button>
-                <button
-                  onClick={() => setActiveTab('add')}
-                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
-                >
-                  {(() => {
-                    const PlusIcon = FaPlus as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                    return <PlusIcon size={16} />;
-                  })()}
-                  Nieuwe Werknemer
-                </button>
-              </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className="px-4 py-2 rounded hover:bg-gray-100"
+              >
+                Overzicht
+              </button>
+              <button
+                onClick={() => setActiveTab('add')}
+                className="px-4 py-2 bg-green-600 text-white rounded flex items-center gap-2"
+              >
+                <FaPlus />
+                Nieuwe Werknemer
+              </button>
             </div>
           </div>
 
-          {/* Content */}
+          {/* ------------------------------- OVERVIEW ------------------------------ */}
           {activeTab === 'overview' && (
             <>
               {/* Filters */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between h-16">
-                  <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                    <div className="relative flex-1 max-w-md">
-                      {(() => {
-                        const SearchIcon = FaSearch as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                        return (
-                          <SearchIcon
-                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                            size={16}
-                          />
-                        );
-                      })()}
-                      <input
-                        type="text"
-                        placeholder="Zoek werknemers..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-
-                    <select
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value as any)}
-                    >
-                      <option value="all">Alle statussen</option>
-                      <option value="active">Actief</option>
-                      <option value="inactive">Inactief</option>
-                      <option value="deactivated">Gedeactiveerd</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    {(() => {
-                      const ChartIcon = FaChartLine as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                      return <ChartIcon size={16} />;
-                    })()}
-                    {filteredEmployees.length} werknemers
-                  </div>
+              <div className="bg-white rounded-xl border p-6 flex gap-4">
+                <div className="relative flex-1">
+                  <FaSearch className="absolute left-3 top-3 text-gray-400" />
+                  <input
+                    className="w-full pl-10 pr-4 py-2 border rounded"
+                    placeholder="Zoek werknemers..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
 
-                {loadingEmployees && (
-                  <div className="mt-4 text-sm text-gray-600">Werknemers laden...</div>
-                )}
+                <select
+                  className="border rounded px-3 py-2"
+                  value={statusFilter}
+                  onChange={(e) =>
+                    setStatusFilter(e.target.value as StatusFilter)
+                  }
+                >
+                  <option value="all">Alle statussen</option>
+                  <option value="active">Actief</option>
+                  <option value="inactive">Inactief</option>
+                  <option value="deactivated">Gedeactiveerd</option>
+                </select>
 
-                {!loadingEmployees && employeesError && (
-                  <div className="mt-4 text-sm text-red-600">{employeesError}</div>
-                )}
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <FaChartLine />
+                  {filteredEmployees.length} werknemers
+                </div>
               </div>
 
-              {/* Employee Table */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Werknemer</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Functie</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Login</th>
+              {/* Table */}
+              <div className="bg-white rounded-xl border overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="p-4 text-left">Werknemer</th>
+                      <th className="p-4 text-left">Contact</th>
+                      <th className="p-4 text-left">Functie</th>
+                      <th className="p-4 text-center">Acties</th>
+                      <th className="p-4 text-left">Status</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {filteredEmployees.map((e) => (
+                      <tr key={e.id} className="border-t hover:bg-gray-50">
+                        <td className="p-4">
+                          <div className="font-medium">{e.fullName}</div>
+                          <div className="text-sm text-gray-500">
+                            {e.birthPlace}
+                          </div>
+                        </td>
+
+                        <td className="p-4 text-sm">
+                          <div className="flex gap-2 items-center">
+                            <FaEnvelope />
+                            {e.email}
+                          </div>
+                          <div className="flex gap-2 items-center text-gray-500">
+                            <FaPhone />
+                            {e.mobile}
+                          </div>
+                        </td>
+
+                        <td>
+                          {roles.find(r => r.id === e.roleId)?.description ??
+                          roles.find(r => r.id === e.roleId)?.name ??
+                          '—'}
+                        </td>
+
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => {
+                              console.log('Editing employee:', e);
+                              setSelectedEmployee(e);
+                              setActiveTab('edit');
+                            }}
+                            className="p-2 text-blue-600"
+                          >
+                            <FaEdit />
+                          </button>
+
+                          {!e.hasLogin && (
+                            <button
+                              onClick={() => handleCreateLogin(e)}
+                              className="p-2 text-green-600"
+                            >
+                              <FaUser />
+                            </button>
+                          )}
+
+                          {e.hasLogin && e.loginIsActive && (
+                            <button
+                              onClick={() => handleBlockLogin(e)}
+                              className="p-2 text-red-600"
+                            >
+                              <FaTrash />
+                            </button>
+                          )}
+
+                          {e.hasLogin && !e.loginIsActive && (
+                            <button
+                              onClick={() => handleUnblockLogin(e)}
+                              className="p-2 text-yellow-600"
+                            >
+                              <FaUser />
+                            </button>
+                          )}
+                        </td>
+
+                        <td className="p-4">
+                          {getStatusBadge(e.hasLogin, e.loginIsActive)}
+                        </td>
+
                       </tr>
-                    </thead>
+                    ))}
 
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredEmployees.map((employee) => (
-                        <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                {employee.initials}
-                              </div>
-                              <div>
-                                <div className="font-medium text-gray-900">{employee.fullName}</div>
-                                <div className="text-sm text-gray-500">{employee.birthPlace}</div>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2 text-sm text-gray-900">
-                                {(() => {
-                                  const EmailIcon = FaEnvelope as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                                  return <EmailIcon size={12} className="text-gray-400" />;
-                                })()}
-                                {employee.email}
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                {(() => {
-                                  const PhoneIcon = FaPhone as unknown as React.ComponentType<{ size?: number; className?: string }>;
-                                  return <PhoneIcon size={12} className="text-gray-400" />;
-                                })()}
-                                {employee.mobile}
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{employee.role}</div>
-                          </td>
-
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(employee.status)}
-                          </td>
-
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-center gap-2">
-
-                              {/* Edit employee */}
-                              <button
-                                onClick={() => {
-                                  setSelectedEmployee(employee);
-                                  setActiveTab('edit');
-                                }}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Werknemer bewerken"
-                              >
-                                <FaEdit size={16} />
-                              </button>
-
-                              {/* Login actions */}
-                              {!employee.hasLogin && (
-                                <button
-                                  onClick={() => handleCreateLogin(employee)}
-                                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                  title="Login aanmaken"
-                                >
-                                  <FaUser size={16} />
-                                </button>
-                              )}
-
-                              {employee.hasLogin && employee.loginIsActive && (
-                                <button
-                                  onClick={() => handleBlockLogin(employee)}
-                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  title="Login blokkeren"
-                                >
-                                  <FaTrash size={16} />
-                                </button>
-                              )}
-
-                              {employee.hasLogin && !employee.loginIsActive && (
-                                <button
-                                  onClick={() => handleUnblockLogin(employee)}
-                                  className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
-                                  title="Login deblokkeren"
-                                >
-                                  <FaUser size={16} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {employee.hasLogin ? (
-                              employee.loginIsActive ? (
-                                <span className="text-green-600 text-sm">Actief</span>
-                              ) : (
-                                <span className="text-red-600 text-sm">Geblokkeerd</span>
-                              )
-                            ) : (
-                              <span className="text-gray-400 text-sm">Geen login</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-
-                      {!loadingEmployees && !employeesError && filteredEmployees.length === 0 && (
+                    {!loadingEmployees &&
+                      !employeesError &&
+                      filteredEmployees.length === 0 && (
                         <tr>
-                          <td className="px-6 py-6 text-sm text-gray-500" colSpan={5}>
+                          <td colSpan={6} className="p-6 text-gray-500">
                             Geen werknemers gevonden.
                           </td>
                         </tr>
                       )}
-                    </tbody>
-                  </table>
-                </div>
+                  </tbody>
+                </table>
               </div>
             </>
           )}
 
-          {activeTab === 'add' && (
+          {/* ------------------------------- ADD / EDIT ----------------------------- */}
+          {(activeTab === 'add' ||
+            (activeTab === 'edit' && selectedEmployee)) && (
             <EmployeeForm
-              onSave={(newEmployee) => {
-                // Local-only add (until you add API create)
-                setEmployees([...employees, newEmployee]);
-                setActiveTab('overview');
-              }}
-              onCancel={() => setActiveTab('overview')}
-            />
-          )}
-
-          {activeTab === 'edit' && selectedEmployee && (
-            <EmployeeForm
-              employee={selectedEmployee}
-              onSave={(updatedEmployee) => {
-                // Local-only edit (until you add API update)
-                setEmployees(employees.map(emp =>
-                  emp.id === updatedEmployee.id ? updatedEmployee : emp
-                ));
+              employee={selectedEmployee ?? undefined}
+              roles={roles}
+              onCancel={() => {
                 setActiveTab('overview');
                 setSelectedEmployee(null);
               }}
-              onCancel={() => {
+              onSave={async (emp) => {
+                if (activeTab === 'add') {
+                  const dto = toEmployeeDto(emp);
+                  const created = await createEmployee(dto);
+                  setEmployees((prev) => [
+                    ...prev,
+                    fromEmployeeDto(created),
+                  ]);
+                } else {
+                  const dto = toEmployeeDto(emp);
+                  await updateEmployee(dto);
+                  const refreshed = await getEmployees();
+                  setEmployees(refreshed ?? []);
+                }
+
                 setActiveTab('overview');
                 setSelectedEmployee(null);
               }}
@@ -643,3 +431,219 @@ const EmployeeForm = ({
 };
 
 export default EmployeeManagement;
+
+/* -------------------------------------------------------------------------- */
+/*                                EMPLOYEE FORM                               */
+/* -------------------------------------------------------------------------- */
+
+const EmployeeForm = ({
+  employee,
+  roles,
+  onSave,
+  onCancel,
+}: {
+  employee?: AdminEmployee;
+  roles: RoleDto[];
+  onSave: (e: AdminEmployee) => void;
+  onCancel: () => void;
+}) => {
+  const [form, setForm] = useState<Partial<AdminEmployee>>(employee ?? {});
+
+  useEffect(() => {
+    if (!employee) return;
+
+    setForm(prev => ({
+      ...prev,
+      ...employee,
+      roleId: employee.roleId ?? '',
+    }));
+  }, [employee, roles]);
+
+  const submit = () => {
+    onSave({
+      id: employee?.id ?? '',
+      status: form.status ?? 'active',
+
+      initials: form.initials ?? '',
+      firstName: form.firstName ?? '',
+      lastName: form.lastName ?? '',
+      tussenvoegsel: form.tussenvoegsel || undefined,
+      fullName: `${form.firstName ?? ''} ${form.tussenvoegsel ?? ''} ${form.lastName ?? ''}`
+        .replace(/\s+/g, ' ')
+        .trim(),
+
+      birthPlace: form.birthPlace || undefined,
+      birthDate: form.birthDate || undefined,
+
+      email: form.email ?? '',
+      mobile: form.mobile || undefined,
+      roleId: form.roleId ?? '',
+      startDate: form.startDate || undefined,
+
+      hasLogin: employee?.hasLogin ?? false,
+      loginIsActive: employee?.loginIsActive ?? null,
+    });
+  };
+
+  return (
+    <div className="bg-white rounded-xl border p-6">
+      <h2 className="text-xl font-semibold mb-6">
+        {employee ? 'Werknemer Bewerken' : 'Nieuwe Werknemer'}
+      </h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        {/* Status */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Status</label>
+          <select
+            className="w-full border p-2 rounded"
+            value={form.status ?? 'active'}
+            onChange={(e) =>
+              setForm({ ...form, status: e.target.value as EmployeeStatus })
+            }
+          >
+            <option value="active">Actief</option>
+            <option value="inactive">Inactief</option>
+            <option value="deactivated">Gedeactiveerd</option>
+          </select>
+        </div>
+
+        {/* Initials */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Initialen</label>
+          <input
+            className="w-full border p-2 rounded"
+            value={form.initials ?? ''}
+            onChange={(e) => setForm({ ...form, initials: e.target.value })}
+          />
+        </div>
+
+        {/* First name */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Voornaam *</label>
+          <input
+            className="w-full border p-2 rounded"
+            value={form.firstName ?? ''}
+            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            required
+          />
+        </div>
+
+        {/* Tussenvoegsel */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Tussenvoegsel</label>
+          <input
+            className="w-full border p-2 rounded"
+            value={form.tussenvoegsel ?? ''}
+            onChange={(e) =>
+              setForm({ ...form, tussenvoegsel: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Last name */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Achternaam *</label>
+          <input
+            className="w-full border p-2 rounded"
+            value={form.lastName ?? ''}
+            onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+            required
+          />
+        </div>
+
+        {/* Birth place */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Geboorteplaats</label>
+          <input
+            className="w-full border p-2 rounded"
+            value={form.birthPlace ?? ''}
+            onChange={(e) => setForm({ ...form, birthPlace: e.target.value })}
+          />
+        </div>
+
+        {/* Birth date */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Geboortedatum</label>
+          <input
+            type="date"
+            className="w-full border p-2 rounded"
+            value={form.birthDate ?? ''}
+            onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
+          />
+        </div>
+
+        {/* Email */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Email *</label>
+          <input
+            type="email"
+            className="w-full border p-2 rounded"
+            value={form.email ?? ''}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
+          />
+        </div>
+
+        {/* Mobile */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Mobiel</label>
+          <input
+            className="w-full border p-2 rounded"
+            value={form.mobile ?? ''}
+            onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+          />
+        </div>
+
+        {/* Role */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Rol</label>
+          <select
+            className="w-full border p-2 rounded"
+            value={form.roleId ?? ''}
+            disabled={roles.length === 0}
+            onChange={(e) =>
+              setForm({ ...form, roleId: e.target.value })
+            }
+            required
+          >
+            <option value="">Selecteer rol</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.description ?? role.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Start date */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Startdatum</label>
+          <input
+            type="date"
+            className="w-full border p-2 rounded"
+            value={form.startDate ?? ''}
+            onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+          />
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-end gap-4 mt-6">
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 border rounded"
+        >
+          Annuleren
+        </button>
+        <button
+          onClick={submit}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          Opslaan
+        </button>
+      </div>
+    </div>
+  );
+};
