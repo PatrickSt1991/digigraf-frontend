@@ -90,63 +90,37 @@ const EmployeeManagement: React.FC = () => {
   /*                                   HELPERS                                  */
   /* -------------------------------------------------------------------------- */
 
-  const toEmployeeDto = (emp: AdminEmployee): EmployeeDto => ({
-    id: emp.id,
-    isActive: emp.status === 'active',
-    initials: emp.initials,
-    firstName: emp.firstName,
-    lastName: emp.lastName,
-    tussenvoegsel: emp.tussenvoegsel,
-    birthPlace: emp.birthPlace,
-    birthDate: emp.birthDate ?? null,
-    email: emp.email,
-    mobile: emp.mobile,
-    roleId: emp.roleId,
-    startDate: emp.startDate ?? null,
-  });
+  const toEmployeeDto = (
+    employee: AdminEmployee,
+    mode: 'create' | 'update'
+  ): EmployeeDto => ({
+    id: mode === 'create' ? null : employee.id,
+    isActive: employee.status === 'active',
+    initials: employee.initials,
+    firstName: employee.firstName,
+    lastName: employee.lastName,
+    tussenvoegsel: employee.tussenvoegsel,
 
-  const fromEmployeeDto = (
-    dto: EmployeeDto,
-    login?: { hasLogin: boolean; loginIsActive: boolean | null }
-  ): AdminEmployee => ({
-    id: dto.id,
-    status: dto.isActive ? 'active' : 'inactive',
+    birthPlace: employee.birthPlace,
+    birthDate: employee.birthDate ?? null,
 
-    initials: dto.initials,
-    firstName: dto.firstName,
-    lastName: dto.lastName,
-    tussenvoegsel: dto.tussenvoegsel,
-    fullName: `${dto.firstName} ${dto.tussenvoegsel ?? ''} ${dto.lastName}`
-      .replace(/\s+/g, ' ')
-      .trim(),
-
-    birthPlace: dto.birthPlace,
-    birthDate: dto.birthDate ?? undefined,
-
-    email: dto.email,
-    mobile: dto.mobile,
-    roleId: dto.roleId,
-    startDate: dto.startDate ?? undefined,
-
-    hasLogin: login?.hasLogin ?? false,
-    loginIsActive: login?.loginIsActive ?? null,
+    email: employee.email,
+    mobile: employee.mobile,
+    roleId: employee.roleId,
+    startDate: employee.startDate ?? null,
   });
 
   const getStatusBadge = (
-    hasLogin: boolean,
     loginIsActive: boolean | null
   ) => {
-    let label: 'Actief' | 'Geblokkeerd' | 'Geen login';
+    let label: 'Actief' | 'Inactief';
     let classes: string;
 
-    if (!hasLogin) {
-      label = 'Geen login';
-      classes = 'bg-gray-100 text-gray-800';
-    } else if (loginIsActive) {
+    if (loginIsActive) {
       label = 'Actief';
       classes = 'bg-green-100 text-green-800';
     } else {
-      label = 'Geblokkeerd';
+      label = 'Inactief';
       classes = 'bg-red-100 text-red-800';
     }
 
@@ -283,7 +257,6 @@ const EmployeeManagement: React.FC = () => {
                   <option value="all">Alle statussen</option>
                   <option value="active">Actief</option>
                   <option value="inactive">Inactief</option>
-                  <option value="deactivated">Gedeactiveerd</option>
                 </select>
 
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -301,7 +274,7 @@ const EmployeeManagement: React.FC = () => {
                       <th className="p-4 text-left">Contact</th>
                       <th className="p-4 text-left">Functie</th>
                       <th className="p-4 text-center">Acties</th>
-                      <th className="p-4 text-left">Status</th>
+                      <th className="p-4 text-left">Account</th>
                     </tr>
                   </thead>
 
@@ -335,7 +308,6 @@ const EmployeeManagement: React.FC = () => {
                         <td className="p-4 text-center">
                           <button
                             onClick={() => {
-                              console.log('Editing employee:', e);
                               setSelectedEmployee(e);
                               setActiveTab('edit');
                             }}
@@ -344,16 +316,7 @@ const EmployeeManagement: React.FC = () => {
                             <FaEdit />
                           </button>
 
-                          {!e.hasLogin && (
-                            <button
-                              onClick={() => handleCreateLogin(e)}
-                              className="p-2 text-green-600"
-                            >
-                              <FaUser />
-                            </button>
-                          )}
-
-                          {e.hasLogin && e.loginIsActive && (
+                           {e.loginIsActive && (
                             <button
                               onClick={() => handleBlockLogin(e)}
                               className="p-2 text-red-600"
@@ -362,7 +325,7 @@ const EmployeeManagement: React.FC = () => {
                             </button>
                           )}
 
-                          {e.hasLogin && !e.loginIsActive && (
+                          {!e.loginIsActive && (
                             <button
                               onClick={() => handleUnblockLogin(e)}
                               className="p-2 text-yellow-600"
@@ -373,7 +336,7 @@ const EmployeeManagement: React.FC = () => {
                         </td>
 
                         <td className="p-4">
-                          {getStatusBadge(e.hasLogin, e.loginIsActive)}
+                          {getStatusBadge(e.loginIsActive)}
                         </td>
 
                       </tr>
@@ -405,19 +368,29 @@ const EmployeeManagement: React.FC = () => {
                 setSelectedEmployee(null);
               }}
               onSave={async (emp) => {
+                const isActive = emp.status === 'active';
+
                 if (activeTab === 'add') {
-                  const dto = toEmployeeDto(emp);
-                  const created = await createEmployee(dto);
-                  setEmployees((prev) => [
-                    ...prev,
-                    fromEmployeeDto(created),
-                  ]);
+                  console.log('Creating employee', emp);
+                  const dto = toEmployeeDto(emp, 'create');
+                  await createEmployee(dto);
+
+                  if (!isActive) {
+                    await blockLogin(emp.id);
+                  }
                 } else {
-                  const dto = toEmployeeDto(emp);
+                  const dto = toEmployeeDto(emp, 'update');
                   await updateEmployee(dto);
-                  const refreshed = await getEmployees();
-                  setEmployees(refreshed ?? []);
+
+                  if (isActive) {
+                    await unblockLogin(emp.id);
+                  } else {
+                    await blockLogin(emp.id);
+                  }
                 }
+
+                const refreshed = await getEmployees();
+                setEmployees(refreshed ?? []);
 
                 setActiveTab('overview');
                 setSelectedEmployee(null);
@@ -480,7 +453,6 @@ const EmployeeForm = ({
       roleId: form.roleId ?? '',
       startDate: form.startDate || undefined,
 
-      hasLogin: employee?.hasLogin ?? false,
       loginIsActive: employee?.loginIsActive ?? null,
     });
   };
@@ -495,7 +467,7 @@ const EmployeeForm = ({
 
         {/* Status */}
         <div>
-          <label className="block text-sm font-medium mb-1">Status</label>
+          <label className="block text-sm font-medium mb-1">Account</label>
           <select
             className="w-full border p-2 rounded"
             value={form.status ?? 'active'}
@@ -505,7 +477,6 @@ const EmployeeForm = ({
           >
             <option value="active">Actief</option>
             <option value="inactive">Inactief</option>
-            <option value="deactivated">Gedeactiveerd</option>
           </select>
         </div>
 

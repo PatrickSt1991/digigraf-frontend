@@ -1,8 +1,8 @@
-export type EmployeeStatus = 'active' | 'inactive' | 'deactivated';
+export type EmployeeStatus = 'active' | 'inactive';
 
 export interface AdminEmployee {
   id: string;
-
+  loginIsActive: boolean | null;
   status: EmployeeStatus;
 
   initials: string;
@@ -18,13 +18,10 @@ export interface AdminEmployee {
   mobile?: string;
   roleId: string;
   startDate?: string;
-
-  hasLogin: boolean;
-  loginIsActive: boolean | null;
 }
 
 export interface EmployeeDto {
-  id: string;
+  id: string | null;
   isActive: boolean;
   initials: string;
   firstName: string;

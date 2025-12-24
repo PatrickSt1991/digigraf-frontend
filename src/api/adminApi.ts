@@ -45,10 +45,16 @@ export async function createEmployee(
 export async function updateEmployee(
   employee: EmployeeDto
 ): Promise<EmployeeDto> {
-  return await apiClient<EmployeeDto>(adminEndpoints.updateEmployee(employee.id), {
-    method: "PUT",
-    body: employee,
-  });
+  if (!employee.id) {
+    throw new Error("Cannot update employee without id");
+  }
+  return await apiClient<EmployeeDto>(
+    adminEndpoints.updateEmployee(employee.id), 
+    {
+      method: "PUT",
+      body: employee,
+    }
+  );
 }
 
 export async function getEmployee(
