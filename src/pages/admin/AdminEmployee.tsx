@@ -23,7 +23,6 @@ import {
 import {
   blockLogin,
   createEmployee,
-  createLogin,
   getEmployeeRoles,
   getEmployees,
   unblockLogin,
@@ -110,26 +109,27 @@ const EmployeeManagement: React.FC = () => {
     startDate: employee.startDate ?? null,
   });
 
-  const getStatusBadge = (
-    loginIsActive: boolean | null
-  ) => {
-    let label: 'Actief' | 'Inactief';
-    let classes: string;
+const getStatusBadge = (loginIsActive: boolean | null) => {
+  const isActive = loginIsActive === true;
 
-    if (loginIsActive) {
-      label = 'Actief';
-      classes = 'bg-green-100 text-green-800';
-    } else {
-      label = 'Inactief';
-      classes = 'bg-red-100 text-red-800';
-    }
+  return (
+    <span
+      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium
+        ${isActive
+          ? 'bg-green-100 text-green-800'
+          : 'bg-red-100 text-red-800'
+        }`}
+    >
+      <span
+        className={`w-2 h-2 rounded-full
+          ${isActive ? 'bg-green-500' : 'bg-red-500'}
+        `}
+      />
+      {isActive ? 'Actief' : 'Inactief'}
+    </span>
+  );
+};
 
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${classes}`}>
-        {label}
-      </span>
-    );
-  };
 
   /* -------------------------------------------------------------------------- */
   /*                                  FILTERING                                 */
@@ -161,15 +161,6 @@ const EmployeeManagement: React.FC = () => {
     );
   };
 
-  const handleCreateLogin = async (emp: AdminEmployee) => {
-    await createLogin(emp.id);
-    updateEmployeeLocal(emp.id, (e) => ({
-      ...e,
-      hasLogin: true,
-      loginIsActive: true,
-    }));
-  };
-
   const handleBlockLogin = async (emp: AdminEmployee) => {
     await blockLogin(emp.id);
     updateEmployeeLocal(emp.id, (e) => ({
@@ -194,148 +185,209 @@ const EmployeeManagement: React.FC = () => {
     <DashboardLayout>
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-7xl mx-auto space-y-6">
-
-          {/* -------------------------------- HEADER ------------------------------- */}
-          <div className="bg-white rounded-xl border p-6 flex justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/admin" className="p-2 hover:bg-gray-100 rounded">
-                <FaArrowLeft />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-10">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4 h-full">
+              {/* Back Button */}
+              <Link
+                to="/admin"
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Terug naar dashboard"
+              >
+                {(() => {
+                  const ArrowIcon = FaArrowLeft as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                  return <ArrowIcon size={16} />;
+                })()}
               </Link>
-
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
-                  <FaUsers />
+              
+              <div className="flex items-center gap-3 h-full">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  {(() => {
+                    const UsersIcon = FaUsers as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                    return <UsersIcon className="text-white" size={24} />;
+                  })()}
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold">Werknemers Beheer</h1>
-                  <p className="text-sm text-gray-600">
-                    Beheer alle werknemers
-                  </p>
+                <div className="flex flex-col justify-center">
+                  <h1 className="text-2xl font-bold text-gray-900">Werknemers Beheer</h1>
+                  <p className="text-gray-600">Beheer alle werknemers en hun gegevens</p>
                 </div>
               </div>
             </div>
-
-            <div className="flex gap-2">
+            <div className="flex gap-3 h-full items-center">
               <button
                 onClick={() => setActiveTab('overview')}
-                className="px-4 py-2 rounded hover:bg-gray-100"
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  activeTab === 'overview' 
+                    ? 'bg-blue-100 text-blue-700 font-medium' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
               >
                 Overzicht
               </button>
               <button
                 onClick={() => setActiveTab('add')}
-                className="px-4 py-2 bg-green-600 text-white rounded flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
               >
-                <FaPlus />
+                {(() => {
+                  const PlusIcon = FaPlus as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                  return <PlusIcon size={16} />;
+                })()}
                 Nieuwe Werknemer
               </button>
             </div>
           </div>
+        </div>
 
           {/* ------------------------------- OVERVIEW ------------------------------ */}
           {activeTab === 'overview' && (
             <>
               {/* Filters */}
-              <div className="bg-white rounded-xl border p-6 flex gap-4">
-                <div className="relative flex-1">
-                  <FaSearch className="absolute left-3 top-3 text-gray-400" />
-                  <input
-                    className="w-full pl-10 pr-4 py-2 border rounded"
-                    placeholder="Zoek werknemers..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between h-16">
+                <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                  <div className="relative flex-1 max-w-md">
+                    {(() => {
+                      const SearchIcon = FaSearch as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                      return <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />;
+                    })()}
+                    <input
+                      type="text"
+                      placeholder="Zoek verzekeraars..."
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <select
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                  >
+                    <option value="all">Alle statussen</option>
+                    <option value="active">Actief</option>
+                    <option value="inactive">Inactief</option>
+                  </select>
                 </div>
-
-                <select
-                  className="border rounded px-3 py-2"
-                  value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(e.target.value as StatusFilter)
-                  }
-                >
-                  <option value="all">Alle statussen</option>
-                  <option value="active">Actief</option>
-                  <option value="inactive">Inactief</option>
-                </select>
-
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <FaChartLine />
+                  {(() => {
+                    const ChartIcon = FaChartLine as unknown as React.ComponentType<{ size?: number; className?: string }>;
+                    return <ChartIcon size={16} />;
+                  })()}
                   {filteredEmployees.length} werknemers
                 </div>
               </div>
+            </div>
 
               {/* Table */}
-              <div className="bg-white rounded-xl border overflow-x-auto">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="p-4 text-left">Werknemer</th>
-                      <th className="p-4 text-left">Contact</th>
-                      <th className="p-4 text-left">Functie</th>
-                      <th className="p-4 text-center">Acties</th>
-                      <th className="p-4 text-left">Account</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Werknemer</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Functie</th>
+                      <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
                     </tr>
                   </thead>
 
-                  <tbody>
+                  <tbody className="divide-y divide-gray-200">
                     {filteredEmployees.map((e) => (
-                      <tr key={e.id} className="border-t hover:bg-gray-50">
-                        <td className="p-4">
-                          <div className="font-medium">{e.fullName}</div>
-                          <div className="text-sm text-gray-500">
-                            {e.birthPlace}
+                      <tr key={e.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3 group">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold flex items-center justify-center">
+                            {e.initials}
+                          </div>
+
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                              {e.fullName}
+                            </span>
+                            {e.birthPlace && (
+                              <span className="text-sm text-gray-500">
+                                {e.birthPlace}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-900">
+                              <FaEnvelope size={12} className="text-gray-400"/>
+                              {e.email}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <FaPhone size={12} className="text-gray-400" />
+                              {e.mobile}
+                            </div>
                           </div>
                         </td>
 
-                        <td className="p-4 text-sm">
-                          <div className="flex gap-2 items-center">
-                            <FaEnvelope />
-                            {e.email}
-                          </div>
-                          <div className="flex gap-2 items-center text-gray-500">
-                            <FaPhone />
-                            {e.mobile}
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {(() => {
+                            const role = roles.find(r => r.id === e.roleId);
+
+                            if (!role) {
+                              return (
+                                <span className="text-sm text-gray-400 italic">
+                                  —
+                                </span>
+                              );
+                            }
+
+                            return (
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {role.description ?? role.name}
+                                </span>
+                                {role.description && role.name && (
+                                  <span className="text-xs text-gray-500">
+                                    {role.name}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
 
-                        <td>
-                          {roles.find(r => r.id === e.roleId)?.description ??
-                          roles.find(r => r.id === e.roleId)?.name ??
-                          '—'}
-                        </td>
 
-                        <td className="p-4 text-center">
-                          <button
-                            onClick={() => {
-                              setSelectedEmployee(e);
-                              setActiveTab('edit');
-                            }}
-                            className="p-2 text-blue-600"
-                          >
-                            <FaEdit />
-                          </button>
-
-                           {e.loginIsActive && (
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => handleBlockLogin(e)}
-                              className="p-2 text-red-600"
+                              onClick={() => {
+                                setSelectedEmployee(e);
+                                setActiveTab('edit');
+                              }}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             >
-                              <FaTrash />
+                              <FaEdit size={16} />
                             </button>
-                          )}
 
-                          {!e.loginIsActive && (
-                            <button
-                              onClick={() => handleUnblockLogin(e)}
-                              className="p-2 text-yellow-600"
-                            >
-                              <FaUser />
-                            </button>
-                          )}
+                            {e.loginIsActive && (
+                              <button
+                                onClick={() => handleBlockLogin(e)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <FaTrash />
+                              </button>
+                            )}
+
+                            {!e.loginIsActive && (
+                              <button
+                                onClick={() => handleUnblockLogin(e)}
+                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              >
+                                <FaUser size={16} />
+                              </button>
+                            )}
+                          </div>
                         </td>
 
-                        <td className="p-4">
+                        <td className="px-6 py-4 whitespace-nowrap">  
                           {getStatusBadge(e.loginIsActive)}
                         </td>
 
@@ -353,6 +405,7 @@ const EmployeeManagement: React.FC = () => {
                       )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </>
           )}
@@ -458,159 +511,226 @@ const EmployeeForm = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border p-6">
-      <h2 className="text-xl font-semibold mb-6">
-        {employee ? 'Werknemer Bewerken' : 'Nieuwe Werknemer'}
-      </h2>
+    <div className="bg-white rounded-xl border p-6 space-y-8">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* ===================== HEADER ===================== */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {employee ? 'Werknemer bewerken' : 'Nieuwe werknemer'}
+        </h2>
+        <p className="text-sm text-gray-500">
+          Persoonlijke en werkgerelateerde gegevens
+        </p>
+      </div>
 
-        {/* Status */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Account</label>
-          <select
-            className="w-full border p-2 rounded"
-            value={form.status ?? 'active'}
-            onChange={(e) =>
-              setForm({ ...form, status: e.target.value as EmployeeStatus })
-            }
-          >
-            <option value="active">Actief</option>
-            <option value="inactive">Inactief</option>
-          </select>
-        </div>
+      {/* ===================== ACCOUNT ===================== */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Account
+        </h3>
 
-        {/* Initials */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Initialen</label>
-          <input
-            className="w-full border p-2 rounded"
-            value={form.initials ?? ''}
-            onChange={(e) => setForm({ ...form, initials: e.target.value })}
-          />
-        </div>
-
-        {/* First name */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Voornaam *</label>
-          <input
-            className="w-full border p-2 rounded"
-            value={form.firstName ?? ''}
-            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-            required
-          />
-        </div>
-
-        {/* Tussenvoegsel */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Tussenvoegsel</label>
-          <input
-            className="w-full border p-2 rounded"
-            value={form.tussenvoegsel ?? ''}
-            onChange={(e) =>
-              setForm({ ...form, tussenvoegsel: e.target.value })
-            }
-          />
-        </div>
-
-        {/* Last name */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Achternaam *</label>
-          <input
-            className="w-full border p-2 rounded"
-            value={form.lastName ?? ''}
-            onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-            required
-          />
-        </div>
-
-        {/* Birth place */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Geboorteplaats</label>
-          <input
-            className="w-full border p-2 rounded"
-            value={form.birthPlace ?? ''}
-            onChange={(e) => setForm({ ...form, birthPlace: e.target.value })}
-          />
-        </div>
-
-        {/* Birth date */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Geboortedatum</label>
-          <input
-            type="date"
-            className="w-full border p-2 rounded"
-            value={form.birthDate ?? ''}
-            onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
-          />
-        </div>
-
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Email *</label>
-          <input
-            type="email"
-            className="w-full border p-2 rounded"
-            value={form.email ?? ''}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </div>
-
-        {/* Mobile */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Mobiel</label>
-          <input
-            className="w-full border p-2 rounded"
-            value={form.mobile ?? ''}
-            onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-          />
-        </div>
-
-        {/* Role */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Rol</label>
-          <select
-            className="w-full border p-2 rounded"
-            value={form.roleId ?? ''}
-            disabled={roles.length === 0}
-            onChange={(e) =>
-              setForm({ ...form, roleId: e.target.value })
-            }
-            required
-          >
-            <option value="">Selecteer rol</option>
-            {roles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.description ?? role.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Start date */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Startdatum</label>
-          <input
-            type="date"
-            className="w-full border p-2 rounded"
-            value={form.startDate ?? ''}
-            onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Account status
+            </label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              value={form.status ?? 'active'}
+              onChange={(e) =>
+                setForm({ ...form, status: e.target.value as EmployeeStatus })
+              }
+            >
+              <option value="active">Actief</option>
+              <option value="inactive">Inactief</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-4 mt-6">
+      {/* ===================== NAAM ===================== */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Naam
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Initialen
+            </label>
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.initials ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, initials: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Voornaam *
+            </label>
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.firstName ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, firstName: e.target.value })
+              }
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tussenvoegsel
+            </label>
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.tussenvoegsel ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, tussenvoegsel: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Achternaam *
+            </label>
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.lastName ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, lastName: e.target.value })
+              }
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ===================== CONTACT ===================== */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Contact
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Geboorteplaats
+            </label>
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.birthPlace ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, birthPlace: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Geboortedatum
+            </label>
+            <input
+              type="date"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.birthDate ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, birthDate: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
+            </label>
+            <input
+              type="email"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.email ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Mobiel
+            </label>
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.mobile ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, mobile: e.target.value })
+              }
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ===================== WERK ===================== */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Werk
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Rol *
+            </label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              value={form.roleId ?? ''}
+              disabled={roles.length === 0}
+              onChange={(e) =>
+                setForm({ ...form, roleId: e.target.value })
+              }
+              required
+            >
+              <option value="">Selecteer rol</option>
+              {roles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.description ?? role.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Startdatum
+            </label>
+            <input
+              type="date"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              value={form.startDate ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, startDate: e.target.value })
+              }
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ===================== ACTIES ===================== */}
+      <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
         <button
           onClick={onCancel}
-          className="px-4 py-2 border rounded"
+          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
         >
           Annuleren
         </button>
         <button
           onClick={submit}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Opslaan
         </button>

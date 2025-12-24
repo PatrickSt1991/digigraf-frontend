@@ -17,8 +17,8 @@ export const endpoints = {
     maritalstatuses: `${API_BASE}/DossierUtils/maritalstatus`,
     coffins: `${API_BASE}/DossierUtils/coffins`,
     coffinlenghts: `${API_BASE}/DossierUtils/coffins-length`,
-    insuranceCompanies: `${API_BASE}/Insurance/companies`,
-    insuranceDeceased: `${API_BASE}/dummy`,
+    insuranceCompanies: `${API_BASE}/Insurance/parties`,
+    insuranceDeceased: `${API_BASE}/Insurance/policies`,
     invoiceDeceased: `${API_BASE}/invoice`,
     invoiceExcel: `${API_BASE}/invoice/generate-excel`,
     suppliers: `${API_BASE}/DossierUtils/suppliers`,
@@ -35,16 +35,37 @@ export const licenseEndpoints = {
 };
 
 export const adminEndpoints = {
-    deceased: `${API_BASE}/admin/deceased`,
-    insuranceCompanies: `${API_BASE}/admin/insurance/companies`,
-    employees: `${API_BASE}/employee/employeesadmin`,
-    employeesRoles: `${API_BASE}/employee/employeeRoles`,
+  // -------------------- DECEASED --------------------
+  deceased: `${API_BASE}/admin/deceased`,
 
-    createEmployee: `${API_BASE}/employee/createEmployee`,
-    updateEmployee: (id: string) => `${API_BASE}/employee/updateEmployee/${id}`,
-    getEmployee: (id: string) => `${API_BASE}/employee/getEmployee/${id}`,
+  // -------------------- INSURANCE --------------------
+  insuranceParties: `${API_BASE}/insurance/parties`,
+  insuranceParty: (id: string) => `${API_BASE}/insurance/parties/${id}`,
 
-    createLogin: (id: string) => `${API_BASE}/employee/createLogin/${id}`,
-    blockLogin: (id: string) => `${API_BASE}/employee/blockLogin/${id}`,
-    unblockLogin: (id: string) => `${API_BASE}/employee/unblockLogin/${id}`,
+  createInsuranceParty: `${API_BASE}/insurance/parties`,
+  updateInsuranceParty: (id: string) => `${API_BASE}/insurance/parties/${id}`,
+  deleteInsuranceParty: (id: string) => `${API_BASE}/insurance/parties/${id}`,
+
+  insurancePolicies: (overledeneId: string) =>
+    `${API_BASE}/insurance/policies?overledeneId=${overledeneId}`,
+
+  deleteInsurancePolicy: (id: string) =>
+    `${API_BASE}/insurance/policies/${id}`,
+
+  // -------------------- EMPLOYEES --------------------
+  employees: `${API_BASE}/employee/employeesadmin`,
+  employeesRoles: `${API_BASE}/employee/employeeRoles`,
+
+  createEmployee: `${API_BASE}/employee/createEmployee`,
+  updateEmployee: (id: string) =>
+    `${API_BASE}/employee/updateEmployee/${id}`,
+  getEmployee: (id: string) =>
+    `${API_BASE}/employee/getEmployee/${id}`,
+
+  createLogin: (id: string) =>
+    `${API_BASE}/employee/createLogin/${id}`,
+  blockLogin: (id: string) =>
+    `${API_BASE}/employee/blockLogin/${id}`,
+  unblockLogin: (id: string) =>
+    `${API_BASE}/employee/unblockLogin/${id}`,
 };
