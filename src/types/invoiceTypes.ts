@@ -5,7 +5,7 @@ export interface PriceComponent {
 }
 
 export interface InvoiceFormData {
-  selectedVerzekeraar: string;
+  insurancePartyId: string;
   priceComponents: PriceComponent[];
   discountAmount: number;
   subtotal: number;
