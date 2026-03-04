@@ -5,3 +5,4 @@ export * from './insurance';
 export * from './DocumentTemplate';
 export * from './invoiceTypes';
 export * from './employee';
+export * from './suppliers';

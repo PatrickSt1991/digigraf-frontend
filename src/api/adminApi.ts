@@ -1,7 +1,7 @@
 import { adminEndpoints } from "./apiConfig";
 import apiClient from "./apiClient";
 import { AdminEmployee, EmployeeDto } from "../types";
-import { RoleDto, InsurancePartyDto, InsurancePolicyDto } from "../types";
+import { RoleDto, InsurancePartyDto, InsurancePolicyDto, SupplierDto, SupplierTypeDto } from "../types";
 /* ===================== EMPLOYEES (existing) ===================== */
 
 export async function getEmployeeRoles(): Promise<RoleDto[]> {
@@ -156,6 +156,70 @@ export async function deleteInsurancePolicy(
 ): Promise<void> {
   await apiClient<void>(
     adminEndpoints.deleteInsurancePolicy(policyId),
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+/* ===================== SUPPLIERS ===================== */
+
+export async function getSuppliers(): Promise<SupplierDto[]> {
+  return apiClient<SupplierDto[]>(adminEndpoints.suppliers, {
+    method: "GET",
+  });
+}
+
+export async function getSupplierTypes(): Promise<SupplierTypeDto[]> {
+  return apiClient<SupplierTypeDto[]>(adminEndpoints.supplierTypes, {
+    method: "GET",
+  });
+}
+
+export async function getSupplier(
+  id: string
+): Promise<SupplierDto> {
+  return apiClient<SupplierDto>(
+    adminEndpoints.supplier(id),
+    {
+      method: "GET",
+    }
+  );
+}
+
+export async function createSupplier(
+  party: SupplierDto
+): Promise<SupplierDto> {
+  return apiClient<SupplierDto>(
+    adminEndpoints.createSupplier,
+    {
+      method: "POST",
+      body: party,
+    }
+  );
+}
+
+export async function updateSupplier(
+  party: SupplierDto
+): Promise<void> {
+  if (!party.id) {
+    throw new Error("Cannot update supplier without id");
+  }
+
+  await apiClient<void>(
+    adminEndpoints.updateSupplier(party.id),
+    {
+      method: "PUT",
+      body: party,
+    }
+  );
+}
+
+export async function deleteSupplier(
+  id: string
+): Promise<void> {
+  await apiClient<void>(
+    adminEndpoints.deleteSupplier(id),
     {
       method: "DELETE",
     }

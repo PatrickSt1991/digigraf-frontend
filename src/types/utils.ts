@@ -12,3 +12,17 @@ export interface FuneralType {
     description?: string;
     is_active?: boolean;
 }
+
+export interface PostalAddressDto {
+  street: string;
+  houseNumber: string;
+  suffix?: string | null;
+  zipCode: string;
+  city: string;
+}
+
+export interface PostboxDto {
+  address: string;
+  zipCode: string;
+  city: string;
+}

@@ -1,3 +1,5 @@
+import { createSupplier } from "./adminApi";
+
 export const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5027/api";
 
 export const endpoints = {
@@ -37,6 +39,16 @@ export const licenseEndpoints = {
 export const adminEndpoints = {
   // -------------------- DECEASED --------------------
   deceased: `${API_BASE}/admin/deceased`,
+
+  // -------------------- SUPPLIERS --------------------
+  suppliers: `${API_BASE}/Suppliers/all`,
+  supplier: (id: string) => `${API_BASE}/Suppliers/${id}`,
+
+  createSupplier: `${API_BASE}/Suppliers/createSupplier`,
+  updateSupplier: (id: string) => `${API_BASE}/Suppliers/${id}`,
+  deleteSupplier: (id: string) => `${API_BASE}/Suppliers/${id}`,
+
+  supplierTypes: `${API_BASE}/Suppliers/types`,
 
   // -------------------- INSURANCE --------------------
   insuranceParties: `${API_BASE}/insurance/parties`,

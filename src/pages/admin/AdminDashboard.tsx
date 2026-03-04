@@ -15,7 +15,7 @@ interface AdminCard {
 export default function AdminDashboard() {
   const cards: AdminCard[] = [
     { title: "Werknemers", description: "Voeg nieuwe werknemers toe of bewerk bestaande.", path: "/admin/employees", icon: FaUsers, category: 'management' },
-    { title: "Verzekeraars", description: "Voeg nieuwe verzekeraars toe of bewerk bestaande.", path: "/admin/insurance", icon: FaBuilding, category: 'management' },
+    { title: "Verzekeraars & Verenigingen", description: "Voeg nieuwe verzekeraars & verenigingen toe of bewerk bestaande.", path: "/admin/insurance", icon: FaBuilding, category: 'management' },
     { title: "Leveranciers", description: "Voeg nieuwe leveranciers toe of bewerk bestaande.", path: "/admin/suppliers", icon: FaTruck, category: 'management' },
     { title: "Financieel", description: "Bekijk en exporteer financiële gegevens van overledenen.", path: "/admin/facturen", icon: FaFileInvoiceDollar, category: 'financial' },
     { title: "Prijsafspraken", description: "Voeg nieuwe prijsafspraken toe of bewerk bestaande.", path: "/admin/pricecomponents", icon: FaMoneyBillWave, category: 'financial' },
