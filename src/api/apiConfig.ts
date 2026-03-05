@@ -63,6 +63,12 @@ export const adminEndpoints = {
 
   deleteInsurancePolicy: (id: string) =>
     `${API_BASE}/insurance/policies/${id}`,
+  // -------------------- COFFINS --------------------
+
+  coffins: `${API_BASE}/coffins`,
+  updateCoffin: (id: string) => `${API_BASE}/coffins/${id}`,
+  createCoffin: `${API_BASE}/coffins`,
+  deleteCoffin: (id: string) => `${API_BASE}/coffins/${id}`,
 
   // -------------------- EMPLOYEES --------------------
   employees: `${API_BASE}/employee/employeesadmin`,

@@ -19,6 +19,7 @@ import {
   AdminOverledenen,
   AdminInsurance,
   AdminSuppliers,
+  AdminCoffins,
   AdminLicense
 } from "./pages/admin";
 import { RequireUser } from "./routes/RequireUser";
@@ -51,6 +52,7 @@ function App() {
         <Route path="/admin/employees" element={<RequireAdmin><AdminEmployee /></RequireAdmin>} />
         <Route path="/admin/insurance" element={<RequireAdmin><AdminInsurance /></RequireAdmin>} />
         <Route path="/admin/suppliers" element={<RequireAdmin><AdminSuppliers /></RequireAdmin>} />
+        <Route path="/admin/coffins" element={<RequireAdmin><AdminCoffins /></RequireAdmin>} />
         <Route path="/admin/licenses" element={<RequireAdmin><AdminLicense /></RequireAdmin>} />
 
         {/* Fallback */}

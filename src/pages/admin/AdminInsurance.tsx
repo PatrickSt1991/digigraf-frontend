@@ -778,19 +778,23 @@ const AdminInsurance: React.FC = () => {
                                 <button
                                   onClick={async () => {
                                     if (!party.id) return;
-                                    await deleteInsuranceParty(party.id);
+                                    await updateInsuranceParty({ ...party, isActive: !party.isActive });
                                     await refresh();
                                   }}
-                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  title="Verwijderen"
+                                  className={`p-2 rounded-lg transition-colors ${
+                                    party.isActive
+                                      ? 'text-red-600 hover:bg-red-50'
+                                      : 'text-green-700 hover:bg-green-50'
+                                  }`}
+                                  title={party.isActive ? 'Deactiveren' : 'Activeren'}
                                 >
                                   {(() => {
-                                    const TrashIcon =
-                                      FaTrash as unknown as React.ComponentType<{
+                                    const Icon =
+                                      (party.isActive ? FaTrash : FaPlus) as unknown as React.ComponentType<{
                                         size?: number;
                                         className?: string;
                                       }>;
-                                    return <TrashIcon size={16} />;
+                                    return <Icon size={16} />;
                                   })()}
                                 </button>
                               </div>

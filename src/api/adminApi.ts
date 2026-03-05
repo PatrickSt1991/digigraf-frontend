@@ -1,6 +1,6 @@
 import { adminEndpoints } from "./apiConfig";
 import apiClient from "./apiClient";
-import { AdminEmployee, EmployeeDto } from "../types";
+import { AdminEmployee, CoffinsDto, EmployeeDto } from "../types";
 import { RoleDto, InsurancePartyDto, InsurancePolicyDto, SupplierDto, SupplierTypeDto } from "../types";
 /* ===================== EMPLOYEES (existing) ===================== */
 
@@ -220,6 +220,53 @@ export async function deleteSupplier(
 ): Promise<void> {
   await apiClient<void>(
     adminEndpoints.deleteSupplier(id),
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+/* ===================== COFFINS ===================== */
+
+export async function getCoffins(): Promise<CoffinsDto[]> {
+  return apiClient<CoffinsDto[]>(adminEndpoints.coffins, {
+    method: "GET",
+  });
+}
+
+export async function createCoffin(
+  coffin: CoffinsDto
+): Promise<CoffinsDto> {
+  return apiClient<CoffinsDto>(
+    adminEndpoints.createCoffin,
+    {
+      method: "POST",
+      body: coffin,
+    }
+  );
+}
+
+export async function updateCoffin(
+  coffin: CoffinsDto
+): Promise<void> {
+  if (!coffin.id) {
+    throw new Error("Cannot update coffin without id");
+  }
+
+  await apiClient<void>(
+    adminEndpoints.updateCoffin(coffin.id),
+    {
+      method: "PUT",
+      body: coffin,
+    }
+  );
+}
+
+export async function deleteCoffin(
+  id: string
+): Promise<void> {
+  await apiClient<void>(
+    adminEndpoints.deleteCoffin(id),
     {
       method: "DELETE",
     }

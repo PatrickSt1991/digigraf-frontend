@@ -26,3 +26,11 @@ export interface PostboxDto {
   zipCode: string;
   city: string;
 }
+
+export interface CoffinsDto {
+  id?: string;
+  code: string;
+  label: string;
+  description?: string;
+  isActive: boolean;
+}
