@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ReactComponent as DgLogo } from "../assets/dg.svg";
+import dgLogo from "../assets/dg.svg";
 import { AuthContext } from "../context/AuthContext";
 import { loginUser } from "../api/authenticateApi";
 
@@ -44,7 +44,7 @@ export default function Login() {
       <div className="flex flex-col items-center mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-14 h-14 sm:w-16 sm:h-16">
-            <DgLogo className="w-full h-full object-contain" />
+            <img src={dgLogo} alt="DG logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-3xl font-bold text-gray-800">DigiGraf</span>
         </div>        

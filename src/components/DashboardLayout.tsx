@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ReactComponent as DgLogo } from "../assets/dg.svg";
+import dgLogo from "../assets/dg.svg";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <Link to="/dashboard">
             <div className="flex items-center space-x-4 ml-5">
               <div className="w-10 h-10 sm:w-12 md:w-16 flex-shrink-0">
-                <DgLogo className="w-full h-full object-contain" />
+                <img src={dgLogo} alt="DG logo" className="w-full h-full object-contain"/>
               </div>
               <span className="font-bold text-lg">DigiGraf</span>
             </div>
