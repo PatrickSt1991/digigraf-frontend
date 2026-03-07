@@ -1,7 +1,8 @@
-import { adminEndpoints } from "./apiConfig";
+import { adminEndpoints, endpoints } from "./apiConfig";
 import apiClient from "./apiClient";
-import { AdminEmployee, CoffinsDto, EmployeeDto } from "../types";
+import { AdminEmployee, AsbestemmingDto, CoffinsDto, EmployeeDto, RouwbriefDto } from "../types";
 import { RoleDto, InsurancePartyDto, InsurancePolicyDto, SupplierDto, SupplierTypeDto } from "../types";
+import { InsurancePriceComponentDto } from "../types/priceComponents";
 /* ===================== EMPLOYEES (existing) ===================== */
 
 export async function getEmployeeRoles(): Promise<RoleDto[]> {
@@ -224,6 +225,107 @@ export async function deleteSupplier(
       method: "DELETE",
     }
   );
+}
+
+/* ===================== ASBESTEMMINGEN ===================== */
+
+export async function getAsbestemmingen(): Promise<AsbestemmingDto[]> {
+  return apiClient<AsbestemmingDto[]>(adminEndpoints.asbestemmingen, {
+    method: "GET",
+  });
+}
+
+export async function createAsbestemming(
+  asbestemming: AsbestemmingDto
+): Promise<AsbestemmingDto> {
+  return apiClient<AsbestemmingDto>(
+    adminEndpoints.createAsbestemming,
+    {
+      method: "POST",
+      body: asbestemming,
+    }
+  );
+}
+
+export async function updateAsbestemming(
+  asbestemming: AsbestemmingDto
+): Promise<void> {
+  if (!asbestemming.id) {
+    throw new Error("Cannot update asbestemming without id");
+  }
+
+  await apiClient<void>(
+    adminEndpoints.updateAsbestemming(asbestemming.id),
+    {
+      method: "PUT",
+      body: asbestemming,
+    }
+  );
+}
+
+/* ===================== Rouwbrieven ===================== */
+export async function getRouwbrieven(): Promise<RouwbriefDto[]> {
+  return apiClient<RouwbriefDto[]>(adminEndpoints.rouwbrieven, {
+    method: "GET",
+  });
+}
+
+export async function createRouwbrief(rouwbrief: RouwbriefDto): Promise<RouwbriefDto> {
+  return apiClient<RouwbriefDto>(
+    adminEndpoints.createRouwbrief,
+    {
+      method: "POST",
+      body: rouwbrief,
+    }
+  );
+}
+
+export async function updateRouwbrief(rouwbrief: RouwbriefDto): Promise<void> {
+  if (!rouwbrief.id) {
+    throw new Error("Cannot update rouwbrief without id");
+  }
+
+  await apiClient<void>(
+    adminEndpoints.updateRouwbrief(rouwbrief.id),
+    {
+      method: "PUT",
+      body: rouwbrief,
+    }
+  );
+}
+
+/* ===================== PRICECOMPONENTS ===================== */
+
+export async function getInsurancePriceComponents(): Promise<InsurancePriceComponentDto[]> {
+  return apiClient<InsurancePriceComponentDto[]>(adminEndpoints.insurancePriceComponents, {
+    method: "GET",
+  });
+}
+
+export async function createInsurancePriceComponent(
+  dto: InsurancePriceComponentDto
+): Promise<InsurancePriceComponentDto> {
+  return apiClient<InsurancePriceComponentDto>(adminEndpoints.createInsurancePriceComponent, {
+    method: "POST",
+    body: dto,
+  });
+}
+
+export async function updateInsurancePriceComponent(
+  dto: InsurancePriceComponentDto
+): Promise<void> {
+  if (!dto.id) throw new Error("Cannot update without id");
+
+  await apiClient<void>(adminEndpoints.updateInsurancePriceComponent(dto.id), {
+    method: "PUT",
+    body: dto,
+  });
+}
+
+export async function getInsurancePartiesAll(): Promise<InsurancePartyDto[]> {
+  return apiClient<InsurancePartyDto[]>(endpoints.insuranceCompanies, {
+    method: "GET",
+  });
 }
 
 /* ===================== COFFINS ===================== */

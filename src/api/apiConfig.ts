@@ -71,6 +71,25 @@ export const adminEndpoints = {
   createCoffin: `${API_BASE}/coffins`,
   deleteCoffin: (id: string) => `${API_BASE}/coffins/${id}`,
 
+  // -------------------- ASBESTEMMINGEN --------------------
+  asbestemmingen: `${API_BASE}/asbestemmingen`,
+  updateAsbestemming: (id: string) => `${API_BASE}/asbestemmingen/${id}`,
+  createAsbestemming: `${API_BASE}/asbestemmingen`,
+  deleteAsbestemming: (id: string) => `${API_BASE}/asbestemmingen/${id}`,
+
+  // -------------------- ROUWBRIEVEN --------------------
+  rouwbrieven: `${API_BASE}/rouwbrieven`,
+  updateRouwbrief: (id: string) => `${API_BASE}/rouwbrieven/${id}`,
+  createRouwbrief: `${API_BASE}/rouwbrieven`,
+  deleteRouwbrief: (id: string) => `${API_BASE}/rouwbrieven/${id}`,
+
+  // -------------------- PRICECOMPONENTS --------------------
+
+  insurancePriceComponents: `${API_BASE}/InsurancePriceComponents/all`,
+  createInsurancePriceComponent: `${API_BASE}/InsurancePriceComponents/createInsurancePriceComponent`,
+  updateInsurancePriceComponent: (id: string) => `${API_BASE}/InsurancePriceComponents/${id}`,
+
+
   // -------------------- EMPLOYEES --------------------
   employees: `${API_BASE}/employee/employeesadmin`,
   employeesRoles: `${API_BASE}/employee/employeeRoles`,

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '../../components';
 import { Link } from 'react-router-dom';
-import { GiCoffin } from "react-icons/gi";
 
 import {
   FaArrowLeft,
@@ -10,26 +9,25 @@ import {
   FaTrash,
   FaPlus,
   FaSearch,
+  FaExclamationTriangle,
   FaBox,
 } from 'react-icons/fa';
 
-// Adjust these API imports to match your backend routes
-import { getCoffins, createCoffin, updateCoffin } from '../../api/adminApi';
-import { CoffinsDto } from '../../types';
+import { getAsbestemmingen, createAsbestemming, updateAsbestemming } from '../../api/adminApi';
+import { AsbestemmingDto } from '../../types';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
-type Tab = 'overview' | 'add' | 'edit';
+const AdminAsbestemming: React.FC = () => {
+  const [activeTab, setActiveTab] =
+    useState<'overview' | 'add' | 'edit'>('overview');
 
-const AdminCoffins: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
-
-  const [selectedCoffin, setSelectedCoffin] = useState<CoffinsDto | null>(null);
+  const [selected, setSelected] = useState<AsbestemmingDto | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
-  const [coffins, setCoffins] = useState<CoffinsDto[]>([]);
+  const [items, setItems] = useState<AsbestemmingDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -37,10 +35,10 @@ const AdminCoffins: React.FC = () => {
     try {
       setLoadError(null);
       setLoading(true);
-      const data = await getCoffins();
-      setCoffins(data ?? []);
+      const data = await getAsbestemmingen();
+      setItems(data ?? []);
     } catch (e) {
-      setLoadError((e as Error)?.message ?? 'Kon uitvaartkisten niet laden.');
+      setLoadError((e as Error)?.message ?? 'Kon asbestemmingen niet laden.');
     } finally {
       setLoading(false);
     }
@@ -67,59 +65,48 @@ const AdminCoffins: React.FC = () => {
     );
   };
 
-  const avatarText = (typeNumber: string) => {
-    const clean = (typeNumber ?? '').trim();
-    if (!clean) return '—';
-    return clean.slice(0, 2).toUpperCase();
-  };
-
-  const filteredCoffins = useMemo(() => {
-    return coffins.filter(c => {
-      const matchesSearch = (
-        `${c.code ?? ''} ${c.description ?? ''}`
-      )
+  const filtered = useMemo(() => {
+    return items.filter(x => {
+      const matchesSearch = (x.description ?? '')
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
       const matchesStatus =
         statusFilter === 'all' ||
-        (statusFilter === 'active' && c.isActive) ||
-        (statusFilter === 'inactive' && !c.isActive);
+        (statusFilter === 'active' && x.isActive) ||
+        (statusFilter === 'inactive' && !x.isActive);
 
       return matchesSearch && matchesStatus;
     });
-  }, [coffins, searchTerm, statusFilter]);
+  }, [items, searchTerm, statusFilter]);
 
   /* -------------------------------------------------------------------------- */
   /*                                   FORM                                     */
   /* -------------------------------------------------------------------------- */
 
-  const CoffinForm = ({
-    coffin,
+  const AsbestemmingForm = ({
+    item,
     onSave,
     onCancel,
   }: {
-    coffin?: CoffinsDto;
-    onSave: (dto: CoffinsDto) => void;
+    item?: AsbestemmingDto;
+    onSave: (dto: AsbestemmingDto) => void;
     onCancel: () => void;
   }) => {
-    const [formData, setFormData] = useState<CoffinsDto>(
-      coffin ?? {
+    const [formData, setFormData] = useState<AsbestemmingDto>(
+      item ?? {
         id: undefined,
-        code: '',
-        label: '',
         description: '',
         isActive: true,
       }
     );
 
     const handleSave = () => {
-      if (!formData.code?.toString().trim()) return;
+      if (!formData.description.trim()) return;
 
-      const cleaned: CoffinsDto = {
+      const cleaned: AsbestemmingDto = {
         ...formData,
-        code: formData.code.toString().trim(),
-        description: (formData.description ?? '').trim() || '',
+        description: formData.description.trim(),
       };
 
       onSave(cleaned);
@@ -130,13 +117,13 @@ const AdminCoffins: React.FC = () => {
         <div className="p-6 border-b border-gray-200 h-16 flex items-center">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             {(() => {
-              const BoxIcon = GiCoffin as unknown as React.ComponentType<{
+              const Icon = FaBox as unknown as React.ComponentType<{
                 size?: number;
                 className?: string;
               }>;
-              return <BoxIcon size={20} className="text-blue-600" />;
+              return <Icon size={20} className="text-blue-600" />;
             })()}
-            {coffin ? 'Bewerken' : 'Nieuwe'} uitvaartkist
+            {item ? 'Bewerken' : 'Nieuwe'} asbestemming
           </h2>
         </div>
 
@@ -145,10 +132,12 @@ const AdminCoffins: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Basisgegevens</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
                 <select
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   value={formData.isActive ? 'active' : 'inactive'}
@@ -164,27 +153,21 @@ const AdminCoffins: React.FC = () => {
                 </select>
               </div>
 
-              {/* Type nummer */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type nummer *</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  value={formData.code ?? ''}
-                  onChange={e => setFormData({ ...formData, code: e.target.value })}
-                />
-                {!formData.code?.toString().trim() && (
-                  <p className="text-xs text-gray-500 mt-1">Type nummer is verplicht.</p>
-                )}
-              </div>
-
               {/* Omschrijving */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Omschrijving</label>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Omschrijving *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  value={formData.description ?? ''}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  value={formData.description}
+                  onChange={e =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                 />
+                {!formData.description.trim() && (
+                  <p className="text-xs text-gray-500 mt-1">Omschrijving is verplicht.</p>
+                )}
               </div>
             </div>
           </div>
@@ -202,9 +185,9 @@ const AdminCoffins: React.FC = () => {
             <button
               type="button"
               onClick={handleSave}
-              disabled={!formData.code?.toString().trim()}
+              disabled={!formData.description.trim()}
               className={`px-6 py-2 rounded-lg text-white ${
-                formData.code?.toString().trim()
+                formData.description.trim()
                   ? 'bg-blue-600 hover:bg-blue-700'
                   : 'bg-blue-300 cursor-not-allowed'
               }`}
@@ -248,16 +231,17 @@ const AdminCoffins: React.FC = () => {
                 <div className="flex items-center gap-3 h-full">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                     {(() => {
-                      const BoxIcon = GiCoffin as unknown as React.ComponentType<{
-                        size?: number;
-                        className?: string;
-                      }>;
-                      return <BoxIcon className="text-white" size={24} />;
+                      const Icon =
+                        FaBox as unknown as React.ComponentType<{
+                          size?: number;
+                          className?: string;
+                        }>;
+                      return <Icon className="text-white" size={22} />;
                     })()}
                   </div>
                   <div className="flex flex-col justify-center">
-                    <h1 className="text-2xl font-bold text-gray-900">Uitvaartkisten</h1>
-                    <p className="text-gray-600">Beheer alle uitvaartkisten en types</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Asbestemming</h1>
+                    <p className="text-gray-600">Beheer asbestemmingen</p>
                   </div>
                 </div>
               </div>
@@ -276,7 +260,7 @@ const AdminCoffins: React.FC = () => {
 
                 <button
                   onClick={() => {
-                    setSelectedCoffin(null);
+                    setSelected(null);
                     setActiveTab('add');
                   }}
                   className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
@@ -289,7 +273,7 @@ const AdminCoffins: React.FC = () => {
                       }>;
                     return <PlusIcon size={16} />;
                   })()}
-                  Nieuwe uitvaartkist
+                  Nieuwe asbestemming
                 </button>
               </div>
             </div>
@@ -319,7 +303,7 @@ const AdminCoffins: React.FC = () => {
 
                       <input
                         type="text"
-                        placeholder="Zoek uitvaartkisten..."
+                        placeholder="Zoek asbestemmingen..."
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
@@ -346,7 +330,7 @@ const AdminCoffins: React.FC = () => {
                         }>;
                       return <ChartIcon size={16} />;
                     })()}
-                    {filteredCoffins.length} uitvaartkisten
+                    {filtered.length} asbestemmingen
                   </div>
                 </div>
 
@@ -360,10 +344,7 @@ const AdminCoffins: React.FC = () => {
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Omschrijving
+                          Asbestemming
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
@@ -377,42 +358,33 @@ const AdminCoffins: React.FC = () => {
                     <tbody className="divide-y divide-gray-200">
                       {loading && (
                         <tr>
-                          <td colSpan={4} className="px-6 py-8 text-gray-500">
+                          <td colSpan={3} className="px-6 py-8 text-gray-500">
                             Laden...
                           </td>
                         </tr>
                       )}
 
                       {!loading &&
-                        filteredCoffins.map(c => (
-                          <tr key={c.id ?? c.code} className="hover:bg-gray-50 transition-colors">
-                            {/* Type */}
+                        filtered.map(a => (
+                          <tr
+                            key={a.id ?? a.description}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                  {avatarText(String(c.code ?? ''))}
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900">{c.label ?? '—'}</div>
-                                  <div className="text-sm text-gray-500">ID: {c.id ?? '—'}</div>
-                                </div>
+                              <div className="font-medium text-gray-900">
+                                {a.description?.trim() ? a.description : '—'}
                               </div>
                             </td>
 
-                            {/* Description */}
-                            <td className="px-6 py-4 text-sm text-gray-700">
-                              {c.description?.toString().trim() ? c.description : '—'}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {getStatusBadge(!!a.isActive)}
                             </td>
 
-                            {/* Status */}
-                            <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(!!c.isActive)}</td>
-
-                            {/* Actions */}
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <div className="flex items-center justify-center gap-2">
                                 <button
                                   onClick={() => {
-                                    setSelectedCoffin(c);
+                                    setSelected(a);
                                     setActiveTab('edit');
                                   }}
                                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -430,20 +402,20 @@ const AdminCoffins: React.FC = () => {
 
                                 <button
                                   onClick={async () => {
-                                    if (!c.id) return;
-                                    await updateCoffin({ ...c, isActive: !c.isActive });
+                                    if (!a.id) return;
+                                    await updateAsbestemming({ ...a, isActive: !a.isActive });
                                     await refresh();
                                   }}
                                   className={`p-2 rounded-lg transition-colors ${
-                                    c.isActive
+                                    a.isActive
                                       ? 'text-red-600 hover:bg-red-50'
                                       : 'text-green-700 hover:bg-green-50'
                                   }`}
-                                  title={c.isActive ? 'Deactiveren' : 'Activeren'}
+                                  title={a.isActive ? 'Deactiveren' : 'Activeren'}
                                 >
                                   {(() => {
                                     const Icon =
-                                      (c.isActive ? FaTrash : FaPlus) as unknown as React.ComponentType<{
+                                      (a.isActive ? FaTrash : FaPlus) as unknown as React.ComponentType<{
                                         size?: number;
                                         className?: string;
                                       }>;
@@ -455,10 +427,10 @@ const AdminCoffins: React.FC = () => {
                           </tr>
                         ))}
 
-                      {!loading && !loadError && filteredCoffins.length === 0 && (
+                      {!loading && !loadError && filtered.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="px-6 py-8 text-gray-500">
-                            Geen uitvaartkisten gevonden.
+                          <td colSpan={3} className="px-6 py-8 text-gray-500">
+                            Geen asbestemmingen gevonden.
                           </td>
                         </tr>
                       )}
@@ -471,9 +443,9 @@ const AdminCoffins: React.FC = () => {
 
           {/* ADD */}
           {activeTab === 'add' && (
-            <CoffinForm
+            <AsbestemmingForm
               onSave={async dto => {
-                await createCoffin(dto);
+                await createAsbestemming(dto);
                 await refresh();
                 setActiveTab('overview');
               }}
@@ -482,18 +454,18 @@ const AdminCoffins: React.FC = () => {
           )}
 
           {/* EDIT */}
-          {activeTab === 'edit' && selectedCoffin && (
-            <CoffinForm
-              coffin={selectedCoffin}
+          {activeTab === 'edit' && selected && (
+            <AsbestemmingForm
+              item={selected}
               onSave={async dto => {
-                await updateCoffin(dto);
+                await updateAsbestemming(dto);
                 await refresh();
                 setActiveTab('overview');
-                setSelectedCoffin(null);
+                setSelected(null);
               }}
               onCancel={() => {
                 setActiveTab('overview');
-                setSelectedCoffin(null);
+                setSelected(null);
               }}
             />
           )}
@@ -503,4 +475,4 @@ const AdminCoffins: React.FC = () => {
   );
 };
 
-export default AdminCoffins;
+export default AdminAsbestemming;

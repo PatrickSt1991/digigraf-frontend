@@ -34,3 +34,15 @@ export interface CoffinsDto {
   description?: string;
   isActive: boolean;
 }
+
+export interface AsbestemmingDto {
+  id?: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface RouwbriefDto {
+  id?: string;
+  code: string;
+  isActive: boolean;
+}

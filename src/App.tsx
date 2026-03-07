@@ -20,7 +20,10 @@ import {
   AdminInsurance,
   AdminSuppliers,
   AdminCoffins,
-  AdminLicense
+  AdminAsbestemming,
+  AdminLicense,
+  AdminLetters,
+  AdminPriceComponents
 } from "./pages/admin";
 import { RequireUser } from "./routes/RequireUser";
 import { RequireAdmin } from "./routes/RequireAdmin";
@@ -53,6 +56,9 @@ function App() {
         <Route path="/admin/insurance" element={<RequireAdmin><AdminInsurance /></RequireAdmin>} />
         <Route path="/admin/suppliers" element={<RequireAdmin><AdminSuppliers /></RequireAdmin>} />
         <Route path="/admin/coffins" element={<RequireAdmin><AdminCoffins /></RequireAdmin>} />
+        <Route path="/admin/ashes" element={<RequireAdmin><AdminAsbestemming /></RequireAdmin>} />
+        <Route path="/admin/letters" element={<RequireAdmin><AdminLetters /></RequireAdmin>} />
+        <Route path="/admin/pricecomponents" element={<RequireAdmin><AdminPriceComponents /></RequireAdmin>} />
         <Route path="/admin/licenses" element={<RequireAdmin><AdminLicense /></RequireAdmin>} />
 
         {/* Fallback */}
