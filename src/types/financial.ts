@@ -1,6 +1,7 @@
 export interface FinancialRowDto {
   id?: string;
   uitvaartNummer: string;
+  dossierId?: string;
 
   kostenbegrotingDatum?: string;
   hasKostenbegroting?: boolean;

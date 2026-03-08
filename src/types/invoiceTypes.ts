@@ -12,3 +12,8 @@ export interface InvoiceFormData {
   total: number;
   isExcelButtonEnabled: boolean;
 }
+
+export interface InvoiceAdminData extends InvoiceFormData {
+  selectedVerzekeraar?: string;
+  selectedVerzekeraarId?: string;
+}

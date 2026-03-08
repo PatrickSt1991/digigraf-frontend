@@ -115,4 +115,8 @@ export const adminEndpoints = {
   financialUrnen: `${API_BASE}/financial/urnen`,
   financialPayout: (id: string) => `${API_BASE}/financial/payout/${id}`,
   financialExport: (tab: string) => `${API_BASE}/financial/export/${tab}`,
+
+  invoiceByDeceased: (id: string) => `${API_BASE}/invoice/${id}`,
+  invoiceSave: `${API_BASE}/invoice`,
+  invoiceExcel: `${API_BASE}/invoice/generate-excel`,
 };

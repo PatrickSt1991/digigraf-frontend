@@ -8,7 +8,6 @@ import {
   FaSearch,
   FaFilter,
   FaFileExcel,
-  FaFileInvoice,
   FaFolderOpen,
   FaMoneyBillWave,
   FaPrint,
@@ -24,8 +23,8 @@ import {
   exportFinancialExcel,
 } from '../../api/adminApi';
 
-
 import { FinancialRowDto } from '../../types';
+import AdminInvoiceModal from "../../modals/admin/InvoiceModal";
 
 type FinancialTab = 'facturen' | 'bloemen' | 'steenhouwerij' | 'werkbonnen' | 'urnen';
 type StatusFilter = 'all' | 'open' | 'paid' | 'unpaid';
@@ -63,6 +62,10 @@ const AdminFinancial: React.FC = () => {
   const [payoutRow, setPayoutRow] = useState<FinancialRowDto | null>(null);
   const [payoutSaving, setPayoutSaving] = useState(false);
 
+  // kostenbegroting/invoice modal (admin)
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [invoiceDeceasedId, setInvoiceDeceasedId] = useState<string | null>(null);
+
   const refresh = async () => {
     try {
       setLoadError(null);
@@ -72,7 +75,6 @@ const AdminFinancial: React.FC = () => {
       const status = statusFilter;
 
       let data: FinancialRowDto[] = [];
-
       if (activeTab === 'facturen') data = await getFinancialInvoices({ q, status });
       if (activeTab === 'bloemen') data = await getFinancialBloemen({ q, status });
       if (activeTab === 'steenhouwerij') data = await getFinancialSteenhouwerij({ q, status });
@@ -88,7 +90,7 @@ const AdminFinancial: React.FC = () => {
   };
 
   useEffect(() => {
-    refresh();
+    void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -135,11 +137,23 @@ const AdminFinancial: React.FC = () => {
     await exportFinancialExcel(activeTab, { q: searchTerm.trim(), status: statusFilter });
   };
 
+    const openKostenbegrotingModal = (row: FinancialRowDto) => {
+
+    if (!row.dossierId) return;
+    setInvoiceDeceasedId(row.dossierId);
+    setInvoiceOpen(true);
+    };
+
+  const hasDossierId = (row: FinancialRowDto) => {
+    const anyRow = row as any;
+    return !!(anyRow.dossierId);
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
         <div className="max-w-7xl mx-auto space-y-6">
-          {/* Header (same style as AdminSuppliers) */}
+          {/* Header */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-10">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-4 h-full">
@@ -186,7 +200,7 @@ const AdminFinancial: React.FC = () => {
               </div>
             </div>
 
-            {/* Finance tabs */}
+            {/* Tabs */}
             <div className="mt-6 flex flex-wrap gap-2">
               {(Object.keys(TAB_LABEL) as FinancialTab[]).map(k => (
                 <button
@@ -204,7 +218,7 @@ const AdminFinancial: React.FC = () => {
             </div>
           </div>
 
-          {/* Filters (same card style as suppliers) */}
+          {/* Filters */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
               <div className="flex flex-col sm:flex-row gap-4 flex-1">
@@ -314,10 +328,7 @@ const AdminFinancial: React.FC = () => {
                 <tbody className="divide-y divide-gray-200">
                   {loading && (
                     <tr>
-                      <td
-                        colSpan={activeTab === 'facturen' ? 3 : 6}
-                        className="px-6 py-8 text-gray-500"
-                      >
+                      <td colSpan={activeTab === 'facturen' ? 3 : 6} className="px-6 py-8 text-gray-500">
                         Laden...
                       </td>
                     </tr>
@@ -338,26 +349,14 @@ const AdminFinancial: React.FC = () => {
 
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <div className="flex items-center justify-center gap-2">
+                                {/* This opens the admin modal (kostenbegroting/invoice edit) */}
                                 <button
                                   className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                   title="Kostenbegroting openen"
-                                  disabled={!r.hasKostenbegroting}
-                                  onClick={() => {
-                                    // TODO: open kostenbegroting
-                                  }}
+                                  disabled={!hasDossierId(r)}
+                                  onClick={() => openKostenbegrotingModal(r)}
                                 >
                                   <FaFolderOpen size={16} />
-                                </button>
-
-                                <button
-                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                  title="Factuur maken"
-                                  disabled={!r.canCreateInvoice}
-                                  onClick={() => {
-                                    // TODO: create invoice
-                                  }}
-                                >
-                                  <FaFileInvoice size={16} />
                                 </button>
 
                                 <button
@@ -460,9 +459,7 @@ const AdminFinancial: React.FC = () => {
                   {/* readonly */}
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Uitvaartnummer
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Uitvaartnummer</label>
                       <input
                         className="w-full px-3 py-2 rounded-lg border bg-gray-100 text-gray-700"
                         value={payoutRow.uitvaartNummer ?? ''}
@@ -471,9 +468,7 @@ const AdminFinancial: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Leverancier
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Leverancier</label>
                       <input
                         className="w-full px-3 py-2 rounded-lg border bg-gray-100 text-gray-700"
                         value={payoutRow.leverancier ?? ''}
@@ -482,9 +477,7 @@ const AdminFinancial: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Bedrag
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Bedrag</label>
                       <input
                         className="w-full px-3 py-2 rounded-lg border bg-gray-100 text-gray-700"
                         value={fmtMoney(payoutRow.bedrag)}
@@ -496,31 +489,23 @@ const AdminFinancial: React.FC = () => {
                   {/* editable */}
                   <div className="pt-2 border-t border-gray-200 space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Provisie
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Provisie</label>
                       <input
                         type="number"
                         step="0.01"
                         className="w-full px-3 py-2 rounded-lg border"
                         value={payoutRow.provisie ?? 0}
-                        onChange={e =>
-                          setPayoutRow({ ...payoutRow, provisie: Number(e.target.value) })
-                        }
+                        onChange={e => setPayoutRow({ ...payoutRow, provisie: Number(e.target.value) })}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Datum uitbetaald
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Datum uitbetaald</label>
                       <input
                         type="date"
                         className="w-full px-3 py-2 rounded-lg border"
                         value={(payoutRow.datumUitbetaald ?? '').slice(0, 10)}
-                        onChange={e =>
-                          setPayoutRow({ ...payoutRow, datumUitbetaald: e.target.value })
-                        }
+                        onChange={e => setPayoutRow({ ...payoutRow, datumUitbetaald: e.target.value })}
                       />
                     </div>
 
@@ -528,9 +513,7 @@ const AdminFinancial: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={!!payoutRow.uitbetaald}
-                        onChange={e =>
-                          setPayoutRow({ ...payoutRow, uitbetaald: e.target.checked })
-                        }
+                        onChange={e => setPayoutRow({ ...payoutRow, uitbetaald: e.target.checked })}
                       />
                       Uitbetaald
                     </label>
@@ -555,6 +538,17 @@ const AdminFinancial: React.FC = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Kostenbegroting modal (admin) */}
+          {invoiceOpen && invoiceDeceasedId && (
+            <AdminInvoiceModal
+              deceasedId={invoiceDeceasedId}
+              onClose={() => {
+                setInvoiceOpen(false);
+                setInvoiceDeceasedId(null);
+              }}
+            />
           )}
         </div>
       </div>

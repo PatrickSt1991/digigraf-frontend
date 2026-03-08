@@ -11,7 +11,9 @@ import { AdminEmployee,
   SupplierDto, 
   SupplierTypeDto, 
   InsurancePriceComponentDto, 
-  FinancialRowDto
+  FinancialRowDto,
+  InvoiceAdminData,
+  InvoiceFormData
 } from "../types";
 
 /* ===================== EMPLOYEES (existing) ===================== */
@@ -448,6 +450,43 @@ export async function exportFinancialExcel(
   const a = document.createElement("a");
   a.href = url;
   a.download = `Financial_${tab}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function getInvoiceByDeceasedId(deceasedId: string): Promise<InvoiceAdminData> {
+  return apiClient<InvoiceAdminData>(adminEndpoints.invoiceByDeceased(deceasedId), {
+    method: "GET",
+  });
+}
+
+export async function saveInvoiceForDeceased(
+  deceasedId: string,
+  data: InvoiceFormData
+): Promise<void> {
+  // backend expects deceasedId + selected insurer + price components etc.
+  await apiClient<void>(adminEndpoints.invoiceSave, {
+    method: "POST",
+    body: { deceasedId, ...data },
+  });
+}
+
+export async function generateInvoiceExcelForDeceased(
+  deceasedId: string,
+  data: InvoiceFormData
+): Promise<void> {
+  const res = await fetch(adminEndpoints.invoiceExcel, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deceasedId, ...data }),
+  });
+  if (!res.ok) throw new Error("Excel export mislukt");
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Invoice_${deceasedId}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }
