@@ -7,3 +7,4 @@ export * from './invoiceTypes';
 export * from './employee';
 export * from './suppliers';
 export * from './priceComponents';
+export * from './financial';

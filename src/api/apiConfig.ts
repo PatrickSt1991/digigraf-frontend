@@ -106,4 +106,13 @@ export const adminEndpoints = {
     `${API_BASE}/employee/blockLogin/${id}`,
   unblockLogin: (id: string) =>
     `${API_BASE}/employee/unblockLogin/${id}`,
+
+  // -------------------- FINANCIAL --------------------
+  financialFacturen: `${API_BASE}/financial/facturen`,
+  financialBloemen: `${API_BASE}/financial/bloemen`,
+  financialSteenhouwerij: `${API_BASE}/financial/steenhouwerij`,
+  financialWerkbonnen: `${API_BASE}/financial/werkbonnen`,
+  financialUrnen: `${API_BASE}/financial/urnen`,
+  financialPayout: (id: string) => `${API_BASE}/financial/payout/${id}`,
+  financialExport: (tab: string) => `${API_BASE}/financial/export/${tab}`,
 };

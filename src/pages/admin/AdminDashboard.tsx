@@ -21,7 +21,7 @@ export default function AdminDashboard() {
     { title: "Asbestemming", description: "Voeg nieuwe asbestemmingen toe of bewerk bestaande.", path: "/admin/ashes", icon: FaBox, category: 'inventory' },
     { title: "Rouwbrieven", description: "Voeg nieuwe rouwbrieven toe of bewerk bestaande.", path: "/admin/letters", icon: FaScroll, category: 'inventory' },
     { title: "Prijsafspraken", description: "Voeg nieuwe prijsafspraken toe of bewerk bestaande.", path: "/admin/pricecomponents", icon: FaMoneyBillWave, category: 'financial' },
-    { title: "Financieel", description: "Bekijk en exporteer financiële gegevens van overledenen.", path: "/admin/facturen", icon: FaFileInvoiceDollar, category: 'financial' },
+    { title: "Financieel", description: "Bekijk en exporteer financiële gegevens van overledenen.", path: "/admin/financial", icon: FaFileInvoiceDollar, category: 'financial' },
     { title: "Rapportages", description: "Bekijk en exporteer rapportages.", path: "/admin/reports", icon: FaChartBar, category: 'financial' },
     { title: "Algemene Instellingen", description: "Systeem instellingen beheren.", path: "/admin/licenses", icon: FaCog, category: 'settings' },
   ];

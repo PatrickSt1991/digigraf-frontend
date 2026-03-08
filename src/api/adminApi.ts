@@ -1,8 +1,19 @@
 import { adminEndpoints, endpoints } from "./apiConfig";
 import apiClient from "./apiClient";
-import { AdminEmployee, AsbestemmingDto, CoffinsDto, EmployeeDto, RouwbriefDto } from "../types";
-import { RoleDto, InsurancePartyDto, InsurancePolicyDto, SupplierDto, SupplierTypeDto } from "../types";
-import { InsurancePriceComponentDto } from "../types/priceComponents";
+import { AdminEmployee, 
+  AsbestemmingDto, 
+  CoffinsDto, 
+  EmployeeDto, 
+  RouwbriefDto, 
+  RoleDto, 
+  InsurancePartyDto, 
+  InsurancePolicyDto, 
+  SupplierDto, 
+  SupplierTypeDto, 
+  InsurancePriceComponentDto, 
+  FinancialRowDto
+} from "../types";
+
 /* ===================== EMPLOYEES (existing) ===================== */
 
 export async function getEmployeeRoles(): Promise<RoleDto[]> {
@@ -373,4 +384,70 @@ export async function deleteCoffin(
       method: "DELETE",
     }
   );
+}
+
+// ===================== FINANCIAL EXPORTS =====================
+type FinancialQuery = { q?: string; status?: string };
+
+export async function getFinancialInvoices(params: FinancialQuery): Promise<FinancialRowDto[]> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.status) qs.set("status", params.status);
+  return apiClient<FinancialRowDto[]>(`${adminEndpoints.financialFacturen}?${qs.toString()}`, { method: "GET" });
+}
+
+export async function getFinancialBloemen(params: FinancialQuery): Promise<FinancialRowDto[]> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.status) qs.set("status", params.status);
+  return apiClient<FinancialRowDto[]>(`${adminEndpoints.financialBloemen}?${qs.toString()}`, { method: "GET" });
+}
+
+export async function getFinancialSteenhouwerij(params: FinancialQuery): Promise<FinancialRowDto[]> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.status) qs.set("status", params.status);
+  return apiClient<FinancialRowDto[]>(`${adminEndpoints.financialSteenhouwerij}?${qs.toString()}`, { method: "GET" });
+}
+
+export async function getFinancialWerkbonnen(params: FinancialQuery): Promise<FinancialRowDto[]> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.status) qs.set("status", params.status);
+  return apiClient<FinancialRowDto[]>(`${adminEndpoints.financialWerkbonnen}?${qs.toString()}`, { method: "GET" });
+}
+
+export async function getFinancialUrnen(params: FinancialQuery): Promise<FinancialRowDto[]> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.status) qs.set("status", params.status);
+  return apiClient<FinancialRowDto[]>(`${adminEndpoints.financialUrnen}?${qs.toString()}`, { method: "GET" });
+}
+
+export async function updateFinancialPayout(
+  id: string,
+  body: { provisie: number; datumUitbetaald: string | null; uitbetaald: boolean }
+): Promise<void> {
+  await apiClient<void>(adminEndpoints.financialPayout(id), { method: "PATCH", body });
+}
+
+export async function exportFinancialExcel(
+  tab: "facturen" | "bloemen" | "steenhouwerij" | "werkbonnen" | "urnen",
+  params: FinancialQuery
+): Promise<void> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.status) qs.set("status", params.status);
+
+  // Use fetch for blob download
+  const res = await fetch(`${adminEndpoints.financialExport(tab)}?${qs.toString()}`);
+  if (!res.ok) throw new Error("Export mislukt");
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Financial_${tab}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
