@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FaTimes, FaPlus, FaTrash, FaSave, FaFileExcel } from "react-icons/fa";
 import type { InvoiceFormData, PriceComponent } from "../../types";
 import {
-  getInvoiceByDeceasedId,
-  saveInvoiceForDeceased,
-  generateInvoiceExcelForDeceased,
+  getInvoiceByDossierId,
+  saveInvoiceForDossier,
+  generateInvoiceExcelForDossier,
 } from "../../api/adminApi";
 
 const emptyInvoice: InvoiceFormData = {
@@ -17,10 +17,10 @@ const emptyInvoice: InvoiceFormData = {
 };
 
 export default function AdminInvoiceModal({
-  deceasedId,
+  dossierId,
   onClose,
 }: {
-  deceasedId: string;
+  dossierId: string;
   onClose: () => void;
 }) {
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function AdminInvoiceModal({
         setError(null);
         setLoading(true);
 
-        const data: any = await getInvoiceByDeceasedId(deceasedId);
+        const data: any = await getInvoiceByDossierId(dossierId);
 
         // data includes at least the form fields; if it also returns selectedVerzekeraar, store it
         setSelectedVerzekeraar(data.selectedVerzekeraar ?? "");
@@ -55,7 +55,7 @@ export default function AdminInvoiceModal({
         setLoading(false);
       }
     })();
-  }, [deceasedId]);
+  }, [dossierId]);
 
   const subtotal = useMemo(() => {
     return (invoice.priceComponents ?? []).reduce(
@@ -104,7 +104,7 @@ export default function AdminInvoiceModal({
         isExcelButtonEnabled: true,
       };
 
-      await saveInvoiceForDeceased(deceasedId, payload);
+      await saveInvoiceForDossier(dossierId, payload);
       setInvoice(payload);
     } catch (e: any) {
       setError(e?.message ?? "Opslaan mislukt.");
@@ -115,7 +115,7 @@ export default function AdminInvoiceModal({
 
   const onExcel = async () => {
     const payload: InvoiceFormData = { ...invoice, subtotal, total, isExcelButtonEnabled: true };
-    await generateInvoiceExcelForDeceased(deceasedId, payload);
+    await generateInvoiceExcelForDossier(dossierId, payload);
   };
 
   return (
@@ -124,7 +124,7 @@ export default function AdminInvoiceModal({
       <div className="absolute left-1/2 top-1/2 w-[95vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Factuur (Admin)</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Kostenbegroting</h2>
             <p className="text-sm text-gray-600">
               {selectedVerzekeraar ? `Verzekeraar: ${selectedVerzekeraar}` : "Bestaande factuur bewerken"}
             </p>

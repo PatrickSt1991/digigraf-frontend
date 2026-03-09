@@ -454,31 +454,30 @@ export async function exportFinancialExcel(
   URL.revokeObjectURL(url);
 }
 
-export async function getInvoiceByDeceasedId(deceasedId: string): Promise<InvoiceAdminData> {
-  return apiClient<InvoiceAdminData>(adminEndpoints.invoiceByDeceased(deceasedId), {
+export async function getInvoiceByDossierId(dossierId: string): Promise<InvoiceAdminData> {
+  return apiClient<InvoiceAdminData>(adminEndpoints.invoiceByDossier(dossierId), {
     method: "GET",
   });
 }
 
-export async function saveInvoiceForDeceased(
-  deceasedId: string,
+export async function saveInvoiceForDossier(
+  dossierId: string,
   data: InvoiceFormData
 ): Promise<void> {
-  // backend expects deceasedId + selected insurer + price components etc.
-  await apiClient<void>(adminEndpoints.invoiceSave, {
-    method: "POST",
-    body: { deceasedId, ...data },
+  await apiClient<void>(adminEndpoints.invoiceUpdate(dossierId), {
+    method: "PUT",
+    body: { dossierId, ...data },
   });
 }
 
-export async function generateInvoiceExcelForDeceased(
-  deceasedId: string,
+export async function generateInvoiceExcelForDossier(
+  dossierId: string,
   data: InvoiceFormData
 ): Promise<void> {
   const res = await fetch(adminEndpoints.invoiceExcel, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ deceasedId, ...data }),
+    body: JSON.stringify({ dossierId, ...data }),
   });
   if (!res.ok) throw new Error("Excel export mislukt");
 
@@ -486,7 +485,7 @@ export async function generateInvoiceExcelForDeceased(
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `Invoice_${deceasedId}.xlsx`;
+  a.download = `Invoice_${dossierId}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }

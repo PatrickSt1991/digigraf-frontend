@@ -43,6 +43,6 @@ export interface AsbestemmingDto {
 
 export interface RouwbriefDto {
   id?: string;
-  code: string;
+  description: string;
   isActive: boolean;
 }

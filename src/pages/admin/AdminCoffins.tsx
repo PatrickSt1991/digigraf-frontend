@@ -70,7 +70,7 @@ const AdminCoffins: React.FC = () => {
   const avatarText = (typeNumber: string) => {
     const clean = (typeNumber ?? '').trim();
     if (!clean) return '—';
-    return clean.slice(0, 2).toUpperCase();
+    return clean.slice(0, 5).toUpperCase();
   };
 
   const filteredCoffins = useMemo(() => {
@@ -393,8 +393,7 @@ const AdminCoffins: React.FC = () => {
                                   {avatarText(String(c.code ?? ''))}
                                 </div>
                                 <div>
-                                  <div className="font-medium text-gray-900">{c.label ?? '—'}</div>
-                                  <div className="text-sm text-gray-500">ID: {c.id ?? '—'}</div>
+                                  <div className="font-medium text-gray-900">{c.code ?? '—'}</div>
                                 </div>
                               </div>
                             </td>

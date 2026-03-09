@@ -64,7 +64,7 @@ const AdminLetters: React.FC = () => {
 
   const filtered = useMemo(() => {
     return items.filter(x => {
-      const matchesSearch = (x.code ?? '')
+      const matchesSearch = (x.description ?? '')
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
@@ -93,17 +93,17 @@ const AdminLetters: React.FC = () => {
     const [formData, setFormData] = useState<RouwbriefDto>(
       rouwbrief ?? {
         id: undefined,
-        code: '',
+        description: '',
         isActive: true,
       }
     );
 
     const handleSave = () => {
-      if (!formData.code.trim()) return;
+      if (!formData.description.trim()) return;
 
       const cleaned: RouwbriefDto = {
         ...formData,
-        code: formData.code.trim(),
+        description: formData.description.trim(),
       };
 
       onSave(cleaned);
@@ -156,10 +156,10 @@ const AdminLetters: React.FC = () => {
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  value={formData.code}
-                  onChange={e => setFormData({ ...formData, code: e.target.value })}
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                 />
-                {!formData.code.trim() && (
+                {!formData.description.trim() && (
                   <p className="text-xs text-gray-500 mt-1">Rouwbrief is verplicht.</p>
                 )}
               </div>
@@ -179,9 +179,9 @@ const AdminLetters: React.FC = () => {
             <button
               type="button"
               onClick={handleSave}
-              disabled={!formData.code.trim()}
+              disabled={!formData.description.trim()}
               className={`px-6 py-2 rounded-lg text-white ${
-                formData.code.trim()
+                formData.description.trim()
                   ? 'bg-blue-600 hover:bg-blue-700'
                   : 'bg-blue-300 cursor-not-allowed'
               }`}
@@ -361,11 +361,11 @@ const AdminLetters: React.FC = () => {
                       {!loading &&
                         filtered.map(x => (
                           <tr
-                            key={x.id ?? x.code}
+                            key={x.id ?? x.description}
                             className="hover:bg-gray-50 transition-colors"
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="font-medium text-gray-900">{x.code}</div>
+                              <div className="font-medium text-gray-900">{x.description}</div>
                             </td>
 
                             <td className="px-6 py-4 whitespace-nowrap">

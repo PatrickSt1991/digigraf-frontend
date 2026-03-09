@@ -8,9 +8,10 @@ import {
   FaSearch,
   FaFilter,
   FaFileExcel,
-  FaFolderOpen,
   FaMoneyBillWave,
-  FaPrint,
+  FaCalculator, 
+  FaFileInvoiceDollar,
+  FaFileInvoice
 } from 'react-icons/fa';
 
 import {
@@ -356,29 +357,29 @@ const AdminFinancial: React.FC = () => {
                                   disabled={!hasDossierId(r)}
                                   onClick={() => openKostenbegrotingModal(r)}
                                 >
-                                  <FaFolderOpen size={16} />
+                                  <FaCalculator  size={16} />
                                 </button>
 
                                 <button
                                   className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                                   title="Opdrachtgever factuur openen"
-                                  disabled={!r.canOpenOpdrachtgeverInvoice}
+                                  hidden={!r.canOpenOpdrachtgeverInvoice}
                                   onClick={() => {
                                     // TODO: open opdrachtgever invoice
                                   }}
                                 >
-                                  <FaPrint size={16} />
+                                  <FaFileInvoiceDollar size={16} />
                                 </button>
 
                                 <button
                                   className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                                   title="Herkomst factuur openen"
-                                  disabled={!r.canOpenHerkomstInvoice}
+                                  hidden={!r.canOpenHerkomstInvoice}
                                   onClick={() => {
                                     // TODO: open herkomst invoice
                                   }}
                                 >
-                                  <FaPrint size={16} />
+                                  <FaFileInvoice  size={16} />
                                 </button>
                               </div>
                             </td>
@@ -543,7 +544,7 @@ const AdminFinancial: React.FC = () => {
           {/* Kostenbegroting modal (admin) */}
           {invoiceOpen && invoiceDeceasedId && (
             <AdminInvoiceModal
-              deceasedId={invoiceDeceasedId}
+              dossierId={invoiceDeceasedId}
               onClose={() => {
                 setInvoiceOpen(false);
                 setInvoiceDeceasedId(null);

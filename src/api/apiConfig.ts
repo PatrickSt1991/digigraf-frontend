@@ -66,21 +66,21 @@ export const adminEndpoints = {
     `${API_BASE}/insurance/policies/${id}`,
   // -------------------- COFFINS --------------------
 
-  coffins: `${API_BASE}/coffins`,
+  coffins: `${API_BASE}/coffins/all`,
   updateCoffin: (id: string) => `${API_BASE}/coffins/${id}`,
-  createCoffin: `${API_BASE}/coffins`,
+  createCoffin: `${API_BASE}/coffins/createCoffin`,
   deleteCoffin: (id: string) => `${API_BASE}/coffins/${id}`,
 
   // -------------------- ASBESTEMMINGEN --------------------
-  asbestemmingen: `${API_BASE}/asbestemmingen`,
-  updateAsbestemming: (id: string) => `${API_BASE}/asbestemmingen/${id}`,
-  createAsbestemming: `${API_BASE}/asbestemmingen`,
+  asbestemmingen: `${API_BASE}/asbestemming/all`,
+  updateAsbestemming: (id: string) => `${API_BASE}/asbestemming/${id}`,
+  createAsbestemming: `${API_BASE}/asbestemming/createAsbestemming`,
   deleteAsbestemming: (id: string) => `${API_BASE}/asbestemmingen/${id}`,
 
   // -------------------- ROUWBRIEVEN --------------------
-  rouwbrieven: `${API_BASE}/rouwbrieven`,
+  rouwbrieven: `${API_BASE}/rouwbrieven/all`,
   updateRouwbrief: (id: string) => `${API_BASE}/rouwbrieven/${id}`,
-  createRouwbrief: `${API_BASE}/rouwbrieven`,
+  createRouwbrief: `${API_BASE}/rouwbrieven/createRouwbrief`,
   deleteRouwbrief: (id: string) => `${API_BASE}/rouwbrieven/${id}`,
 
   // -------------------- PRICECOMPONENTS --------------------
@@ -116,7 +116,8 @@ export const adminEndpoints = {
   financialPayout: (id: string) => `${API_BASE}/financial/payout/${id}`,
   financialExport: (tab: string) => `${API_BASE}/financial/export/${tab}`,
 
-  invoiceByDeceased: (id: string) => `${API_BASE}/invoice/${id}`,
+  invoiceByDossier: (id: string) => `${API_BASE}/invoice/${id}`,
   invoiceSave: `${API_BASE}/invoice`,
+  invoiceUpdate: (id: string) => `${API_BASE}/invoice/${id}`,
   invoiceExcel: `${API_BASE}/invoice/generate-excel`,
 };
