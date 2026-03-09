@@ -479,13 +479,22 @@ export async function generateInvoiceExcelForDossier(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ dossierId, ...data }),
   });
+
   if (!res.ok) throw new Error("Excel export mislukt");
 
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
+
+  const contentDisposition = res.headers.get("Content-Disposition");
+  const match = contentDisposition?.match(/filename="?([^"]+)"?/);
+  const fileName = match?.[1] ?? `Kostenbegroting_${dossierId}.xls`;
+
   const a = document.createElement("a");
   a.href = url;
-  a.download = `Invoice_${dossierId}.xlsx`;
+  a.download = fileName;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+
   URL.revokeObjectURL(url);
 }

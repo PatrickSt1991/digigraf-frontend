@@ -114,6 +114,7 @@ export default function AdminInvoiceModal({
   };
 
   const onExcel = async () => {
+    console.log("Generating Excel with payload:", { ...invoice, subtotal, total });
     const payload: InvoiceFormData = { ...invoice, subtotal, total, isExcelButtonEnabled: true };
     await generateInvoiceExcelForDossier(dossierId, payload);
   };
