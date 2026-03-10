@@ -1,3 +1,9 @@
+export type InsurancePolicyRow = {
+  id: string;
+  policyNumber: string;
+  premium: number;  
+}
+
 export interface PriceComponent {
   omschrijving: string;
   aantal: number;
@@ -7,10 +13,12 @@ export interface PriceComponent {
 export interface InvoiceFormData {
   insurancePartyId: string;
   priceComponents: PriceComponent[];
+  insurancePolicies?: InsurancePolicyRow[];
   discountAmount: number;
   subtotal: number;
   total: number;
   isExcelButtonEnabled: boolean;
+  invoiceDate: string;
 }
 
 export interface InvoiceAdminData extends InvoiceFormData {

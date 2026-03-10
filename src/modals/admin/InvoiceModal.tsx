@@ -10,10 +10,12 @@ import {
 const emptyInvoice: InvoiceFormData = {
   insurancePartyId: "",
   priceComponents: [{ omschrijving: "", aantal: 1, bedrag: 0 }],
+  insurancePolicies: [],
   discountAmount: 0,
   subtotal: 0,
   total: 0,
   isExcelButtonEnabled: false,
+  invoiceDate: "",
 };
 
 export default function AdminInvoiceModal({
@@ -44,10 +46,12 @@ export default function AdminInvoiceModal({
         setInvoice({
           insurancePartyId: data.insurancePartyId ?? data.selectedVerzekeraarId ?? "",
           priceComponents: data.priceComponents ?? [],
+          insurancePolicies: data.insurancePolicies ?? [],
           discountAmount: data.discountAmount ?? 0,
           subtotal: data.subtotal ?? 0,
           total: data.total ?? 0,
           isExcelButtonEnabled: true,
+          invoiceDate: data.invoiceDate
         });
       } catch (e: any) {
         setError(e?.message ?? "Kon factuur niet laden.");
@@ -64,10 +68,17 @@ export default function AdminInvoiceModal({
     );
   }, [invoice.priceComponents]);
 
-  const total = useMemo(() => subtotal - (Number(invoice.discountAmount) || 0), [
-    subtotal,
-    invoice.discountAmount,
-  ]);
+  const insuranceTotal = useMemo(() => {
+    return (invoice.insurancePolicies ?? []).reduce(
+      (sum, p) => sum + (Number(p.premium) || 0),
+      0
+    );
+  }, [invoice.insurancePolicies]);
+
+  const total = useMemo(
+    () => subtotal - (Number(invoice.discountAmount) || 0) - insuranceTotal,
+    [subtotal, invoice.discountAmount, insuranceTotal]
+  );
 
   const setLine = (idx: number, key: keyof PriceComponent, value: any) => {
     setInvoice((prev) => {
@@ -215,7 +226,7 @@ export default function AdminInvoiceModal({
 
                   <tbody className="divide-y divide-gray-200">
                     {invoice.priceComponents.map((pc, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                      <tr key={`pc-${idx}`} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-3">
                           <input
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -251,6 +262,46 @@ export default function AdminInvoiceModal({
                           >
                             <FaTrash size={16} />
                           </button>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {(invoice.insurancePolicies ?? []).length > 0 && (
+                      <tr className="bg-gray-50">
+                        <td colSpan={4} className="px-6 py-2 text-xs font-semibold text-gray-500 uppercase">
+                          Verzekeringspolissen
+                        </td>
+                      </tr>
+                    )}
+
+                    {(invoice.insurancePolicies ?? []).map((policy) => (
+                      <tr key={`ip-${policy.id}`} className="bg-blue-50/40">
+                        <td className="px-6 py-3">
+                          <input
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-700"
+                            value={policy.policyNumber ? `Verzekering ${policy.policyNumber}` : "Verzekering"}
+                            readOnly
+                          />
+                        </td>
+
+                        <td className="px-6 py-3 w-28">
+                          <input
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-700"
+                            value={1}
+                            readOnly
+                          />
+                        </td>
+
+                        <td className="px-6 py-3 w-40">
+                          <input
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-700"
+                            value={policy.premium}
+                            readOnly
+                          />
+                        </td>
+
+                        <td className="px-6 py-3 text-right">
+                          <span className="text-xs text-gray-500">Automatisch</span>
                         </td>
                       </tr>
                     ))}

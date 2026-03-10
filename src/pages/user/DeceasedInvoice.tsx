@@ -32,6 +32,7 @@ export default function DeceasedInvoice() {
     isExcelButtonEnabled: true,
     funeralLeader: "",
     funeralNumber: "",
+    invoiceDate: "",
   };
 
   const {
