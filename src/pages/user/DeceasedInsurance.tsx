@@ -1,11 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import {
-  DashboardLayout,
-  FormCard,
-  FormField,
-  FuneralForm,
-} from "../../components";
+import { DashboardLayout, FormCard, FormField, FuneralForm } from "../../components";
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 import { InsuranceEntry } from "../../types";
@@ -19,105 +14,138 @@ export default function DeceasedInsurance() {
         funeralNumber?: string;
       }
     | undefined;
-  const { overledeneId } = useParams();
+
+  const { dossierId } = useParams();
   const initializedRef = useRef(false);
 
   const {
     formData,
     handleChange,
     setFormData,
-    goNext,
     goBack,
     loading: formLoading,
     error: formError,
   } = useFormHandler({
     initialData: {
+      id: "",
       funeralLeader: navState?.funeralLeader ?? "",
-      funeralNumber: navState?.funeralNumber ??  "",
+      funeralNumber: navState?.funeralNumber ?? "",
       insuranceEntries: [] as InsuranceEntry[],
       age: "",
     },
-    steps: [
-      "/deceased-information",
-      "/deceased-insurance",
-      "/deceased-layout",
-      "/success-deceased",
-    ],
-    fetchUrl: overledeneId
-      ? `${endpoints.deceased}/${overledeneId}/insurances`
-      : undefined,
+    steps: ["/deceased-information", "/deceased-insurance", "/deceased-layout", "/success-deceased"],
+    fetchUrl: dossierId ? `${endpoints.insuranceDeceased}/${dossierId}` : undefined,
     allow404AsEmpty: true,
   });
 
-  const saveUrl = overledeneId
-    ? `${endpoints.insuranceDeceased}?overledeneId=${overledeneId}`
+  const saveUrl = dossierId
+    ? `${endpoints.insuranceDeceased}/${dossierId}`
     : endpoints.insuranceDeceased;
 
   const handleNext = useSaveAndNext({
     formData,
     endpoint: saveUrl,
-    id: overledeneId as string | undefined,
+    id: dossierId,
     getNextPath: (_result, currentId) => {
-      return currentId
-        ? `/deceased-layout/${currentId}`
-        : "/deceased-layout";
+      return currentId ? `/deceased-layout/${currentId}` : "/deceased-layout";
     },
+    getNextState: (_result, currentId) => ({
+      dossierId: currentId ?? formData.id ?? "",
+      funeralLeader: formData.funeralLeader ?? "",
+      funeralNumber: formData.funeralNumber ?? "",
+    }),
   });
-  const { data, loading: dropdownLoading, errors: dropdownErrors } =
-    useDropdownData({
-      insuranceParties: endpoints.insuranceCompanies,
-    });
 
-  // Seed default entries once
+  const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
+    insuranceParties: endpoints.insuranceCompanies,
+  });
+
   useEffect(() => {
-    if (!initializedRef.current && !formLoading) {
-      const entries: InsuranceEntry[] = Array.from({ length: 3 }).map(() => ({
-        insurancePartyId: "",
-        policyNumber: "",
-        premium: undefined,
-      }));
-      setFormData((prev) => ({ ...prev, insuranceEntries: entries }));
+    if (formLoading || initializedRef.current) return;
+
+    const existingEntries = formData.insuranceEntries ?? [];
+    const missingCount = Math.max(0, 3 - existingEntries.length);
+
+    if (missingCount === 0) {
       initializedRef.current = true;
+      return;
     }
-  }, [formLoading, setFormData]);
+
+    const extraEntries: InsuranceEntry[] = Array.from({ length: missingCount }, () => ({
+      insurancePartyId: "",
+      policyNumber: "",
+      premium: undefined,
+    }));
+
+    setFormData((prev) => ({
+      ...prev,
+      insuranceEntries: [...(prev.insuranceEntries ?? []), ...extraEntries],
+    }));
+
+    initializedRef.current = true;
+  }, [formLoading, formData.insuranceEntries, setFormData]);
 
   const handleEntryChange = (
     index: number,
     field: keyof InsuranceEntry,
     value: string | number
   ) => {
-    const updated = [...formData.insuranceEntries];
-    updated[index] = {
-      ...updated[index],
-      [field]:
-        field === "premium"
-          ? value === ""
-            ? undefined
-            : Number(value)
-          : value,
-    };
-    setFormData((prev) => ({ ...prev, insuranceEntries: updated }));
+    setFormData((prev) => {
+      const updated = [...(prev.insuranceEntries ?? [])];
+
+      updated[index] = {
+        ...updated[index],
+        [field]:
+          field === "premium"
+            ? value === ""
+              ? undefined
+              : Number(value)
+            : value,
+      };
+
+      return {
+        ...prev,
+        insuranceEntries: updated,
+      };
+    });
   };
 
   const addEntry = () => {
     setFormData((prev) => ({
       ...prev,
       insuranceEntries: [
-        ...prev.insuranceEntries,
+        ...(prev.insuranceEntries ?? []),
         { insurancePartyId: "", policyNumber: "", premium: undefined },
       ],
     }));
   };
 
   const removeEntry = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      insuranceEntries: prev.insuranceEntries.filter((_, i) => i !== index),
-    }));
+    setFormData((prev) => {
+      const current = prev.insuranceEntries ?? [];
+
+      if (current.length <= 3) {
+        const updated = [...current];
+        updated[index] = {
+          insurancePartyId: "",
+          policyNumber: "",
+          premium: undefined,
+        };
+
+        return {
+          ...prev,
+          insuranceEntries: updated,
+        };
+      }
+
+      return {
+        ...prev,
+        insuranceEntries: current.filter((_, i) => i !== index),
+      };
+    });
   };
 
-  const insuranceParties =
-    (data.insuranceParties || []).filter((p: any) => p.isInsurance);
+  const insuranceParties = (data.insuranceParties || []).filter((p: any) => p.isInsurance);
 
   return (
     <DashboardLayout>
@@ -143,18 +171,12 @@ export default function DeceasedInsurance() {
                 {dropdownLoading.insuranceParties ? (
                   <div>Loading...</div>
                 ) : dropdownErrors.insuranceParties ? (
-                  <div className="text-red-600">
-                    {dropdownErrors.insuranceParties}
-                  </div>
+                  <div className="text-red-600">{dropdownErrors.insuranceParties}</div>
                 ) : (
                   <select
                     value={entry.insurancePartyId}
                     onChange={(e) =>
-                      handleEntryChange(
-                        index,
-                        "insurancePartyId",
-                        e.target.value
-                      )
+                      handleEntryChange(index, "insurancePartyId", e.target.value)
                     }
                     className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                   >

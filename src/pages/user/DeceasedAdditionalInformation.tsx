@@ -13,18 +13,18 @@ export default function AdditionalInformationDeceased() {
         funeralNumber?: string;
       }
     | undefined;
-  const { overledeneId } = useParams();
+  const { dossierId } = useParams();
 
   const {
     formData,
     handleChange,
     handleDateChange,
-    goNext,
     goBack,
     loading: formLoading,
     error: formError,
   } = useFormHandler({
     initialData: {
+      id: "",
       // Additional information about the deceased
       maritalstatus: "",
       belief: "",
@@ -66,23 +66,28 @@ export default function AdditionalInformationDeceased() {
     steps: ["/deceased","/deceased-information","/deceased-insurance","/success-deceased"],
     dateFieldName: "dob",
     calculateAge,
-    fetchUrl: overledeneId ? `${endpoints.additional}/${overledeneId}` : undefined,
+    fetchUrl: dossierId ? `${endpoints.additional}/${dossierId}` : undefined,
     allow404AsEmpty: true,
   });
 
-  const saveurl = overledeneId 
-    ? `${endpoints.additional}?overledeneId=${overledeneId}`
+  const saveurl = dossierId 
+    ? `${endpoints.additional}/${dossierId}`
     : endpoints.additional;
 
   const handleNext = useSaveAndNext({
     formData,
     endpoint: saveurl,
-    id: overledeneId as string | undefined,
+    id: dossierId,
     getNextPath: (_result, currentId) => {
       return currentId
         ? `/deceased-insurance/${currentId}`
         : "/deceased-insurance";
     },
+    getNextState: (_result, currentId) => ({
+      dossierId: currentId ?? formData.id ?? "",
+      funeralLeader: formData.funeralLeader ?? "",
+      funeralNumber: formData.funeralNumber ?? "",
+    }),
   });
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
@@ -201,7 +206,7 @@ export default function AdditionalInformationDeceased() {
             <FormField label="Huisnummer" name="housenumber" value={formData.housenumber} onChange={handleChange} />
             <FormField label="Toevoeging" name="housenumberAddition" value={formData.housenumberAddition} onChange={handleChange} />
             <FormField label="Straat" required name="street" value={formData.street} onChange={handleChange} />
-            <FormField label="City" required name="city" value={formData.city} onChange={handleChange} />
+            <FormField label="Plaats" required name="city" value={formData.city} onChange={handleChange} />
             <FormField label="Gemeente" name="county" value={formData.county} onChange={handleChange} />
             <FormField label="Telefoonnummer" required name="phonenumber" value={formData.phonenumber} onChange={handleChange} />
             <FormField label="E-mail" name="email" value={formData.email} onChange={handleChange} />

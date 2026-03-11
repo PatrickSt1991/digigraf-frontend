@@ -7,13 +7,12 @@ import { DossierDto } from "../../types";
 
 export default function Deceased() {
   const location = useLocation();
-  const { overledeneId } = useParams<{ overledeneId: string }>();
+  const { dossierId } = useParams<{ dossierId: string }>();
 
   const {
     formData,
     handleChange,
     handleDateChange,
-    goNext,
     goBack,
     loading,
     error,
@@ -61,18 +60,18 @@ export default function Deceased() {
     dateFieldName: "deceased.dob",
     deathDateFieldName: "deathInfo.dateOfDeath",
     calculateAge,
-    fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
+    fetchUrl: dossierId ? `${endpoints.deceased}/${dossierId}` : undefined,
     allow404AsEmpty: true,
   });
 
-  const saveUrl = overledeneId
-    ? `${endpoints.deceased}/${overledeneId}`
+  const saveUrl = dossierId
+    ? `${endpoints.deceased}/${dossierId}`
     : `${endpoints.deceased}/new`;
 
   const handleNext = useSaveAndNext<DossierDto>({
     formData,
     endpoint: saveUrl,
-    id: overledeneId,
+    id: dossierId,
     getNextPath: (result, currentId) => {
       const savedId = currentId ?? result?.id;
       return savedId
@@ -324,7 +323,7 @@ export default function Deceased() {
                 >
                   <option value="">Selecteer een lijkvinding...</option>
                   {data.bodyFindings?.map((s: any) => (
-                    <option key={s.id} value={s.code}>
+                    <option key={s.id} value={s.label}>
                       {s.label}
                     </option>
                   ))}
@@ -346,7 +345,7 @@ export default function Deceased() {
                 >
                   <option value="">Selecteer een herkomst...</option>
                   {data.origins?.map((s: any) => (
-                    <option key={s.id} value={s.code}>
+                    <option key={s.id} value={s.label}>
                       {s.label}
                     </option>
                   ))}

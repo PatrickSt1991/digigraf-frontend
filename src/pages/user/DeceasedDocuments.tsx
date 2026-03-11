@@ -6,7 +6,7 @@ import { useFormHandler } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 
 export default function DeceasedDocuments() {
-  const { overledeneId } = useParams<{ overledeneId: string }>();
+  const { dossierId } = useParams<{ dossierId: string }>();
   const location = useLocation();
   const navState = location.state as
     | {
@@ -35,8 +35,8 @@ export default function DeceasedDocuments() {
        templates: [] 
       },
     steps: ["/deceased-funeral", "/deceased-documents", "/deceased-invoice", "/success-deceased"],
-    fetchUrl: overledeneId
-      ? `${endpoints.documentsdeceased}/${overledeneId}`
+    fetchUrl: dossierId
+      ? `${endpoints.documentsdeceased}/${dossierId}`
       : `${endpoints.documentsdefault}`,
     allow404AsEmpty: true,
   });

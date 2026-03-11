@@ -5,7 +5,7 @@ import { endpoints } from "../../api/apiConfig";
 
 export default function DeceasedServicesLayout() {
   const location = useLocation();
-  const { deceasedId } = useParams<{ deceasedId: string }>();
+  const { dossierId } = useParams<{ dossierId: string }>();
   const navState = location.state as
     | {
         dossierId?: string;
@@ -14,7 +14,7 @@ export default function DeceasedServicesLayout() {
       }
     | undefined;
 
-  const { formData, handleChange, goNext, goBack, loading, error } = useFormHandler({
+  const { formData, handleChange, setFormData, goBack, loading, error } = useFormHandler({
     initialData: {
       funeralLeader: navState?.funeralLeader ?? "",
       funeralNumber: navState?.funeralNumber ??  "",
@@ -59,7 +59,7 @@ export default function DeceasedServicesLayout() {
       isNotificationEnabled: false,
     },
     steps: ["/deceased-invoice", "/deceased-services", "/the-next-step-final-step", "/success-deceased"],
-    fetchUrl: deceasedId ? `${endpoints.deceased}/${deceasedId}` : undefined,
+    fetchUrl: dossierId ? `${endpoints.deceased}/${dossierId}` : undefined,
     allow404AsEmpty: true,
   });
 
@@ -91,16 +91,20 @@ export default function DeceasedServicesLayout() {
   if (loading) return <div>Loading data...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
 
-  const handleWorksheetChange = (index: number, name: string, value: any) => {
-    const newWorksheets = [...formData.worksheets];
-    newWorksheets[index] = { ...newWorksheets[index], [name]: value };
-    handleChange({
-      target: {
-        name: "worksheets",
-        value: newWorksheets,
-      },
-    });
-  };
+const handleWorksheetChange = (index: number, name: string, value: any) => {
+  setFormData((prev) => {
+    const newWorksheets = [...prev.worksheets];
+    newWorksheets[index] = {
+      ...newWorksheets[index],
+      [name]: value,
+    };
+
+    return {
+      ...prev,
+      worksheets: newWorksheets,
+    };
+  });
+};
 
   return (
     <DashboardLayout>

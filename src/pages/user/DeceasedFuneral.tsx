@@ -12,12 +12,11 @@ export default function FuneralDeceased() {
           funeralNumber?: string;
         }
       | undefined;
-    const { overledeneId } = useParams();
+    const { dossierId } = useParams();
 
     const {
         formData,
         handleChange,
-        goNext,
         goBack,
         loading: formLoading,
         error: formError,
@@ -55,18 +54,17 @@ export default function FuneralDeceased() {
             funeralNumber: navState?.funeralNumber ??  "",
         },
         steps: ["/deceased-layout", "/deceased-funeral", "/deceased-documents", "/success-deceased"],
-        fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
+        fetchUrl: dossierId ? `${endpoints.funeral}/${dossierId}` : undefined,
         allow404AsEmpty: true,
     });
 
-    const saveurl = overledeneId
-      ? `${endpoints.funeral}?overledeneId=${overledeneId}`
+    const saveurl = dossierId ? `${endpoints.funeral}/${dossierId}`
       : endpoints.funeral;
 
     const handleNext = useSaveAndNext({
       formData,
       endpoint: saveurl,
-      id: overledeneId as string | undefined,
+      id: dossierId as string | undefined,
       getNextPath: (_result, currentId) => {
         return currentId
           ? `/deceased-documents/${currentId}`

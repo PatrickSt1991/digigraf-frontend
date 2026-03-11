@@ -28,7 +28,7 @@ export default function DeceasedInvoice() {
         funeralNumber?: string;
       }
     | undefined;
-  const { overledeneId } = useParams<{ overledeneId: string }>();
+  const { dossierId } = useParams<{ dossierId: string }>();
 
   const initialData: DeceasedInvoiceFormData = {
     insurancePartyId: "",
@@ -57,20 +57,20 @@ export default function DeceasedInvoice() {
       "/deceased-services",
       "/success-deceased",
     ],
-    fetchUrl: overledeneId
-      ? `${endpoints.invoiceDeceased}/${overledeneId}`
+    fetchUrl: dossierId
+      ? `${endpoints.invoiceDeceased}/${dossierId}`
       : undefined,
       allow404AsEmpty: true,
   });
 
-  const saveUrl = overledeneId
-    ? `${endpoints.invoiceDeceased}?overledeneId=${overledeneId}`
+  const saveUrl = dossierId
+    ? `${endpoints.invoiceDeceased}?overledeneId=${dossierId}`
     : endpoints.invoiceDeceased;
 
   const handleNext = useSaveAndNext({
     formData,
     endpoint: saveUrl,
-    id: overledeneId as string | undefined,
+    id: dossierId as string | undefined,
     getNextPath: (_result, currentId) => {
       return currentId
         ? `/deceased-services/${currentId}`

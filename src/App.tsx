@@ -39,14 +39,14 @@ function App() {
         {/* User routes (all require authentication) */}
         <Route path="/" element={<RequireUser><Dashboard /></RequireUser>} />
         <Route path="/dashboard" element={<RequireUser><Dashboard /></RequireUser>} />
-        <Route path="/deceased/:overledeneId?" element={<RequireUser><Deceased /></RequireUser>} />
-        <Route path="/deceased-information/:overledeneId?" element={<RequireUser><AdditionalInformationDeceased /></RequireUser>} />
-        <Route path="/deceased-insurance/:overledeneId?" element={<RequireUser><InsuranceDeceased /></RequireUser>} />
-        <Route path="/deceased-layout/:overledeneId?" element={<RequireUser><DeceasedLayout /></RequireUser>} />
-        <Route path="/deceased-funeral/:overledeneId?" element={<RequireUser><DeceasedFuneral /></RequireUser>} />
-        <Route path="/deceased-documents/:overledeneId?" element={<RequireUser><DeceasedDocuments /></RequireUser>} />
-        <Route path="/deceased-invoice/:overledeneId?" element={<RequireUser><DeceasedInvoice /></RequireUser>} />
-        <Route path="/deceased-services/:overledeneId?" element={<RequireUser><DeceasedServicesLayout /></RequireUser>} />
+        <Route path="/deceased/:dossierId?" element={<RequireUser><Deceased /></RequireUser>} />
+        <Route path="/deceased-information/:dossierId?" element={<RequireUser><AdditionalInformationDeceased /></RequireUser>} />
+        <Route path="/deceased-insurance/:dossierId?" element={<RequireUser><InsuranceDeceased /></RequireUser>} />
+        <Route path="/deceased-layout/:dossierId?" element={<RequireUser><DeceasedLayout /></RequireUser>} />
+        <Route path="/deceased-funeral/:dossierId?" element={<RequireUser><DeceasedFuneral /></RequireUser>} />
+        <Route path="/deceased-documents/:dossierId?" element={<RequireUser><DeceasedDocuments /></RequireUser>} />
+        <Route path="/deceased-invoice/:dossierId?" element={<RequireUser><DeceasedInvoice /></RequireUser>} />
+        <Route path="/deceased-services/:dossierId?" element={<RequireUser><DeceasedServicesLayout /></RequireUser>} />
         <Route path="/upcoming" element={<RequireUser><UpcomingFunerals /></RequireUser>} />
         <Route path="/all-dossiers" element={<RequireUser><AllFunerals /></RequireUser>} />
 

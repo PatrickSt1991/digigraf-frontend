@@ -5,12 +5,21 @@ import { endpoints } from "../../api/apiConfig";
 
 export default function LayoutDeceased() {
   const location = useLocation();
-  const { overledeneId } = useParams<{ overledeneId: string }>();
+  const navState = location.state as
+    | {
+        dossierId?: string;
+        funeralLeader?: string;
+        funeralNumber?: string;
+      }
+    | undefined;
 
-  const { formData, handleChange, goNext, goBack, loading, error } = useFormHandler({
+  const { dossierId } = useParams<{ dossierId: string }>();
+
+  const { formData, handleChange, goBack, loading, error } = useFormHandler({
     initialData: {
-      funeralLeader: "",
-      funeralNumber: "",
+      id: "",
+      funeralLeader: navState?.funeralLeader ?? "",
+      funeralNumber: navState?.funeralNumber ?? "",
       layoutLocation: "",
       coffinType: "",
       coffinDescription: "",
@@ -34,21 +43,26 @@ export default function LayoutDeceased() {
       additionalInformation: "",
     },
     steps: ["/deceased-insurance", "/deceased-layout", "/deceased-funeral", "/success-deceased"],
-    fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
+    fetchUrl: dossierId ? `${endpoints.layoutDeceased}/${dossierId}` : undefined,
     allow404AsEmpty: true,
   });
 
-  const saveUrl = overledeneId ? `${endpoints.deceased}?overledeneId=${overledeneId}` : endpoints.deceased;
+  const saveUrl = dossierId ? `${endpoints.layoutDeceased}/${dossierId}` : endpoints.layoutDeceased;
 
   const handleNext = useSaveAndNext({
     formData,
     endpoint: saveUrl,
-    id: overledeneId as string | undefined,
+    id: dossierId as string | undefined,
     getNextPath: (_result, currentId) => {
       return currentId
         ? `/deceased-funeral/${currentId}`
         : "/deceased-funeral";
     },
+    getNextState: (_result, currentId) => ({
+      dossierId: currentId ?? formData.id ?? "",
+      funeralLeader: formData.funeralLeader ?? "",
+      funeralNumber: formData.funeralNumber ?? "",
+    }),
   });
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
