@@ -3,6 +3,7 @@ import { DashboardLayout, FormCard, FormField, FuneralForm } from "../../compone
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
 import { calculateAge } from "../../utils/calculateAge";
 import { endpoints } from "../../api/apiConfig";
+import { DossierDto } from "../../types";
 
 export default function Deceased() {
   const location = useLocation();
@@ -16,63 +17,73 @@ export default function Deceased() {
     goBack,
     loading,
     error,
-  } = useFormHandler({
+  } = useFormHandler<DossierDto>({
     initialData: {
-      // Deceased personal information
-      socialsecurity: "",
-      salutation: "",
-      lastName: "",
-      firstName: "",
-      dob: "",
-      placeofbirth: "",
-      age: "",
-      postalCode: "",
-      housenumber: "",
-      housenumberAddition: "",
-      street: "",
-      city: "",
-      county: "",
-      voorregeling: false,
-      homedeceased: false,
-
-      // Deceased location information
-      dateofDeath: "",
-      timeofDeath: "",
-      locationofDeath: "",
-      postalcodeofDeath: "",
-      housenumberofDeath: "",
-      housenumberadditionofDeath: "",
-      streetofDeath: "",
-      cityofDeath: "",
-      countyofDeath: "",
-      bodyFinding: "",
-      origin: "",
-
-      // Deceased medical information
-      gp: "",
-      gpPhone: "",
-      me: "",
-
-      // Funeral info
+      id: "",
       funeralLeader: "",
       funeralNumber: "",
+      funeralType: "",
+      voorregeling: false,
+      dossierCompleted: false,
+      deceased: {
+        id: "",
+        socialSecurity: "",
+        firstName: "",
+        lastName: "",
+        salutation: "",
+        dob: "",
+        placeOfBirth: "",
+        postalCode: "",
+        street: "",
+        houseNumber: "",
+        houseNumberAddition: "",
+        city: "",
+        county: "",
+        homeDeceased: false,
+      },
+      deathInfo: {
+        id: "",
+        dossierId: "",
+        dateOfDeath: "",
+        timeOfDeath: "",
+        locationOfDeath: "",
+        postalCodeOfDeath: "",
+        streetOfDeath: "",
+        houseNumberOfDeath: "",
+        houseNumberAdditionOfDeath: "",
+        cityOfDeath: "",
+        countyOfDeath: "",
+        bodyFinding: "",
+        origin: "",
+      },
     },
     steps: ["/dashboard", "/deceased", "/deceased-information", "/success-deceased"],
-    dateFieldName: "dob",
-    deathDateFieldName: "dateofDeath",
+    dateFieldName: "deceased.dob",
+    deathDateFieldName: "deathInfo.dateOfDeath",
     calculateAge,
     fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
+    allow404AsEmpty: true,
   });
 
-  const saveUrl = overledeneId 
-    ? `${endpoints.deceased}?overledeneId=${overledeneId}`
-    : endpoints.deceased;
+  const saveUrl = overledeneId
+    ? `${endpoints.deceased}/${overledeneId}`
+    : `${endpoints.deceased}/new`;
 
-  const handleNext = useSaveAndNext({
+  const handleNext = useSaveAndNext<DossierDto>({
     formData,
     endpoint: saveUrl,
     id: overledeneId,
-    goNext,
+    getNextPath: (result, currentId) => {
+      const savedId = currentId ?? result?.id;
+      return savedId
+        ? `/deceased-information/${savedId}`
+        : "/deceased-information";
+    },
+    getNextState: (_result, currentId) => ({
+      dossierId: currentId ?? formData.id ?? "",
+      funeralLeader: formData.funeralLeader ?? "",
+      funeralNumber: formData.funeralNumber ?? "",
+    }),
   });
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
@@ -87,207 +98,227 @@ export default function Deceased() {
   return (
     <DashboardLayout>
       <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
-        {/* Funeral info form */}
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={() => goNext(location.pathname)} //handleNext = prod
+          onNext={handleNext}
           onBack={() => goBack(location.pathname)}
           readOnly={false}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Left column */}
           <FormCard title="Persoonsgegevens Overledene">
             <FormField
               label="BSN"
               required
-              name="socialsecurity"
-              value={formData.socialsecurity}
+              name="deceased.socialSecurity"
+              value={(formData as any).deceased?.socialSecurity ?? ""}
               onChange={handleChange}
             />
+
             <FormField label="Aanhef" required>
-              {dropdownLoading.salutations  ? (
+              {dropdownLoading.salutations ? (
                 <div>Loading...</div>
-              ) : dropdownErrors.salutations  ? (
-                <div className="text-red-600">{ dropdownErrors.salutations }</div>
+              ) : dropdownErrors.salutations ? (
+                <div className="text-red-600">{dropdownErrors.salutations}</div>
               ) : (
                 <select
-                  name="salutation"
-                  value={formData.salutation}
+                  name="deceased.salutation"
+                  value={formData.deceased?.salutation ?? ""}
                   onChange={handleChange}
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer een aanhef...</option>
                   {data.salutations?.map((s: any) => (
-                    <option key={s.id} value={s.code}>
+                    <option key={s.id} value={s.label}>
                       {s.label}
                     </option>
                   ))}
                 </select>
               )}
             </FormField>
+
             <FormField
               label="Voornamen"
               required
-              name="firstName"
-              value={formData.firstName}
+              name="deceased.firstName"
+              value={formData.deceased?.firstName ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Achternaam"
               required
-              name="lastName"
-              value={formData.lastName}
+              name="deceased.lastName"
+              value={formData.deceased?.lastName ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Geboortedatum"
               type="date"
-              name="dob"
-              value={formData.dob}
+              name="deceased.dob"
+              value={formData.deceased?.dob?.split("T")[0] ?? ""}
               onChange={handleDateChange}
             />
+
             <FormField
               label="Geboorteplaats"
-              name="placeofbirth"
-              value={formData.placeofbirth}
+              name="deceased.placeOfBirth"
+              value={formData.deceased?.placeOfBirth ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Leeftijd"
-              name="age"
-              value={formData.age}
-              onChange={handleChange}
+              name="deceased.age"
+              value={formData.deceased?.dob ? String(calculateAge(formData.deceased.dob)) : ""}
+              onChange={() => {}}
             />
+
             <FormField
               label="Postcode"
               required
-              name="postalCode"
-              value={formData.postalCode}
+              name="deceased.postalCode"
+              value={formData.deceased?.postalCode ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Huisnummer"
               required
-              name="housenumber"
-              value={formData.housenumber}
+              name="deceased.houseNumber"
+              value={formData.deceased?.houseNumber ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Toevoeging"
-              name="housenumberAddition"
-              value={formData.housenumberAddition}
+              name="deceased.houseNumberAddition"
+              value={formData.deceased?.houseNumberAddition ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Straat"
               required
-              name="street"
-              value={formData.street}
+              name="deceased.street"
+              value={formData.deceased?.street ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Plaats"
               required
-              name="city"
-              value={formData.city}
+              name="deceased.city"
+              value={formData.deceased?.city ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Gemeente"
               required
-              name="county"
-              value={formData.county}
+              name="deceased.county"
+              value={formData.deceased?.county ?? ""}
               onChange={handleChange}
             />
+
             <FormField label="Voorregeling">
               <input
                 type="checkbox"
                 name="voorregeling"
-                checked={formData.voorregeling}
+                checked={formData.voorregeling ?? false}
                 onChange={handleChange}
               />
             </FormField>
+
             <FormField label="Home Deceased">
               <input
                 type="checkbox"
-                name="homedeceased"
-                checked={formData.homedeceased}
+                name="deceased.homeDeceased"
+                checked={formData.deceased?.homeDeceased ?? false}
                 onChange={handleChange}
               />
             </FormField>
           </FormCard>
 
-          {/* Right column */}
           <FormCard title="Gegevens overlijden">
             <FormField
               label="Datum"
               type="date"
               required
-              name="dateofDeath"
-              value={formData.dateofDeath}
-              onChange={handleChange}
+              name="deathInfo.dateOfDeath"
+              value={formData.deathInfo?.dateOfDeath?.split("T")[0] ?? ""}
+              onChange={handleDateChange}
             />
+
             <FormField
               label="Tijdstip"
               type="time"
               required
-              name="timeofDeath"
-              value={formData.timeofDeath}
+              name="deathInfo.timeOfDeath"
+              value={formData.deathInfo?.timeOfDeath ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Locatie"
-              name="locationofDeath"
-              value={formData.locationofDeath}
+              name="deathInfo.locationOfDeath"
+              value={formData.deathInfo?.locationOfDeath ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Postcode"
-              name="postalcodeofDeath"
-              value={formData.postalcodeofDeath}
+              name="deathInfo.postalCodeOfDeath"
+              value={formData.deathInfo?.postalCodeOfDeath ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Huisnummer"
-              name="housenumberofDeath"
-              value={formData.housenumberofDeath}
+              name="deathInfo.houseNumberOfDeath"
+              value={formData.deathInfo?.houseNumberOfDeath ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Toevoeging"
-              name="housenumberadditionofDeath"
-              value={formData.housenumberadditionofDeath}
+              name="deathInfo.houseNumberAdditionOfDeath"
+              value={formData.deathInfo?.houseNumberAdditionOfDeath ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Straat"
-              name="streetofDeath"
-              value={formData.streetofDeath}
+              name="deathInfo.streetOfDeath"
+              value={formData.deathInfo?.streetOfDeath ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Plaats"
-              name="cityofDeath"
-              value={formData.cityofDeath}
+              name="deathInfo.cityOfDeath"
+              value={formData.deathInfo?.cityOfDeath ?? ""}
               onChange={handleChange}
             />
+
             <FormField
               label="Gemeente"
-              name="countyofDeath"
-              value={formData.countyofDeath}
+              name="deathInfo.countyOfDeath"
+              value={formData.deathInfo?.countyOfDeath ?? ""}
               onChange={handleChange}
             />
+
             <FormField label="Lijkvinding">
               {dropdownLoading.bodyFindings ? (
                 <div>Loading...</div>
               ) : dropdownErrors.bodyFindings ? (
-                <div className="text-red-600">{ dropdownErrors.bodyFindings }</div>
+                <div className="text-red-600">{dropdownErrors.bodyFindings}</div>
               ) : (
                 <select
-                  name="bodyFinding"
-                  value={formData.bodyFinding}
+                  name="deathInfo.bodyFinding"
+                  value={formData.deathInfo?.bodyFinding ?? ""}
                   onChange={handleChange}
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
@@ -305,11 +336,11 @@ export default function Deceased() {
               {dropdownLoading.origins ? (
                 <div>Loading...</div>
               ) : dropdownErrors.origins ? (
-                <div className="text-red-600">{ dropdownErrors.origins }</div>
+                <div className="text-red-600">{dropdownErrors.origins}</div>
               ) : (
                 <select
-                  name="origin"
-                  value={formData.origin}
+                  name="deathInfo.origin"
+                  value={formData.deathInfo?.origin ?? ""}
                   onChange={handleChange}
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >

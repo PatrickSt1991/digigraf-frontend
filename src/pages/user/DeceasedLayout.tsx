@@ -35,11 +35,21 @@ export default function LayoutDeceased() {
     },
     steps: ["/deceased-insurance", "/deceased-layout", "/deceased-funeral", "/success-deceased"],
     fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
+    allow404AsEmpty: true,
   });
 
   const saveUrl = overledeneId ? `${endpoints.deceased}?overledeneId=${overledeneId}` : endpoints.deceased;
 
-  const handleNext = useSaveAndNext({ formData, endpoint: saveUrl, id: overledeneId, goNext });
+  const handleNext = useSaveAndNext({
+    formData,
+    endpoint: saveUrl,
+    id: overledeneId as string | undefined,
+    getNextPath: (_result, currentId) => {
+      return currentId
+        ? `/deceased-funeral/${currentId}`
+        : "/deceased-funeral";
+    },
+  });
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
     coffinTypes: endpoints.coffins,
@@ -53,7 +63,13 @@ export default function LayoutDeceased() {
   return (
     <DashboardLayout>
       <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
-        <FuneralForm formData={formData} onChange={handleChange} onNext={() => goNext(location.pathname)} onBack={() => goBack(location.pathname)} readOnly={true} />
+        <FuneralForm 
+          formData={formData} 
+          onChange={handleChange}
+          onNext={handleNext} 
+          onBack={() => goBack(location.pathname)} 
+          readOnly={true} 
+        />
 
         <div className="grid grid-cols-1 gap-4">
           <FormCard title="Opbaren Overledene">

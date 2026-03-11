@@ -21,6 +21,13 @@ type DeceasedInvoiceFormData = InvoiceFormData & {
 
 export default function DeceasedInvoice() {
   const location = useLocation();
+  const navState = location.state as
+    | {
+        dossierId?: string;
+        funeralLeader?: string;
+        funeralNumber?: string;
+      }
+    | undefined;
   const { overledeneId } = useParams<{ overledeneId: string }>();
 
   const initialData: DeceasedInvoiceFormData = {
@@ -30,8 +37,8 @@ export default function DeceasedInvoice() {
     subtotal: 0,
     total: 0,
     isExcelButtonEnabled: true,
-    funeralLeader: "",
-    funeralNumber: "",
+    funeralLeader: navState?.funeralLeader ?? "",
+    funeralNumber: navState?.funeralNumber ??  "",
     invoiceDate: "",
   };
 
@@ -53,6 +60,7 @@ export default function DeceasedInvoice() {
     fetchUrl: overledeneId
       ? `${endpoints.invoiceDeceased}/${overledeneId}`
       : undefined,
+      allow404AsEmpty: true,
   });
 
   const saveUrl = overledeneId
@@ -62,10 +70,13 @@ export default function DeceasedInvoice() {
   const handleNext = useSaveAndNext({
     formData,
     endpoint: saveUrl,
-    id: overledeneId,
-    goNext,
+    id: overledeneId as string | undefined,
+    getNextPath: (_result, currentId) => {
+      return currentId
+        ? `/deceased-services/${currentId}`
+        : "/deceased-services";
+    },
   });
-
   const {
     data,
     loading: dropdownLoading,
@@ -189,7 +200,7 @@ useEffect(() => {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={() => goNext(location.pathname)}
+          onNext={handleNext}
           onBack={() => goBack(location.pathname)}
           readOnly
         />

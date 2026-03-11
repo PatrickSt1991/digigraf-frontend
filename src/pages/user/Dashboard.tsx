@@ -72,9 +72,8 @@ export default function Dashboard() {
       <SearchModal
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
-        onSearch={(criteria) => {
-          console.log("Zoekcriteria:", criteria);
-          // TODO: implement search logic or navigation
+        onSelect={(dossier) => {
+          navigate(`/dossier/${dossier.id}`);
         }}
       />
     </DashboardLayout>

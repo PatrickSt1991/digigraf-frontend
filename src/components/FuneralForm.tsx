@@ -52,7 +52,7 @@ export default function FuneralForm({
             >
               <option value="">Selecteer een uitvaartleider...</option>
               {funeralLeaders.map((ft) => (
-                <option key={ft.id} value={ft.value}>
+                <option key={ft.id} value={ft.label}>
                   {ft.label}
                 </option>
               ))}

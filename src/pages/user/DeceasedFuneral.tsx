@@ -5,6 +5,13 @@ import { endpoints } from "../../api/apiConfig";
 
 export default function FuneralDeceased() {
     const location = useLocation();
+    const navState = location.state as
+      | {
+          dossierId?: string;
+          funeralLeader?: string;
+          funeralNumber?: string;
+        }
+      | undefined;
     const { overledeneId } = useParams();
 
     const {
@@ -44,11 +51,12 @@ export default function FuneralDeceased() {
             existingGrave: "",
             sandGrave: "",
             graveMonument: "",
-            funeralLeader: "",
-            funeralNumber: "",
+            funeralLeader: navState?.funeralLeader ?? "",
+            funeralNumber: navState?.funeralNumber ??  "",
         },
         steps: ["/deceased-layout", "/deceased-funeral", "/deceased-documents", "/success-deceased"],
         fetchUrl: overledeneId ? `${endpoints.deceased}/${overledeneId}` : undefined,
+        allow404AsEmpty: true,
     });
 
     const saveurl = overledeneId
@@ -56,10 +64,14 @@ export default function FuneralDeceased() {
       : endpoints.funeral;
 
     const handleNext = useSaveAndNext({
-        formData,
-        endpoint: saveurl,
-        id: overledeneId,
-        goNext,
+      formData,
+      endpoint: saveurl,
+      id: overledeneId as string | undefined,
+      getNextPath: (_result, currentId) => {
+        return currentId
+          ? `/deceased-documents/${currentId}`
+          : "/deceased-documents";
+      },
     });
 
     const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
@@ -73,7 +85,7 @@ export default function FuneralDeceased() {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={() => goNext(location.pathname)} //handleNext = prod
+          onNext={handleNext}
           onBack={() => goBack(location.pathname)}
           readOnly={true}
         />

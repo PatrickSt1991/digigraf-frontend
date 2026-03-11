@@ -1,5 +1,6 @@
 export interface Deceased {
     id?: string; // Guid
+    socialSecurity: string;
     firstName?: string;
     lastName?: string;
     salutation?: string;
@@ -16,6 +17,7 @@ export interface Deceased {
 
 export interface DeathInfoDto {
     id?: string; // Guid
+    dossierId? : string,
     dateOfDeath?: string; // ISO date
     timeOfDeath?: string; // ISO time
     locationOfDeath?: string;
@@ -31,8 +33,8 @@ export interface DeathInfoDto {
 
 export interface DossierDto {
     id?: string; // Guid
-    funeralLeader?: string;
-    funeralNumber?: string;
+    funeralLeader: string;
+    funeralNumber: string;
     funeralType?: string;
     voorregeling?: boolean;
     dossierCompleted?: boolean;

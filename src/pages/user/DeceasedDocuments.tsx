@@ -8,6 +8,13 @@ import { endpoints } from "../../api/apiConfig";
 export default function DeceasedDocuments() {
   const { overledeneId } = useParams<{ overledeneId: string }>();
   const location = useLocation();
+  const navState = location.state as
+    | {
+        dossierId?: string;
+        funeralLeader?: string;
+        funeralNumber?: string;
+      }
+    | undefined;
 
   const {
     formData,
@@ -18,27 +25,32 @@ export default function DeceasedDocuments() {
     loading,
     error,
   } = useFormHandler<{
-    funeralLeader: string;
-    funeralNumber: string;
+      funeralLeader: string,
+      funeralNumber: string,
     templates?: DocumentTemplate[];
   }>({
-    initialData: { funeralLeader: "", funeralNumber: "", templates: [] },
+    initialData: { 
+      funeralLeader: navState?.funeralLeader ?? "", 
+      funeralNumber: navState?.funeralNumber ??  "",
+       templates: [] 
+      },
     steps: ["/deceased-funeral", "/deceased-documents", "/deceased-invoice", "/success-deceased"],
     fetchUrl: overledeneId
       ? `${endpoints.documentsdeceased}/${overledeneId}`
       : `${endpoints.documentsdefault}`,
+    allow404AsEmpty: true,
   });
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<DocumentTemplate | null>(null);
 
-const openEditor = (template: DocumentTemplate) => {
-  setActiveTemplate(template);
-  setTimeout(() => {
-    setModalOpen(true);
-  }, 0);
-};
+  const openEditor = (template: DocumentTemplate) => {
+    setActiveTemplate(template);
+    setTimeout(() => {
+      setModalOpen(true);
+    }, 0);
+  };
 
   const handleSave = async (updatedBody: string) => {
     if (!activeTemplate) return;
@@ -46,7 +58,7 @@ const openEditor = (template: DocumentTemplate) => {
     const updatedSections: Section[] = activeTemplate.sections.map(s =>
       s.label === "Body" ? { ...s, value: updatedBody } : s
     );
-console.log(updatedSections);
+
     const updatedTemplate: DocumentTemplate = { ...activeTemplate, sections: updatedSections };
 
     try {

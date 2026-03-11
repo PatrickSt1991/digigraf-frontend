@@ -12,6 +12,13 @@ import { InsuranceEntry } from "../../types";
 
 export default function DeceasedInsurance() {
   const location = useLocation();
+  const navState = location.state as
+    | {
+        dossierId?: string;
+        funeralLeader?: string;
+        funeralNumber?: string;
+      }
+    | undefined;
   const { overledeneId } = useParams();
   const initializedRef = useRef(false);
 
@@ -25,8 +32,8 @@ export default function DeceasedInsurance() {
     error: formError,
   } = useFormHandler({
     initialData: {
-      funeralLeader: "",
-      funeralNumber: "",
+      funeralLeader: navState?.funeralLeader ?? "",
+      funeralNumber: navState?.funeralNumber ??  "",
       insuranceEntries: [] as InsuranceEntry[],
       age: "",
     },
@@ -39,6 +46,7 @@ export default function DeceasedInsurance() {
     fetchUrl: overledeneId
       ? `${endpoints.deceased}/${overledeneId}/insurances`
       : undefined,
+    allow404AsEmpty: true,
   });
 
   const saveUrl = overledeneId
@@ -48,10 +56,13 @@ export default function DeceasedInsurance() {
   const handleNext = useSaveAndNext({
     formData,
     endpoint: saveUrl,
-    id: overledeneId,
-    goNext,
+    id: overledeneId as string | undefined,
+    getNextPath: (_result, currentId) => {
+      return currentId
+        ? `/deceased-layout/${currentId}`
+        : "/deceased-layout";
+    },
   });
-
   const { data, loading: dropdownLoading, errors: dropdownErrors } =
     useDropdownData({
       insuranceParties: endpoints.insuranceCompanies,
@@ -114,7 +125,7 @@ export default function DeceasedInsurance() {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={() => goNext(location.pathname)}
+          onNext={handleNext}
           onBack={() => goBack(location.pathname)}
           readOnly
         />

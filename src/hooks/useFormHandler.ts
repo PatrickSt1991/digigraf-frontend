@@ -8,10 +8,10 @@ interface UseFormHandlerProps<T extends Record<string, any> & { age?: string }> 
   dateFieldName?: string;
   calculateAge?: (birthDate: string, deathDate?: string) => number;
   deathDateFieldName?: string;
-  fetchUrl?: string; // optional: if provided, hook fetches data
+  fetchUrl?: string;
+  allow404AsEmpty?: boolean;
 }
 
-// Expanded type to allow React events, manual { target } objects, or partial data objects
 type ChangeEventLike =
   | React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   | { target: { name: string; value: any } }
@@ -26,6 +26,7 @@ export const useFormHandler = <
   calculateAge,
   deathDateFieldName,
   fetchUrl,
+  allow404AsEmpty = false,
 }: UseFormHandlerProps<T>) => {
   const [formData, setFormData] = useState<T>(initialData);
   const [result, setResult] = useState<T | null>(null);
@@ -34,106 +35,85 @@ export const useFormHandler = <
 
   const navigate = useNavigate();
 
-  // Fetch existing data if fetchUrl is given
-  useEffect(() => {
-    if (!fetchUrl) return;
+useEffect(() => {
+  if (!fetchUrl) {
+    setLoading(false);
+    return;
+  }
 
-    const fetchData = async () => {
-      try {
-        const res = await fetch(fetchUrl);
-        if (!res.ok) throw new Error("Failed to fetch data");
-        const data = await res.json();
+  const fetchData = async () => {
+    try {
+      setError(null);
 
-        // Merge API data with initial form data
+      const res = await fetch(fetchUrl);
+
+      if (res.status === 404 && allow404AsEmpty) {
         setFormData((prev) => ({
+          ...initialData,
           ...prev,
-          ...data,
         }));
-      } catch (err: any) {
-        setError(err.message || "Unknown error");
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
-    fetchData();
-  }, [fetchUrl]);
+      if (!res.ok) throw new Error("Failed to fetch data");
 
-  const handleChange = useCallback((eOrObj: ChangeEventLike) => {
-    if ("target" in eOrObj) {
-      const { name, value } = eOrObj.target;
+      const data = await res.json();
 
-      // Guard for real input elements (with .type, .checked, etc.)
-      if ("type" in eOrObj.target) {
-        const input = eOrObj.target as HTMLInputElement;
-        setFormData((prev) => ({
-          ...prev,
-          [name]: input.type === "checkbox" ? input.checked : value,
-        }));
-      } else {
-        // Custom { target: { name, value } }
-        setFormData((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
-      }
-    } else {
-      // Direct object update (Partial<InvoiceFormData>)
       setFormData((prev) => ({
         ...prev,
-        ...eOrObj,
+        ...data,
       }));
+    } catch (err: any) {
+      setError(err.message || "Unknown error");
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
-  const handleDateChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
+  fetchData();
+}, [fetchUrl, allow404AsEmpty]);
 
-      setFormData((prev) => {
-        const updatedData = { ...prev, [name]: value };
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, type, value } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    const finalValue = type === "checkbox" ? checked : value;
 
-        // only run age calculation if both props exist
-        if (dateFieldName && calculateAge) {
-          if (name === dateFieldName && value) {
-            try {
-              const deathDate = deathDateFieldName
-                ? updatedData[deathDateFieldName]
-                : undefined;
-              const calculatedAge = calculateAge(value, deathDate);
-              if (!isNaN(calculatedAge) && calculatedAge >= 0) {
-                (updatedData as any).age = calculatedAge.toString();
-              }
-            } catch (error) {
-              console.warn("Age calculation failed:", error);
-            }
-          }
+    setFormData((prev: any) => {
+      const keys = name.split(".");
+      const next = structuredClone(prev);
+      let current = next;
 
-          if (
-            deathDateFieldName &&
-            name === deathDateFieldName &&
-            value &&
-            updatedData[dateFieldName]
-          ) {
-            try {
-              const calculatedAge = calculateAge(
-                updatedData[dateFieldName],
-                value
-              );
-              if (!isNaN(calculatedAge) && calculatedAge >= 0) {
-                (updatedData as any).age = calculatedAge.toString();
-              }
-            } catch (error) {
-              console.warn("Age calculation failed:", error);
-            }
-          }
-        }
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) current[keys[i]] = {};
+        current = current[keys[i]];
+      }
 
-        return updatedData;
-      });
-    },
-    [dateFieldName, deathDateFieldName, calculateAge]
-  );
+      current[keys[keys.length - 1]] = finalValue;
+      return next;
+    });
+  };
+
+  const handleDateChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev: any) => {
+      const keys = name.split(".");
+      const next = structuredClone(prev);
+      let current = next;
+
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) current[keys[i]] = {};
+        current = current[keys[i]];
+      }
+
+      current[keys[keys.length - 1]] = value;
+      return next;
+    });
+  };
 
   const handleSubmit = useCallback(
     async (e?: React.FormEvent, goToStep?: string) => {

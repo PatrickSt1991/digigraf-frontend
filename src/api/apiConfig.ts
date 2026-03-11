@@ -1,10 +1,12 @@
+import { se } from "react-day-picker/locale";
+
 export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5027/api";
 
 export const endpoints = {
     authentication: `${API_BASE}/Auth`,
     upcoming: `${API_BASE}/upcoming-funerals`,
     deceased: `${API_BASE}/deceased`,
-    additional: `${API_BASE}/additional`,
+    additional: `${API_BASE}/clientinfo`,
     funeral: `${API_BASE}/funeral`,
     documentsdeceased: `${API_BASE}/DocumentTemplates`,
     documentsdefault: `${API_BASE}/DocumentTemplates/defaults`,
@@ -25,6 +27,7 @@ export const endpoints = {
     suppliertypes: `${API_BASE}/DossierUtils/supplier-types`,
     employees: `${API_BASE}/Employee/employees`,
     employeesOverview: `${API_BASE}/Employee/overview`,
+    searchDossier: `${API_BASE}/deceased/search`,
 };
 
 export const licenseEndpoints = {

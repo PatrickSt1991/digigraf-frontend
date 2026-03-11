@@ -1,39 +1,43 @@
 import { useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../api/apiClient";
 
-interface UseSaveAndNextProps<T> {
+interface UseSaveAndNextProps<T, R = any, S = Record<string, any> | undefined> {
   formData: T;
-  setFormData?: (data: T) => void;
   endpoint: string;
   id?: string;
-  goNext: (currentPath: string) => void;
+  getNextPath: (result: R, currentId?: string) => string;
+  getNextState?: (result: R, currentId?: string) => S;
 }
 
-export function useSaveAndNext<T>({
+export function useSaveAndNext<T, R = any, S = Record<string, any> | undefined>({
   formData,
   endpoint,
   id,
-  goNext,
-}: UseSaveAndNextProps<T>) {
-  const location = useLocation();
+  getNextPath,
+  getNextState,
+}: UseSaveAndNextProps<T, R, S>) {
+  const navigate = useNavigate();
 
   const handleNext = useCallback(async () => {
     try {
-      const url = id ? `${endpoint}/${id}` : endpoint;
-
-      await apiClient(url, {
+      const result = await apiClient<R>(endpoint, {
         method: id ? "PUT" : "POST",
         body: formData,
       });
 
-      goNext(location.pathname);
+      const nextPath = getNextPath(result, id);
+      const nextState = getNextState ? getNextState(result, id) : undefined;
+
+      navigate(nextPath, {
+        state: nextState,
+      });
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : "Onbekende fout";
       alert(`Fout bij opslaan: ${msg}`);
     }
-  }, [formData, endpoint, id, goNext, location.pathname]);
+  }, [formData, endpoint, id, getNextPath, getNextState, navigate]);
 
   return handleNext;
 }

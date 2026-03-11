@@ -3,58 +3,64 @@ import { DashboardLayout, FormCard, FormField, FormRow, FuneralForm } from "../.
 import { useDropdownData, useFormHandler } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 
-const initialFormData = {
-  funeralLeader: "",
-  funeralNumber: "",
-  attendantIntake: "",
-  // Steenhouwerij
-  stoneDescription: "",
-  stoneAmount: "",
-  stoneSupplier: "",
-  stoneEmployee: "",
-  // Bloemen
-  flowerDescription: "",
-  flowerAmount: "",
-  flowerSupplier: "",
-  flowerEmployee: "",
-  flowersWithCard: false,
-  flowersWithRibbon: false,
-  deliveryAddress: "",
-  deliveryDate: "",
-  ribbon1: "",
-  ribbon2: "",
-  ribbon3: "",
-  ribbon4: "",
-  // Urnen en Gedenksieraden
-  urnDescription: "",
-  urnAmount: "",
-  urnSupplier: "",
-  urnEmployee: "",
-  // Werkbonnen (placeholder for a dynamic list)
-  worksheets: [
-    {
-      employee: "",
-      otherServices: "",
-      hearse: false,
-      escortVehicle: false,
-      lastCare: false,
-      transfer: false,
-      condolence: false,
-    },
-  ],
-  // Finish Popup
-  customerScore: "",
-  isNotificationEnabled: false,
-};
-
 export default function DeceasedServicesLayout() {
-  const { deceasedId } = useParams<{ deceasedId: string }>();
   const location = useLocation();
+  const { deceasedId } = useParams<{ deceasedId: string }>();
+  const navState = location.state as
+    | {
+        dossierId?: string;
+        funeralLeader?: string;
+        funeralNumber?: string;
+      }
+    | undefined;
 
   const { formData, handleChange, goNext, goBack, loading, error } = useFormHandler({
-    initialData: initialFormData,
+    initialData: {
+      funeralLeader: navState?.funeralLeader ?? "",
+      funeralNumber: navState?.funeralNumber ??  "",
+      attendantIntake: "",
+      // Steenhouwerij
+      stoneDescription: "",
+      stoneAmount: "",
+      stoneSupplier: "",
+      stoneEmployee: "",
+      // Bloemen
+      flowerDescription: "",
+      flowerAmount: "",
+      flowerSupplier: "",
+      flowerEmployee: "",
+      flowersWithCard: false,
+      flowersWithRibbon: false,
+      deliveryAddress: "",
+      deliveryDate: "",
+      ribbon1: "",
+      ribbon2: "",
+      ribbon3: "",
+      ribbon4: "",
+      // Urnen en Gedenksieraden
+      urnDescription: "",
+      urnAmount: "",
+      urnSupplier: "",
+      urnEmployee: "",
+      // Werkbonnen (placeholder for a dynamic list)
+      worksheets: [
+        {
+          employee: "",
+          otherServices: "",
+          hearse: false,
+          escortVehicle: false,
+          lastCare: false,
+          transfer: false,
+          condolence: false,
+        },
+      ],
+      // Finish Popup
+      customerScore: "",
+      isNotificationEnabled: false,
+    },
     steps: ["/deceased-invoice", "/deceased-services", "/the-next-step-final-step", "/success-deceased"],
     fetchUrl: deceasedId ? `${endpoints.deceased}/${deceasedId}` : undefined,
+    allow404AsEmpty: true,
   });
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({

@@ -1,3 +1,5 @@
+import { DossierDto } from "./index";
+
 export interface Salutation {
     id: string;
     code: string;
@@ -45,4 +47,18 @@ export interface RouwbriefDto {
   id?: string;
   description: string;
   isActive: boolean;
+}
+
+export interface SearchCriteria {
+  lastName?: string;
+  birthDate?: string;
+  funeralNumber?: string;
+  archive: boolean;
+  oldDB: boolean;
+}
+
+export interface SearchResult {
+  results: DossierDto[];
+  total: number;
+  searchedOldDB: boolean;
 }
