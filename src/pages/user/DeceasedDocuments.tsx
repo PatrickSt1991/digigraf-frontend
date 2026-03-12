@@ -1,9 +1,21 @@
 import { useParams, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { DocumentTemplate, Section } from "../../types";
-import { DashboardLayout, FormCard, FuneralForm, DocumentEditorModal } from "../../components";
+import {
+  DashboardLayout,
+  FormCard,
+  FuneralForm,
+  DocumentEditorModal,
+} from "../../components";
 import { useFormHandler } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
+
+type DeceasedDocumentsFormData = {
+  id?: string;
+  funeralLeader: string;
+  funeralNumber: string;
+  templates?: DocumentTemplate[];
+};
 
 export default function DeceasedDocuments() {
   const { dossierId } = useParams<{ dossierId: string }>();
@@ -24,24 +36,20 @@ export default function DeceasedDocuments() {
     setFormData,
     loading,
     error,
-  } = useFormHandler<{
-      funeralLeader: string,
-      funeralNumber: string,
-    templates?: DocumentTemplate[];
-  }>({
-    initialData: { 
-      funeralLeader: navState?.funeralLeader ?? "", 
-      funeralNumber: navState?.funeralNumber ??  "",
-       templates: [] 
-      },
-    steps: ["/deceased-funeral", "/deceased-documents", "/deceased-invoice", "/success-deceased"],
+  } = useFormHandler<DeceasedDocumentsFormData>({
+    initialData: {
+      id: dossierId ?? "",
+      funeralLeader: navState?.funeralLeader ?? "",
+      funeralNumber: navState?.funeralNumber ?? "",
+      templates: [],
+    },
+    steps: ["/deceased-funeral", "/deceased-documents", "/deceased-invoice", "/success-deceased",],
     fetchUrl: dossierId
       ? `${endpoints.documentsdeceased}/${dossierId}`
       : `${endpoints.documentsdefault}`,
     allow404AsEmpty: true,
   });
 
-  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<DocumentTemplate | null>(null);
 
@@ -54,25 +62,29 @@ export default function DeceasedDocuments() {
 
   const handleSave = async (updatedBody: string) => {
     if (!activeTemplate) return;
-    // Update the Body section
-    const updatedSections: Section[] = activeTemplate.sections.map(s =>
+
+    const updatedSections: Section[] = activeTemplate.sections.map((s) =>
       s.label === "Body" ? { ...s, value: updatedBody } : s
     );
 
-    const updatedTemplate: DocumentTemplate = { ...activeTemplate, sections: updatedSections };
+    const updatedTemplate: DocumentTemplate = {
+      ...activeTemplate,
+      sections: updatedSections,
+    };
 
     try {
-      await fetch(`/api/documenttemplates/${activeTemplate.id}`, {
+      await fetch(`${endpoints.documentsdeceased}/${activeTemplate.id}`, {
         method: "PUT",
         body: JSON.stringify(updatedTemplate),
         headers: { "Content-Type": "application/json" },
       });
 
-      // Update FE state
-      const updatedTemplates = formData.templates?.map(t =>
-        t.id === activeTemplate.id ? updatedTemplate : t
-      );
-      setFormData({ ...formData, templates: updatedTemplates });
+      setFormData((prev) => ({
+        ...prev,
+        templates: prev.templates?.map((t) =>
+          t.id === activeTemplate.id ? updatedTemplate : t
+        ),
+      }));
 
       setModalOpen(false);
       alert("Template saved!");
@@ -82,22 +94,46 @@ export default function DeceasedDocuments() {
     }
   };
 
+  const handlePrint = async (template: DocumentTemplate) => {
+    window.open(`${endpoints.documentsdeceased}/${template.id}/print`, "_blank");
+  };
+
+  const handleEmail = async (template: DocumentTemplate) => {
+    window.open(`${endpoints.documentsdeceased}/${template.id}/email`, "_blank");
+  };
+
+  if (loading) return <div>Loading documents...</div>;
+  if (error) return <div className="text-red-600">{error}</div>;
+
   return (
     <DashboardLayout>
       <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
-        <FuneralForm
-          formData={formData}
-          onChange={handleChange}
-          onNext={() => goNext(location.pathname)}  //handleNext = prod
-          onBack={() => goBack(location.pathname)}
-          readOnly={true}
-        />
+      <FuneralForm
+        formData={formData}
+        onChange={handleChange}
+        onNext={() =>
+          goNext(location.pathname, {
+            dossierId: dossierId ?? formData.id ?? "",
+            funeralLeader: formData.funeralLeader ?? "",
+            funeralNumber: formData.funeralNumber ?? "",
+          })
+        }
+        onBack={() =>
+          goBack(location.pathname, {
+            dossierId: dossierId ?? formData.id ?? "",
+            funeralLeader: formData.funeralLeader ?? "",
+            funeralNumber: formData.funeralNumber ?? "",
+          })
+        }
+        readOnly={true}
+      />
 
-        <div className="grid grid-cols-3 gap-4">
-          {(formData.templates || []).map(template => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {(formData.templates || []).map((template) => (
             <FormCard key={template.id} title={template.title}>
-              <div className="flex gap-3 mt-4">
+              <div className="flex gap-3 mt-4 flex-wrap">
                 <button
+                  type="button"
                   onClick={() => openEditor(template)}
                   className="px-4 py-2 rounded-xl border border-green-600 bg-green-600 text-white hover:bg-green-700 transition"
                 >
@@ -106,10 +142,18 @@ export default function DeceasedDocuments() {
 
                 {template.overledeneId && (
                   <>
-                    <button className="px-4 py-2 rounded-xl border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200 hover:text-gray-900 transition">
+                    <button
+                      type="button"
+                      onClick={() => handlePrint(template)}
+                      className="px-4 py-2 rounded-xl border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200 hover:text-gray-900 transition"
+                    >
                       Printen
                     </button>
-                    <button className="px-4 py-2 rounded-xl border border-blue-500 bg-blue-500 text-white hover:bg-blue-600 transition">
+                    <button
+                      type="button"
+                      onClick={() => handleEmail(template)}
+                      className="px-4 py-2 rounded-xl border border-blue-500 bg-blue-500 text-white hover:bg-blue-600 transition"
+                    >
                       Email
                     </button>
                   </>
@@ -119,35 +163,34 @@ export default function DeceasedDocuments() {
           ))}
         </div>
 
-        
-          {(!formData.templates || formData.templates.length === 0) && (
-            <FormCard title="">
-              <div>No document templates found for this deceased.</div>
-            </FormCard>
-          )}
-        
-          <DocumentEditorModal
-            isOpen={modalOpen}
-            onClose={() => setModalOpen(false)}
-            title={activeTemplate?.title || ""}
-            initialContent={
-              activeTemplate?.sections.find(
-                s => s.label?.trim().toLowerCase() === "body"
-              )?.value || ""
-            }
-            header={
-              activeTemplate?.sections.find(
-                s => s.label?.trim().toLowerCase() === "header"
-              )?.value
-            }
-            footer={
-              activeTemplate?.sections.find(
-                s => s.label?.trim().toLowerCase() === "footer"
-              )?.value
-            }
-            onSave={handleSave}
-            key={activeTemplate?.id} // Add this key to force re-render when template changes
-          />
+        {(!formData.templates || formData.templates.length === 0) && (
+          <FormCard title="">
+            <div>No document templates found for this deceased.</div>
+          </FormCard>
+        )}
+
+        <DocumentEditorModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title={activeTemplate?.title || ""}
+          initialContent={
+            activeTemplate?.sections.find(
+              (s) => s.label?.trim().toLowerCase() === "body"
+            )?.value || ""
+          }
+          header={
+            activeTemplate?.sections.find(
+              (s) => s.label?.trim().toLowerCase() === "header"
+            )?.value
+          }
+          footer={
+            activeTemplate?.sections.find(
+              (s) => s.label?.trim().toLowerCase() === "footer"
+            )?.value
+          }
+          onSave={handleSave}
+          key={activeTemplate?.id}
+        />
       </div>
     </DashboardLayout>
   );

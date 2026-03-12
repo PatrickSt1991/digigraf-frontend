@@ -126,23 +126,39 @@ useEffect(() => {
   );
 
   const goNext = useCallback(
-    (currentStep: string) => {
-      const index = steps.indexOf(currentStep);
+    (currentStep: string, state?: any) => {
+      const normalizedStep = "/" + currentStep.split("/")[1];
+      const index = steps.indexOf(normalizedStep);
+
       if (index >= 0 && index < steps.length - 1) {
-        handleSubmit(undefined, steps[index + 1]);
+        const nextStep = steps[index + 1];
+        const nextPath =
+          state?.dossierId && nextStep !== "/success-deceased"
+            ? `${nextStep}/${state.dossierId}`
+            : nextStep;
+
+        navigate(nextPath, { state });
       }
     },
-    [steps, handleSubmit]
+    [steps, navigate]
   );
 
   const goBack = useCallback(
-    (currentStep: string) => {
-      const index = steps.indexOf(currentStep);
+    (currentStep: string, state?: any) => {
+      const normalizedStep = "/" + currentStep.split("/")[1];
+      const index = steps.indexOf(normalizedStep);
+
       if (index > 0) {
-        handleSubmit(undefined, steps[index - 1]);
+        const previousStep = steps[index - 1];
+        const previousPath =
+          state?.dossierId && previousStep !== "/success-deceased"
+            ? `${previousStep}/${state.dossierId}`
+            : previousStep;
+
+        navigate(previousPath, { state });
       }
     },
-    [steps, handleSubmit]
+    [steps, navigate]
   );
 
   const resetForm = useCallback(() => {

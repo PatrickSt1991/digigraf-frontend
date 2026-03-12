@@ -112,7 +112,13 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onBack={() => goBack(location.pathname)}
+            onBack={() =>
+              goBack(location.pathname, {
+                dossierId: dossierId ?? formData.id ?? "",
+                funeralLeader: formData.funeralLeader ?? "",
+                funeralNumber: formData.funeralNumber ?? "",
+              })
+            }
           onComplete={() => goNext(location.pathname)}
           readOnly={true}
         />

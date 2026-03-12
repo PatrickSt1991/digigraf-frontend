@@ -12,6 +12,8 @@ export interface PriceComponent {
 
 export interface InvoiceFormData {
   insurancePartyId: string;
+  selectedVerzekeraar?: string;
+  selectedVerzekeraarId: string;
   priceComponents: PriceComponent[];
   insurancePolicies?: InsurancePolicyRow[];
   discountAmount: number;
@@ -19,9 +21,4 @@ export interface InvoiceFormData {
   total: number;
   isExcelButtonEnabled: boolean;
   invoiceDate: string;
-}
-
-export interface InvoiceAdminData extends InvoiceFormData {
-  selectedVerzekeraar?: string;
-  selectedVerzekeraarId?: string;
 }

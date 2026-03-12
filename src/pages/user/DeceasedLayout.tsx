@@ -81,7 +81,13 @@ export default function LayoutDeceased() {
           formData={formData} 
           onChange={handleChange}
           onNext={handleNext} 
-          onBack={() => goBack(location.pathname)} 
+          onBack={() =>
+            goBack(location.pathname, {
+              dossierId: dossierId ?? formData.id ?? "",
+              funeralLeader: formData.funeralLeader ?? "",
+              funeralNumber: formData.funeralNumber ?? "",
+            })
+          }
           readOnly={true} 
         />
 

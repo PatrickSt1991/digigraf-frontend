@@ -84,7 +84,13 @@ export default function FuneralDeceased() {
           formData={formData}
           onChange={handleChange}
           onNext={handleNext}
-          onBack={() => goBack(location.pathname)}
+          onBack={() =>
+            goBack(location.pathname, {
+              dossierId: dossierId ?? "",
+              funeralLeader: formData.funeralLeader ?? "",
+              funeralNumber: formData.funeralNumber ?? "",
+            })
+          }
           readOnly={true}
         />
 

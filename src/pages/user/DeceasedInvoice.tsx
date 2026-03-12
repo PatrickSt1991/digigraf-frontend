@@ -32,6 +32,7 @@ export default function DeceasedInvoice() {
 
   const initialData: DeceasedInvoiceFormData = {
     insurancePartyId: "",
+    selectedVerzekeraarId: "",
     priceComponents: [{ omschrijving: "", aantal: 1, bedrag: 0 }],
     discountAmount: 0,
     subtotal: 0,
@@ -45,8 +46,8 @@ export default function DeceasedInvoice() {
   const {
     formData,
     handleChange,
-    goNext,
     goBack,
+    setFormData,
     loading,
     error,
   } = useFormHandler<DeceasedInvoiceFormData>({
@@ -64,7 +65,7 @@ export default function DeceasedInvoice() {
   });
 
   const saveUrl = dossierId
-    ? `${endpoints.invoiceDeceased}?overledeneId=${dossierId}`
+    ? `${endpoints.invoiceDeceased}/${dossierId}`
     : endpoints.invoiceDeceased;
 
   const handleNext = useSaveAndNext({
@@ -76,6 +77,11 @@ export default function DeceasedInvoice() {
         ? `/deceased-services/${currentId}`
         : "/deceased-services";
     },
+    getNextState: (_result, currentId) => ({
+      dossierId: currentId ?? "",
+      funeralLeader: formData.funeralLeader ?? "",
+      funeralNumber: formData.funeralNumber ?? "",
+    }),
   });
   const {
     data,
@@ -95,40 +101,52 @@ export default function DeceasedInvoice() {
   useEffect(() => {
     const subtotal = formData.priceComponents.reduce(
       (sum, pc) =>
-        sum +
-        (Number(pc.bedrag) || 0) * (Number(pc.aantal) || 0),
+        sum + (Number(pc.bedrag) || 0) * (Number(pc.aantal) || 0),
       0
     );
 
     const total = subtotal - (Number(formData.discountAmount) || 0);
 
-    handleChange({ subtotal, total });
-  }, [formData.priceComponents, formData.discountAmount]);
+    setFormData((prev) => ({
+      ...prev,
+      subtotal,
+      total,
+    }));
+  }, [formData.priceComponents, formData.discountAmount, setFormData]);
 
-/* -------------------------------------------------------------------------- */
-/*                  LOAD PRICE TEMPLATE ON INSURER CHANGE                      */
-/* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /*                  LOAD PRICE TEMPLATE ON INSURER CHANGE                      */
+  /* -------------------------------------------------------------------------- */
 
-useEffect(() => {
-  if (!formData.insurancePartyId) {
-    handleChange({ priceComponents: [] });
-    return;
-  }
+  useEffect(() => {
+    if (!formData.selectedVerzekeraarId) {
+      setFormData((prev) => ({
+        ...prev,
+        priceComponents: [],
+      }));
+      return;
+    }
 
-  fetch(
-    `${endpoints.invoiceDeceased}/templates?insurancePartyId=${formData.insurancePartyId}`
-  )
-    .then((res) => {
-      if (!res.ok) throw new Error("Failed to load price template");
-      return res.json();
-    })
-    .then((components: PriceComponent[]) => {
-      handleChange({ priceComponents: components });
-    })
-    .catch(() => {
-      handleChange({ priceComponents: [] });
-    });
-}, [formData.insurancePartyId]);
+    fetch(
+      `${endpoints.invoiceDeceased}/templates?insurancePartyId=${formData.selectedVerzekeraarId}`
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load price template");
+        return res.json();
+      })
+      .then((components: PriceComponent[]) => {
+        setFormData((prev) => ({
+          ...prev,
+          priceComponents: components,
+        }));
+      })
+      .catch(() => {
+        setFormData((prev) => ({
+          ...prev,
+          priceComponents: [],
+        }));
+      });
+  }, [formData.selectedVerzekeraarId, setFormData]);
 
 
   /* -------------------------------------------------------------------------- */
@@ -140,34 +158,40 @@ useEffect(() => {
     key: keyof PriceComponent,
     value: any
   ) => {
-    const updated = [...formData.priceComponents];
-    updated[idx] = {
-      ...updated[idx],
-      [key]:
-        key === "bedrag" || key === "aantal"
-          ? value === ""
-            ? ""
-            : Number(value)
-          : value,
-    };
-    handleChange({ priceComponents: updated });
+    setFormData((prev) => {
+      const updated = [...prev.priceComponents];
+      updated[idx] = {
+        ...updated[idx],
+        [key]:
+          key === "bedrag" || key === "aantal"
+            ? value === ""
+              ? ""
+              : Number(value)
+            : value,
+      };
+
+      return {
+        ...prev,
+        priceComponents: updated,
+      };
+    });
   };
 
   const addPriceComponent = () => {
-    handleChange({
+    setFormData((prev) => ({
+      ...prev,
       priceComponents: [
-        ...formData.priceComponents,
+        ...prev.priceComponents,
         { omschrijving: "", aantal: 1, bedrag: 0 },
       ],
-    });
+    }));
   };
 
   const removePriceComponent = (idx: number) => {
-    handleChange({
-      priceComponents: formData.priceComponents.filter(
-        (_, i) => i !== idx
-      ),
-    });
+    setFormData((prev) => ({
+      ...prev,
+      priceComponents: prev.priceComponents.filter((_, i) => i !== idx),
+    }));
   };
 
   /* -------------------------------------------------------------------------- */
@@ -200,8 +224,14 @@ useEffect(() => {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={handleNext}
-          onBack={() => goBack(location.pathname)}
+          onNext={handleNext} 
+          onBack={() =>
+            goBack(location.pathname, {
+              dossierId: dossierId ?? "",
+              funeralLeader: formData.funeralLeader ?? "",
+              funeralNumber: formData.funeralNumber ?? "",
+            })
+          }
           readOnly
         />
 
@@ -218,8 +248,8 @@ useEffect(() => {
                   </div>
                 ) : (
                   <select
-                    name="insurancePartyId"
-                    value={formData.insurancePartyId}
+                    name="selectedVerzekeraarId"
+                    value={formData.selectedVerzekeraarId}
                     onChange={handleChange}
                     className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                   >
@@ -237,7 +267,7 @@ useEffect(() => {
             <button
               onClick={handleGenerateExcel}
               disabled={
-                !formData.insurancePartyId ||
+                !formData.selectedVerzekeraarId ||
                 !formData.isExcelButtonEnabled
               }
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
@@ -271,7 +301,7 @@ useEffect(() => {
                         e.target.value
                       )
                     }
-                    disabled={!formData.insurancePartyId}
+                    disabled={!formData.selectedVerzekeraarId}
                     className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
                   />
                 </div>
@@ -287,7 +317,7 @@ useEffect(() => {
                         e.target.value
                       )
                     }
-                    disabled={!formData.insurancePartyId}
+                    disabled={!formData.selectedVerzekeraarId}
                     className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
                   />
                 </div>
@@ -303,7 +333,7 @@ useEffect(() => {
                         e.target.value
                       )
                     }
-                    disabled={!formData.insurancePartyId}
+                    disabled={!formData.selectedVerzekeraarId}
                     className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
                   />
                 </div>
@@ -312,7 +342,7 @@ useEffect(() => {
                   <button
                     type="button"
                     onClick={() => removePriceComponent(idx)}
-                    disabled={!formData.insurancePartyId}
+                    disabled={!formData.selectedVerzekeraarId}
                     className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm disabled:opacity-50"
                   >
                     Verwijder
@@ -324,7 +354,7 @@ useEffect(() => {
             <button
               type="button"
               onClick={addPriceComponent}
-              disabled={!formData.insurancePartyId}
+              disabled={!formData.selectedVerzekeraarId}
               className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50 mt-2"
             >
               Voeg regel toe
@@ -341,7 +371,7 @@ useEffect(() => {
                 name="discountAmount"
                 value={formData.discountAmount}
                 onChange={handleChange}
-                disabled={!formData.insurancePartyId}
+                disabled={!formData.selectedVerzekeraarId}
                 className="w-24 border-0 border-b border-gray-300 focus:ring-0"
               />
             </div>

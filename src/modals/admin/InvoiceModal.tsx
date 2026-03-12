@@ -8,6 +8,7 @@ import {
 } from "../../api/adminApi";
 
 const emptyInvoice: InvoiceFormData = {
+  selectedVerzekeraarId: "",
   insurancePartyId: "",
   priceComponents: [{ omschrijving: "", aantal: 1, bedrag: 0 }],
   insurancePolicies: [],
@@ -45,6 +46,7 @@ export default function AdminInvoiceModal({
 
         setInvoice({
           insurancePartyId: data.insurancePartyId ?? data.selectedVerzekeraarId ?? "",
+          selectedVerzekeraarId: data.insurancePartyId ?? data.selectedVerzekeraarId ?? "",
           priceComponents: data.priceComponents ?? [],
           insurancePolicies: data.insurancePolicies ?? [],
           discountAmount: data.discountAmount ?? 0,
