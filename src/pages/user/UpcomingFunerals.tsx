@@ -10,159 +10,184 @@ import {
 } from "react-icons/fa";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
+import { endpoints } from "../../api/apiConfig";
 
-type DossierDto = {
-  id?: string;
-  funeralLeader?: string;
-  funeralNumber?: string;
-  dossierCompleted?: boolean;
-  deceased?: {
-    firstName?: string;
-    lastName?: string;
-  } | null;
-  deathInfo?: {
-    dateOfDeath?: string;
-    locationOfDeath?: string;
-    cityOfDeath?: string;
-  } | null;
+type AgendaItemDto = {
+  dossierId: string;
+  funeralNumber: string;
+  deceasedName: string;
+  date: string;
+  time: string;
+  location: string;
+  funeralLeader: string;
+};
+
+type AgendaResponse = {
+  results: AgendaItemDto[];
+  highlightedDates: string[];
 };
 
 type Funeral = {
   id: string;
   dossierId: string;
   name: string;
-  date: string; // yyyy-mm-dd
+  date: string;
   time: string;
   location: string;
   funeralLeader: string;
   funeralNumber: string;
 };
 
+const toMonthParam = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+const toDateParam = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+
 export default function UpcomingFunerals() {
   const navigate = useNavigate();
 
   const [funerals, setFunerals] = useState<Funeral[]>([]);
+  const [highlightedDates, setHighlightedDates] = useState<Date[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadFunerals = async () => {
-      setLoading(true);
-      setError("");
+    const timeout = setTimeout(() => {
+      setSearch(searchInput.trim());
+    }, 300);
 
-      try {
-        const response = await fetch(
-          "/api/deceased/search?funeralNumber=UIT&archive=false",
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
 
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text || "Kon uitvaarten niet laden.");
+useEffect(() => {
+  const loadAgenda = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const monthParam = toMonthParam(visibleMonth);
+
+      // 1) Calendar highlights always depend on visible month
+      const highlightsResponse = await fetch(
+        `${endpoints.upcomingAgenda}?month=${monthParam}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
         }
-
-        const data = await response.json();
-
-        const mapped: Funeral[] = ((data?.results ?? []) as DossierDto[])
-          .filter((d) => d.id)
-          .map((d) => {
-            const firstName = d.deceased?.firstName?.trim() ?? "";
-            const lastName = d.deceased?.lastName?.trim() ?? "";
-            const fullName =
-              [lastName, firstName].filter(Boolean).join(", ") ||
-              d.funeralNumber ||
-              "Onbekend dossier";
-
-            const rawDate = d.deathInfo?.dateOfDeath
-              ? new Date(d.deathInfo.dateOfDeath)
-              : null;
-
-            const date = rawDate && !isNaN(rawDate.getTime())
-              ? rawDate.toISOString().split("T")[0]
-              : "";
-
-            const city = d.deathInfo?.cityOfDeath?.trim() ?? "";
-            const locationOfDeath =
-              d.deathInfo?.locationOfDeath?.trim() ?? "";
-
-            const location =
-              [locationOfDeath, city].filter(Boolean).join(", ") || "—";
-
-            return {
-              id: d.id!,
-              dossierId: d.id!,
-              name: fullName,
-              date,
-              time: "—",
-              location,
-              funeralLeader: d.funeralLeader?.trim() || "—",
-              funeralNumber: d.funeralNumber?.trim() || "—",
-            };
-          })
-          .filter((f) => !!f.date)
-          .sort((a, b) => a.date.localeCompare(b.date));
-
-        setFunerals(mapped);
-      } catch (err: any) {
-        setError(err?.message || "Er ging iets mis bij het laden.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFunerals();
-  }, []);
-
-  const filteredFunerals = useMemo(() => {
-    const lower = search.toLowerCase().trim();
-
-    let filtered = funerals.filter((f) => {
-      if (!lower) return true;
-
-      return (
-        f.name.toLowerCase().includes(lower) ||
-        f.location.toLowerCase().includes(lower) ||
-        f.funeralLeader.toLowerCase().includes(lower) ||
-        f.funeralNumber.toLowerCase().includes(lower)
       );
-    });
 
-    if (selectedDate) {
-      const dateString = selectedDate.toISOString().split("T")[0];
-      filtered = filtered.filter((f) => f.date === dateString);
+      if (!highlightsResponse.ok) {
+        const text = await highlightsResponse.text();
+        throw new Error(text || "Kon kalenderdata niet laden.");
+      }
+
+      const highlightsData: AgendaResponse = await highlightsResponse.json();
+
+      const mappedHighlightedDates = (highlightsData.highlightedDates ?? [])
+        .map((d) => new Date(`${d}T00:00:00`))
+        .filter((d) => !isNaN(d.getTime()));
+
+      setHighlightedDates(mappedHighlightedDates);
+
+      // 2) Results query depends on actual filters
+      const params = new URLSearchParams();
+
+      if (selectedDate) {
+        params.set("date", toDateParam(selectedDate));
+      } else if (!search.trim()) {
+        // only use month as result filter when there is no search and no selected date
+        params.set("month", monthParam);
+      }
+
+      if (search.trim()) {
+        params.set("search", search.trim());
+      }
+
+      const resultsResponse = await fetch(
+        `${endpoints.upcomingAgenda}?${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!resultsResponse.ok) {
+        const text = await resultsResponse.text();
+        throw new Error(text || "Kon uitvaarten niet laden.");
+      }
+
+      const resultsData: AgendaResponse = await resultsResponse.json();
+
+      const mappedResults: Funeral[] = (resultsData.results ?? [])
+        .map((item) => ({
+          id: item.dossierId,
+          dossierId: item.dossierId,
+          name: item.deceasedName || item.funeralNumber || "Onbekend dossier",
+          date: item.date,
+          time: item.time || "—",
+          location: item.location || "—",
+          funeralLeader: item.funeralLeader || "—",
+          funeralNumber: item.funeralNumber || "—",
+        }))
+        .sort((a, b) => {
+          const aKey = `${a.date} ${a.time}`;
+          const bKey = `${b.date} ${b.time}`;
+          return aKey.localeCompare(bKey);
+        });
+
+      setFunerals(mappedResults);
+    } catch (err: any) {
+      setError(err?.message || "Er ging iets mis bij het laden.");
+      setFunerals([]);
+      setHighlightedDates([]);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return filtered;
-  }, [funerals, search, selectedDate]);
+  loadAgenda();
+}, [visibleMonth, selectedDate, search]);
 
   const today = new Date();
-  const todayString = today.toISOString().split("T")[0];
+  const todayString = toDateParam(today);
 
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
-  const tomorrowString = tomorrow.toISOString().split("T")[0];
+  const tomorrowString = toDateParam(tomorrow);
 
   const weekAhead = new Date();
   weekAhead.setDate(today.getDate() + 7);
 
-  const funeralsToday = funerals.filter((f) => f.date === todayString);
+  const funeralsToday = useMemo(
+    () => funerals.filter((f) => f.date === todayString),
+    [funerals, todayString]
+  );
 
-  const funeralsTomorrow = funerals.filter((f) => f.date === tomorrowString);
+  const funeralsTomorrow = useMemo(
+    () => funerals.filter((f) => f.date === tomorrowString),
+    [funerals, tomorrowString]
+  );
 
-  const funeralsWeek = funerals.filter((f) => {
-    const date = new Date(f.date);
-    return date > tomorrow && date <= weekAhead;
-  });
-
-  const datesWithFunerals = funerals.map((f) => new Date(f.date));
+  const funeralsWeek = useMemo(
+    () =>
+      funerals.filter((f) => {
+        const date = new Date(`${f.date}T00:00:00`);
+        return date > tomorrow && date <= weekAhead;
+      }),
+    [funerals]
+  );
 
   return (
     <DashboardLayout>
@@ -170,7 +195,7 @@ export default function UpcomingFunerals() {
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-2">Uitvaart Agenda</h2>
           <p className="text-gray-600">
-            Overzicht van {filteredFunerals.length} komende uitvaarten
+            Overzicht van {funerals.length} komende uitvaarten
           </p>
         </div>
 
@@ -204,8 +229,8 @@ export default function UpcomingFunerals() {
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="Zoek op naam, locatie, uitvaartleider of uitvaartnummer..."
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 />
@@ -220,11 +245,12 @@ export default function UpcomingFunerals() {
               Filters {showFilters ? "↑" : "↓"}
             </button>
 
-            {(search || selectedDate) && (
+            {(searchInput || selectedDate) && (
               <button
                 onClick={() => {
                   setSelectedDate(undefined);
                   setSearch("");
+                  setSearchInput("");
                 }}
                 className="px-4 py-2 text-red-600 hover:text-red-700 text-sm font-medium"
               >
@@ -243,9 +269,11 @@ export default function UpcomingFunerals() {
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
+                  month={visibleMonth}
+                  onMonthChange={setVisibleMonth}
                   modifiers={{
                     hasFuneral: (day) =>
-                      datesWithFunerals.some(
+                      highlightedDates.some(
                         (d) => d.toDateString() === day.toDateString()
                       ),
                   }}
@@ -270,8 +298,8 @@ export default function UpcomingFunerals() {
                       })}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
-                      {filteredFunerals.length} uitvaart
-                      {filteredFunerals.length !== 1 ? "en" : ""} op deze datum
+                      {funerals.length} uitvaart
+                      {funerals.length !== 1 ? "en" : ""} op deze datum
                     </p>
                   </div>
                 ) : (
@@ -288,7 +316,7 @@ export default function UpcomingFunerals() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
             <h3 className="text-lg font-semibold text-gray-800">
-              Komende uitvaarten ({filteredFunerals.length})
+              Komende uitvaarten ({funerals.length})
             </h3>
           </div>
 
@@ -301,7 +329,7 @@ export default function UpcomingFunerals() {
               <p className="text-lg">Kon agenda niet laden</p>
               <p className="text-sm mt-1">{error}</p>
             </div>
-          ) : filteredFunerals.length === 0 ? (
+          ) : funerals.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <FaCalendarAlt className="mx-auto text-4xl mb-3 text-gray-300" />
               <p className="text-lg">Geen uitvaarten gevonden</p>
@@ -311,12 +339,13 @@ export default function UpcomingFunerals() {
             </div>
           ) : (
             <ul className="divide-y divide-gray-100">
-              {filteredFunerals.map((f) => (
-                <li
-                  key={f.id}
-                  className="hover:bg-gray-50 transition duration-150"
-                >
-                  <div className="p-6">
+              {funerals.map((f) => (
+                <li key={f.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/deceased/${f.dossierId}`)}
+                    className="w-full text-left p-6 transition duration-150 hover:bg-red-50 hover:border-l-4 hover:border-red-500 focus:outline-none focus:bg-red-50 cursor-pointer"
+                  >
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -327,11 +356,14 @@ export default function UpcomingFunerals() {
                           <span className="flex items-center gap-2">
                             <FaCalendarAlt className="text-red-600 flex-shrink-0" />
                             <span>
-                              {new Date(f.date).toLocaleDateString("nl-NL", {
-                                weekday: "short",
-                                day: "numeric",
-                                month: "long",
-                              })}{" "}
+                              {new Date(`${f.date}T00:00:00`).toLocaleDateString(
+                                "nl-NL",
+                                {
+                                  weekday: "short",
+                                  day: "numeric",
+                                  month: "long",
+                                }
+                              )}{" "}
                               – {f.time}
                             </span>
                           </span>
@@ -352,14 +384,11 @@ export default function UpcomingFunerals() {
                         </p>
                       </div>
 
-                      <button
-                        className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition font-medium"
-                        onClick={() => navigate(`/deceased/${f.dossierId}`)}
-                      >
-                        Bekijk dossier
-                      </button>
+                      <div className="text-sm font-medium text-red-600 lg:self-center">
+                        Open dossier
+                      </div>
                     </div>
-                  </div>
+                  </button>
                 </li>
               ))}
             </ul>

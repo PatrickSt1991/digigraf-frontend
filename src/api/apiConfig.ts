@@ -2,7 +2,6 @@ export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5027/
 
 export const endpoints = {
     authentication: `${API_BASE}/Auth`,
-    upcoming: `${API_BASE}/upcoming-funerals`,
     deceased: `${API_BASE}/deceased`,
     additional: `${API_BASE}/clientinfo`,
     funeral: `${API_BASE}/deceasedfuneral`,
@@ -28,6 +27,7 @@ export const endpoints = {
     employees: `${API_BASE}/Employee/employees`,
     employeesOverview: `${API_BASE}/Employee/overview`,
     searchDossier: `${API_BASE}/deceased/search`,
+    upcomingAgenda: `${API_BASE}/deceased/upcoming-agenda`,
 };
 
 export const licenseEndpoints = {
