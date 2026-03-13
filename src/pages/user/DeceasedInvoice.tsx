@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import {
   DashboardLayout,
@@ -21,6 +21,7 @@ type DeceasedInvoiceFormData = InvoiceFormData & {
 
 export default function DeceasedInvoice() {
   const location = useLocation();
+  const navigate = useNavigate();
   const navState = location.state as
     | {
         dossierId?: string;
@@ -240,10 +241,20 @@ export default function DeceasedInvoice() {
               funeralNumber: formData.funeralNumber ?? "",
             })
           }
-          readOnly
+          readOnly={true}
+          navigationActions={[
+            { label: "Dashboard", onClick: () => navigate("/dashboard") },
+            { label: "Overledene", onClick: () => navigate(`/deceased/${dossierId}`) },
+            { label: "Opdrachtgever", onClick: () => navigate(`/deceased-information/${dossierId}`) },
+            { label: "Verzekeringen", onClick: () => navigate(`/deceased-insurance/${dossierId}`) },
+            { label: "Opbaren", onClick: () => navigate(`/deceased-layout/${dossierId}`) },
+            { label: "Condoleance", onClick: () => navigate(`/deceased-funeral/${dossierId}`) },
+            { label: "Documenten", onClick: () => navigate(`/deceased-documents/${dossierId}`) },
+            { label: "Diensten", onClick: () => navigate(`/deceased-services/${dossierId}`) },
+          ]}
         />
 
-        <FormCard title="Factuur Overledene">
+        <FormCard title="Kostenbegroting Overledene">
           {/* Verzekeraar + Excel */}
           <div className="mt-4 flex items-end justify-between gap-4">
             <div className="w-64">

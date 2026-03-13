@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { DashboardLayout, FormCard, FormField, FuneralForm } from "../../components";
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
 import { calculateAge } from "../../utils/calculateAge";
@@ -7,6 +7,7 @@ import { DossierDto } from "../../types";
 
 export default function Deceased() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { dossierId } = useParams<{ dossierId: string }>();
 
   const {
@@ -18,14 +19,12 @@ export default function Deceased() {
     error,
   } = useFormHandler<DossierDto>({
     initialData: {
-      id: "",
       funeralLeader: "",
       funeralNumber: "",
       funeralType: "",
       voorregeling: false,
       dossierCompleted: false,
       deceased: {
-        id: "",
         socialSecurity: "",
         firstName: "",
         lastName: "",
@@ -41,8 +40,6 @@ export default function Deceased() {
         homeDeceased: false,
       },
       deathInfo: {
-        id: "",
-        dossierId: "",
         dateOfDeath: "",
         timeOfDeath: "",
         locationOfDeath: "",
@@ -91,6 +88,7 @@ export default function Deceased() {
     origins: endpoints.origins,
   });
 
+  const currentDossierId = (dossierId)?.toString().trim() || "";
   if (loading) return <div>Loading deceased data...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
 
@@ -103,6 +101,41 @@ export default function Deceased() {
           onNext={handleNext}
           onBack={() => goBack(location.pathname)}
           readOnly={false}
+          navigationActions={
+            currentDossierId
+              ? [
+                  { label: "Dashboard", onClick: () => navigate("/dashboard") },
+                  {
+                    label: "Opdrachtgever",
+                    onClick: () => navigate(`/deceased-information/${currentDossierId}`),
+                  },
+                  {
+                    label: "Verzekeringen",
+                    onClick: () => navigate(`/deceased-insurance/${currentDossierId}`),
+                  },
+                  {
+                    label: "Opbaren",
+                    onClick: () => navigate(`/deceased-layout/${currentDossierId}`),
+                  },
+                  {
+                    label: "Condoleance",
+                    onClick: () => navigate(`/deceased-funeral/${currentDossierId}`),
+                  },
+                  {
+                    label: "Documenten",
+                    onClick: () => navigate(`/deceased-documents/${currentDossierId}`),
+                  },
+                  {
+                    label: "Kostenbegroting",
+                    onClick: () => navigate(`/deceased-invoice/${currentDossierId}`),
+                  },
+                  {
+                    label: "Diensten",
+                    onClick: () => navigate(`/deceased-services/${currentDossierId}`),
+                  },
+                ]
+              : []
+          }
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -156,6 +189,7 @@ export default function Deceased() {
             <FormField
               label="Geboortedatum"
               type="date"
+              required
               name="deceased.dob"
               value={formData.deceased?.dob?.split("T")[0] ?? ""}
               onChange={handleDateChange}

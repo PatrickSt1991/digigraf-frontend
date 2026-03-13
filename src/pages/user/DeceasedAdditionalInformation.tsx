@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { DashboardLayout, FormCard, FormField, FuneralForm } from "../../components";
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
 import { calculateAge } from "../../utils/calculateAge";
@@ -6,6 +6,7 @@ import { endpoints } from "../../api/apiConfig";
 
 export default function AdditionalInformationDeceased() {
   const location = useLocation();
+  const navigate = useNavigate();
   const navState = location.state as
     | {
         dossierId?: string;
@@ -111,6 +112,16 @@ export default function AdditionalInformationDeceased() {
             })
           }
           readOnly={true}
+          navigationActions={[
+            { label: "Dashboard", onClick: () => navigate("/dashboard") },
+            { label: "Overledene", onClick: () => navigate(`/deceased/${dossierId}`) },
+            { label: "Verzekeringen", onClick: () => navigate(`/deceased-insurance/${dossierId}`) },
+            { label: "Opbaren", onClick: () => navigate(`/deceased-layout/${dossierId}`) },
+            { label: "Condoleance", onClick: () => navigate(`/deceased-funeral/${dossierId}`) },
+            { label: "Documenten", onClick: () => navigate(`/deceased-documents/${dossierId}`) },
+            { label: "Kostenbegroting ", onClick: () => navigate(`/deceased-invoice/${dossierId}`) },
+            { label: "Diensten", onClick: () => navigate(`/deceased-services/${dossierId}`) },
+          ]}
         />
 
         {/* Handle form-level fetch errors */}

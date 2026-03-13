@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { DocumentTemplate, Section } from "../../types";
 import {
@@ -20,6 +20,7 @@ type DeceasedDocumentsFormData = {
 export default function DeceasedDocuments() {
   const { dossierId } = useParams<{ dossierId: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const navState = location.state as
     | {
         dossierId?: string;
@@ -126,6 +127,16 @@ export default function DeceasedDocuments() {
           })
         }
         readOnly={true}
+        navigationActions={[
+          { label: "Dashboard", onClick: () => navigate("/dashboard") },
+          { label: "Overledene", onClick: () => navigate(`/deceased/${dossierId}`) },
+          { label: "Opdrachtgever", onClick: () => navigate(`/deceased-information/${dossierId}`) },
+          { label: "Verzekeringen", onClick: () => navigate(`/deceased-insurance/${dossierId}`) },
+          { label: "Opbaren", onClick: () => navigate(`/deceased-layout/${dossierId}`) },
+          { label: "Condoleance", onClick: () => navigate(`/deceased-funeral/${dossierId}`) },
+          { label: "Kostenbegroting ", onClick: () => navigate(`/deceased-invoice/${dossierId}`) },
+          { label: "Diensten", onClick: () => navigate(`/deceased-services/${dossierId}`) },
+        ]}
       />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

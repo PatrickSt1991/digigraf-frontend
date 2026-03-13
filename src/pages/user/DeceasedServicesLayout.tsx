@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   DashboardLayout,
   FormCard,
@@ -59,6 +59,7 @@ type DeceasedServicesFormData = {
 
 export default function DeceasedServicesLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { dossierId } = useParams<{ dossierId: string }>();
 
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
@@ -287,6 +288,16 @@ export default function DeceasedServicesLayout() {
           onComplete={handleOpenCompleteModal}
           isLastStep={true}
           readOnly={true}
+          navigationActions={[
+            { label: "Dashboard", onClick: () => navigate("/dashboard") },
+            { label: "Overledene", onClick: () => navigate(`/deceased/${dossierId}`) },
+            { label: "Opdrachtgever", onClick: () => navigate(`/deceased-information/${dossierId}`) },
+            { label: "Verzekeringen", onClick: () => navigate(`/deceased-insurance/${dossierId}`) },
+            { label: "Opbaren", onClick: () => navigate(`/deceased-layout/${dossierId}`) },
+            { label: "Condoleance", onClick: () => navigate(`/deceased-funeral/${dossierId}`) },
+            { label: "Documenten", onClick: () => navigate(`/deceased-documents/${dossierId}`) },
+            { label: "Kostenbegroting ", onClick: () => navigate(`/deceased-invoice/${dossierId}`) },
+          ]}
         />
 
         <FormCard title="Steenhouwerij">

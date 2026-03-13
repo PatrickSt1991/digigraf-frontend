@@ -1,10 +1,11 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { DashboardLayout, FormCard, FormField, FuneralForm, FormRow } from "../../components";
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 
 export default function LayoutDeceased() {
   const location = useLocation();
+  const navigate = useNavigate();
   const navState = location.state as
     | {
         dossierId?: string;
@@ -89,6 +90,16 @@ export default function LayoutDeceased() {
             })
           }
           readOnly={true} 
+          navigationActions={[
+            { label: "Dashboard", onClick: () => navigate("/dashboard") },
+            { label: "Overledene", onClick: () => navigate(`/deceased/${dossierId}`) },
+            { label: "Opdrachtgever", onClick: () => navigate(`/deceased-information/${dossierId}`) },
+            { label: "Verzekeringen", onClick: () => navigate(`/deceased-insurance/${dossierId}`) },
+            { label: "Condoleance", onClick: () => navigate(`/deceased-funeral/${dossierId}`) },
+            { label: "Documenten", onClick: () => navigate(`/deceased-documents/${dossierId}`) },
+            { label: "Kostenbegroting ", onClick: () => navigate(`/deceased-invoice/${dossierId}`) },
+            { label: "Diensten", onClick: () => navigate(`/deceased-services/${dossierId}`) },
+          ]}
         />
 
         <div className="grid grid-cols-1 gap-4">
