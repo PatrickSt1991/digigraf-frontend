@@ -12,7 +12,6 @@ import { AdminEmployee,
   SupplierTypeDto, 
   InsurancePriceComponentDto, 
   FinancialRowDto,
-  InvoiceAdminData,
   InvoiceFormData
 } from "../types";
 
@@ -454,8 +453,8 @@ export async function exportFinancialExcel(
   URL.revokeObjectURL(url);
 }
 
-export async function getInvoiceByDossierId(dossierId: string): Promise<InvoiceAdminData> {
-  return apiClient<InvoiceAdminData>(adminEndpoints.invoiceByDossier(dossierId), {
+export async function getInvoiceByDossierId(dossierId: string): Promise<InvoiceFormData> {
+  return apiClient<InvoiceFormData>(adminEndpoints.invoiceByDossier(dossierId), {
     method: "GET",
   });
 }
