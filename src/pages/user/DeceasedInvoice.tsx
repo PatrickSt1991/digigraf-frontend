@@ -68,7 +68,7 @@ export default function DeceasedInvoice() {
     ? `${endpoints.invoiceDeceased}/${dossierId}`
     : endpoints.invoiceDeceased;
 
-  const handleNext = useSaveAndNext({
+  const {handleNext} = useSaveAndNext({
     formData,
     endpoint: saveUrl,
     id: dossierId as string | undefined,
@@ -94,6 +94,48 @@ export default function DeceasedInvoice() {
   const insurers =
     data.insuranceParties?.filter((p: any) => p.isInsurance) ?? [];
 
+  const handleInsuranceChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const insuranceId = e.target.value;
+    const selectedName =
+      insurers.find((p: any) => p.id === insuranceId)?.label ?? "";
+
+    if (!insuranceId) {
+      setFormData((prev) => ({
+        ...prev,
+        selectedVerzekeraarId: "",
+        selectedVerzekeraar: "",
+        priceComponents: [],
+      }));
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${endpoints.invoiceDeceased}/templates?insurancePartyId=${insuranceId}`
+      );
+
+      if (!res.ok) throw new Error("Failed to load price template");
+
+      const components: PriceComponent[] = await res.json();
+
+      setFormData((prev) => ({
+        ...prev,
+        selectedVerzekeraarId: insuranceId,
+        selectedVerzekeraar: selectedName,
+        priceComponents: components,
+      }));
+    } catch {
+      setFormData((prev) => ({
+        ...prev,
+        selectedVerzekeraarId: insuranceId,
+        selectedVerzekeraar: selectedName,
+        priceComponents: [],
+      }));
+    }
+  };
+
   /* -------------------------------------------------------------------------- */
   /*                          CALCULATIONS (SUB / TOTAL)                         */
   /* -------------------------------------------------------------------------- */
@@ -113,40 +155,6 @@ export default function DeceasedInvoice() {
       total,
     }));
   }, [formData.priceComponents, formData.discountAmount, setFormData]);
-
-  /* -------------------------------------------------------------------------- */
-  /*                  LOAD PRICE TEMPLATE ON INSURER CHANGE                      */
-  /* -------------------------------------------------------------------------- */
-
-  useEffect(() => {
-    if (!formData.selectedVerzekeraarId) {
-      setFormData((prev) => ({
-        ...prev,
-        priceComponents: [],
-      }));
-      return;
-    }
-
-    fetch(
-      `${endpoints.invoiceDeceased}/templates?insurancePartyId=${formData.selectedVerzekeraarId}`
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load price template");
-        return res.json();
-      })
-      .then((components: PriceComponent[]) => {
-        setFormData((prev) => ({
-          ...prev,
-          priceComponents: components,
-        }));
-      })
-      .catch(() => {
-        setFormData((prev) => ({
-          ...prev,
-          priceComponents: [],
-        }));
-      });
-  }, [formData.selectedVerzekeraarId, setFormData]);
 
 
   /* -------------------------------------------------------------------------- */
@@ -250,7 +258,7 @@ export default function DeceasedInvoice() {
                   <select
                     name="selectedVerzekeraarId"
                     value={formData.selectedVerzekeraarId}
-                    onChange={handleChange}
+                    onChange={handleInsuranceChange}
                     className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                   >
                     <option value="">Selecteer verzekeraar...</option>

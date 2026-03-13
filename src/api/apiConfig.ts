@@ -6,6 +6,7 @@ export const endpoints = {
     deceased: `${API_BASE}/deceased`,
     additional: `${API_BASE}/clientinfo`,
     funeral: `${API_BASE}/deceasedfuneral`,
+    deceasedServices: `${API_BASE}/deceasedservices`,
     documentsdeceased: `${API_BASE}/DocumentTemplates`,
     documentsdefault: `${API_BASE}/DocumentTemplates/defaults`,
     funeralLeaders: `${API_BASE}/DossierUtils/funeral-leaders`,

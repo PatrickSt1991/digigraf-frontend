@@ -1,11 +1,68 @@
+import { useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { DashboardLayout, FormCard, FormField, FormRow, FuneralForm } from "../../components";
-import { useDropdownData, useFormHandler } from "../../hooks";
+import {
+  DashboardLayout,
+  FormCard,
+  FormField,
+  FormRow,
+  FuneralForm,
+} from "../../components";
+import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
+import apiClient from "../../api/apiClient";
+import CompleteDossierModal from "../../modals/user/CompleteDossierModal";
+
+type Worksheet = {
+  employee: string;
+  otherServices: string;
+  hearse: boolean;
+  escortVehicle: boolean;
+  lastCare: boolean;
+  transfer: boolean;
+  condolence: boolean;
+};
+
+type DeceasedServicesFormData = {
+  id?: string;
+  funeralLeader: string;
+  funeralNumber: string;
+  attendantIntake: string;
+
+  stoneDescription: string;
+  stoneAmount: string;
+  stoneSupplier: string;
+  stoneEmployee: string;
+
+  flowerDescription: string;
+  flowerAmount: string;
+  flowerSupplier: string;
+  flowerEmployee: string;
+  flowersWithCard: boolean;
+  flowersWithRibbon: boolean;
+  deliveryAddress: string;
+  deliveryDate: string;
+  ribbon1: string;
+  ribbon2: string;
+  ribbon3: string;
+  ribbon4: string;
+
+  urnDescription: string;
+  urnAmount: string;
+  urnSupplier: string;
+  urnEmployee: string;
+
+  worksheets: Worksheet[];
+
+  customerScore: string;
+  isNotificationEnabled: boolean;
+};
 
 export default function DeceasedServicesLayout() {
   const location = useLocation();
   const { dossierId } = useParams<{ dossierId: string }>();
+
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+
   const navState = location.state as
     | {
         dossierId?: string;
@@ -14,17 +71,25 @@ export default function DeceasedServicesLayout() {
       }
     | undefined;
 
-  const { formData, handleChange, setFormData, goBack, loading, error } = useFormHandler({
+  const {
+    formData,
+    handleChange,
+    setFormData,
+    goBack,
+    loading,
+    error,
+  } = useFormHandler<DeceasedServicesFormData>({
     initialData: {
+      id: dossierId ?? "",
       funeralLeader: navState?.funeralLeader ?? "",
-      funeralNumber: navState?.funeralNumber ??  "",
+      funeralNumber: navState?.funeralNumber ?? "",
       attendantIntake: "",
-      // Steenhouwerij
+
       stoneDescription: "",
       stoneAmount: "",
       stoneSupplier: "",
       stoneEmployee: "",
-      // Bloemen
+
       flowerDescription: "",
       flowerAmount: "",
       flowerSupplier: "",
@@ -37,12 +102,12 @@ export default function DeceasedServicesLayout() {
       ribbon2: "",
       ribbon3: "",
       ribbon4: "",
-      // Urnen en Gedenksieraden
+
       urnDescription: "",
       urnAmount: "",
       urnSupplier: "",
       urnEmployee: "",
-      // Werkbonnen (placeholder for a dynamic list)
+
       worksheets: [
         {
           employee: "",
@@ -54,57 +119,156 @@ export default function DeceasedServicesLayout() {
           condolence: false,
         },
       ],
-      // Finish Popup
+
       customerScore: "",
       isNotificationEnabled: false,
     },
-    steps: ["/deceased-invoice", "/deceased-services", "/the-next-step-final-step", "/success-deceased"],
-    fetchUrl: dossierId ? `${endpoints.deceased}/${dossierId}` : undefined,
+    steps: ["/deceased-invoice", "/deceased-services", "/success-deceased"],
+    fetchUrl: dossierId ? `${endpoints.deceasedServices}/${dossierId}` : undefined,
     allow404AsEmpty: true,
   });
 
-  const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
-    suppliers: endpoints.suppliers,
-    employees: endpoints.employees,
+  const { data, loading: dropdownLoading, errors: dropdownErrors } =
+    useDropdownData({
+      suppliers: endpoints.suppliers,
+      employees: endpoints.employees,
+    });
+
+  const saveUrl = dossierId
+    ? `${endpoints.deceasedServices}/${dossierId}`
+    : endpoints.deceasedServices;
+
+  const { handleSaveAndClose } = useSaveAndNext({
+    formData,
+    endpoint: saveUrl,
+    id: dossierId as string | undefined,
+    getClosePath: () => "/dashboard",
+    getCloseState: (_result, currentId) => ({
+      dossierId: currentId ?? formData.id ?? "",
+      funeralLeader: formData.funeralLeader ?? "",
+      funeralNumber: formData.funeralNumber ?? "",
+    }),
   });
 
   const stoneSuppliers =
-    data.suppliers?.filter(
-      (s: any) => s.type?.code === "Steenhouwer"
-    ) ?? [];
+    data.suppliers?.filter((s: any) => s.type?.code === "Steenhouwer") ?? [];
 
-  const flowerSuppliers = 
-    data.suppliers?.filter(
-      (s: any) => s.type?.code === "Bloemen"
-    ) ?? [];
-
-  const coffinSuppliers = 
-    data.suppliers?.filter(
-      (s: any) => s.type?.code === "Kisten"
-    ) ?? [];
+  const flowerSuppliers =
+    data.suppliers?.filter((s: any) => s.type?.code === "Bloemen") ?? [];
 
   const urnSuppliers =
-    data.suppliers?.filter(
-      (s: any) => s.type?.code === "UrnAndGedenksieraden"
-    ) ?? [];
+    data.suppliers?.filter((s: any) => s.type?.code === "UrnAndGedenksieraden") ??
+    [];
+
+  const handleWorksheetChange = (
+    index: number,
+    name: keyof Worksheet,
+    value: string | boolean
+  ) => {
+    setFormData((prev) => {
+      const newWorksheets = [...prev.worksheets];
+      newWorksheets[index] = {
+        ...newWorksheets[index],
+        [name]: value,
+      };
+
+      return {
+        ...prev,
+        worksheets: newWorksheets,
+      };
+    });
+  };
+
+  const addWorksheet = () => {
+    setFormData((prev) => ({
+      ...prev,
+      worksheets: [
+        ...prev.worksheets,
+        {
+          employee: "",
+          otherServices: "",
+          hearse: false,
+          escortVehicle: false,
+          lastCare: false,
+          transfer: false,
+          condolence: false,
+        },
+      ],
+    }));
+  };
+
+  const removeWorksheet = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      worksheets: prev.worksheets.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleOpenCompleteModal = () => {
+    setIsCompleteModalOpen(true);
+  };
+
+  const handleCloseCompleteModal = () => {
+    setIsCompleteModalOpen(false);
+  };
+
+  const handleConfirmComplete = async ({
+    customerScore,
+    isNotificationEnabled,
+    file,
+  }: {
+    customerScore: string;
+    isNotificationEnabled: boolean;
+    file: File;
+  }) => {
+    const nextFormData: DeceasedServicesFormData = {
+      ...formData,
+      customerScore,
+      isNotificationEnabled,
+    };
+
+    setFormData(nextFormData);
+
+    const saveResult = await apiClient<any>(saveUrl, {
+      method: dossierId ? "PUT" : "POST",
+      body: nextFormData,
+    });
+
+    const resolvedDossierId =
+      dossierId ?? saveResult?.id ?? nextFormData.id ?? "";
+
+    if (!resolvedDossierId) {
+      throw new Error("Geen dossierId beschikbaar na opslaan.");
+    }
+
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+    uploadData.append("customerScore", customerScore);
+    uploadData.append(
+      "isNotificationEnabled",
+      String(isNotificationEnabled)
+    );
+
+    // Pas dit endpoint aan als jouw backend route anders heet.
+    const response = await fetch(
+      `${endpoints.deceasedServices}/${resolvedDossierId}/complete`,
+      {
+        method: "POST",
+        body: uploadData,
+      }
+    );
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Afronden mislukt.");
+    }
+
+    setIsCompleteModalOpen(false);
+    window.location.href = `/success-deceased/${resolvedDossierId}`;
+  };
 
   if (loading) return <div>Loading data...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
-
-const handleWorksheetChange = (index: number, name: string, value: any) => {
-  setFormData((prev) => {
-    const newWorksheets = [...prev.worksheets];
-    newWorksheets[index] = {
-      ...newWorksheets[index],
-      [name]: value,
-    };
-
-    return {
-      ...prev,
-      worksheets: newWorksheets,
-    };
-  });
-};
 
   return (
     <DashboardLayout>
@@ -112,18 +276,19 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-            onBack={() =>
-              goBack(location.pathname, {
-                dossierId: dossierId ?? formData.id ?? "",
-                funeralLeader: formData.funeralLeader ?? "",
-                funeralNumber: formData.funeralNumber ?? "",
-              })
-            }
-          onComplete={() => goNext(location.pathname)}
+          onBack={() =>
+            goBack(location.pathname, {
+              dossierId: dossierId ?? formData.id ?? "",
+              funeralLeader: formData.funeralLeader ?? "",
+              funeralNumber: formData.funeralNumber ?? "",
+            })
+          }
+          onSaveAndClose={handleSaveAndClose}
+          onComplete={handleOpenCompleteModal}
+          isLastStep={true}
           readOnly={true}
         />
 
-        {/* Steenhouwerij Card */}
         <FormCard title="Steenhouwerij">
           <FormField
             label="Omschrijving"
@@ -145,8 +310,8 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
             <FormField label="Leverancier" required>
               {dropdownLoading.suppliers ? (
                 <div>Loading...</div>
-              ) : dropdownErrors.stoneSuppliers ? (
-                <div className="text-red-600">{dropdownErrors.stoneSuppliers}</div>
+              ) : dropdownErrors.suppliers ? (
+                <div className="text-red-600">{dropdownErrors.suppliers}</div>
               ) : (
                 <select
                   name="stoneSupplier"
@@ -155,7 +320,6 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
                   className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                 >
                   <option value="">Selecteer Leverancier...</option>
-
                   {stoneSuppliers.map((s: any) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -180,44 +344,19 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
                 >
                   <option value="">Selecteer Werknemer...</option>
                   {data.employees?.map((e: any) => (
-                    <option key={e.id} value={e.id}>{e.fullName}</option>
+                    <option key={e.id} value={e.id}>
+                      {e.fullName}
+                    </option>
                   ))}
                 </select>
               )}
             </FormField>
           </FormRow>
-          <div className="border-t border-gray-300 my-4 pt-4">
-            <h3 className="text-lg font-semibold mb-2">Overzicht weergave</h3>
-            {/* DataGrid equivalent */}
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uitvaartnummer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leverancier</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Werknemer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum uitbetaling</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {/* Placeholder for data rows */}
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap">...</td>
-                  <td className="px-6 py-4 whitespace-nowrap">...</td>
-                  <td className="px-6 py-4 whitespace-nowrap">...</td>
-                  <td className="px-6 py-4 whitespace-nowrap">...</td>
-                  <td className="px-6 py-4 whitespace-nowrap">...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </FormCard>
 
-        {/* Bloemen Card */}
         <FormCard title="Bloemen">
           <FormField
             label="Omschrijving"
-            required
             name="flowerDescription"
             multiline
             rows={6}
@@ -232,11 +371,11 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
               value={formData.flowerAmount}
               onChange={handleChange}
             />
-            <FormField label="Leverancier" required>
-              {dropdownLoading.flowerSuppliers ? (
+            <FormField label="Leverancier">
+              {dropdownLoading.suppliers ? (
                 <div>Loading...</div>
-              ) : dropdownErrors.flowerSuppliers ? (
-                <div className="text-red-600">{dropdownErrors.flowerSuppliers}</div>
+              ) : dropdownErrors.suppliers ? (
+                <div className="text-red-600">{dropdownErrors.suppliers}</div>
               ) : (
                 <select
                   name="flowerSupplier"
@@ -254,44 +393,11 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
               )}
             </FormField>
           </FormRow>
-          <FormRow cols={2}>
-            <FormField
-              label="Bezorg adres"
-              name="deliveryAddress"
-              value={formData.deliveryAddress}
-              onChange={handleChange}
-            />
-            <FormField
-              label="Bezorg datum"
-              name="deliveryDate"
-              type="date"
-              value={formData.deliveryDate}
-              onChange={handleChange}
-            />
-          </FormRow>
-          <FormRow cols={2}>
-            <FormField label="Kaart" type="checkbox" name="flowersWithCard" checked={formData.flowersWithCard} onChange={handleChange} />
-            <FormField label="Lint" type="checkbox" name="flowersWithRibbon" checked={formData.flowersWithRibbon} onChange={handleChange} />
-          </FormRow>
-          {formData.flowersWithRibbon && (
-            <>
-              <h3 className="text-lg font-semibold border-b border-gray-300 pb-2 mb-4">Lint teksten</h3>
-              <FormRow cols={2}>
-                <FormField label="Eerste lint" name="ribbon1" value={formData.ribbon1} onChange={handleChange} />
-                <FormField label="Tweede lint" name="ribbon2" value={formData.ribbon2} onChange={handleChange} />
-              </FormRow>
-              <FormRow cols={2}>
-                <FormField label="Derde lint" name="ribbon3" value={formData.ribbon3} onChange={handleChange} />
-                <FormField label="Vierde lint" name="ribbon4" value={formData.ribbon4} onChange={handleChange} />
-              </FormRow>
-            </>
-          )}
         </FormCard>
 
         <FormCard title="Urnen en Gedenksieraden">
           <FormField
             label="Omschrijving"
-            required
             name="urnDescription"
             multiline
             rows={6}
@@ -306,11 +412,11 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
               value={formData.urnAmount}
               onChange={handleChange}
             />
-            <FormField label="Leverancier" required>
-              {dropdownLoading.urnSuppliers ? (
+            <FormField label="Leverancier">
+              {dropdownLoading.suppliers ? (
                 <div>Loading...</div>
-              ) : dropdownErrors.urnSuppliers ? (
-                <div className="text-red-600">{dropdownErrors.urnSuppliers}</div>
+              ) : dropdownErrors.suppliers ? (
+                <div className="text-red-600">{dropdownErrors.suppliers}</div>
               ) : (
                 <select
                   name="urnSupplier"
@@ -328,32 +434,10 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
               )}
             </FormField>
           </FormRow>
-          <FormRow cols={2}>
-            <FormField label="Persoon overzicht">
-              {dropdownLoading.employees ? (
-                <div>Loading...</div>
-              ) : dropdownErrors.employees ? (
-                <div className="text-red-600">{dropdownErrors.employees}</div>
-              ) : (
-                <select
-                  name="urnEmployee"
-                  value={formData.urnEmployee}
-                  onChange={handleChange}
-                  className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
-                >
-                  <option value="">Selecteer Werknemer...</option>
-                  {data.employees?.map((e: any) => (
-                    <option key={e.id} value={e.id}>{e.fullName}</option>
-                  ))}
-                </select>
-              )}
-            </FormField>
-          </FormRow>
         </FormCard>
 
-        {/* Werkbonnen Card */}
         <FormCard title="Werkbonnen">
-          {formData.worksheets.map((worksheet: any, index: number) => (
+          {formData.worksheets.map((worksheet: Worksheet, index: number) => (
             <div key={index} className="border-b border-gray-200 pb-4 mb-4">
               <FormRow cols={2}>
                 <FormField label="Personeel" required>
@@ -365,68 +449,115 @@ const handleWorksheetChange = (index: number, name: string, value: any) => {
                     <select
                       name="employee"
                       value={worksheet.employee}
-                      onChange={(e) => handleWorksheetChange(index, e.target.name, e.target.value)}
+                      onChange={(e) =>
+                        handleWorksheetChange(index, "employee", e.target.value)
+                      }
                       className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
                     >
                       <option value="">Selecteer Personeel...</option>
                       {data.employees?.map((e: any) => (
-                        <option key={e.id} value={e.id}>{e.fullName}</option>
+                        <option key={e.id} value={e.id}>
+                          {e.fullName}
+                        </option>
                       ))}
                     </select>
                   )}
                 </FormField>
+
                 <FormField
                   label="Overige diensten"
                   multiline
                   rows={4}
                   name="otherServices"
                   value={worksheet.otherServices}
-                  onChange={(e) => handleWorksheetChange(index, e.target.name, e.target.value)}
+                  onChange={(e) =>
+                    handleWorksheetChange(index, "otherServices", e.target.value)
+                  }
                 />
               </FormRow>
+
               <FormRow cols={3}>
                 <FormField
                   label="Rouwauto"
                   type="checkbox"
                   name="hearse"
                   checked={worksheet.hearse}
-                  onChange={(e) => handleWorksheetChange(index, e.target.name, e.target.checked)}
+                  onChange={(e) =>
+                    handleWorksheetChange(index, "hearse", e.target.checked)
+                  }
                 />
                 <FormField
                   label="Volgauto"
                   type="checkbox"
                   name="escortVehicle"
                   checked={worksheet.escortVehicle}
-                  onChange={(e) => handleWorksheetChange(index, e.target.name, e.target.checked)}
+                  onChange={(e) =>
+                    handleWorksheetChange(index, "escortVehicle", e.target.checked)
+                  }
                 />
                 <FormField
                   label="Laatste verzorging"
                   type="checkbox"
                   name="lastCare"
                   checked={worksheet.lastCare}
-                  onChange={(e) => handleWorksheetChange(index, e.target.name, e.target.checked)}
+                  onChange={(e) =>
+                    handleWorksheetChange(index, "lastCare", e.target.checked)
+                  }
                 />
               </FormRow>
+
               <FormRow cols={3}>
                 <FormField
                   label="Overbrengen"
                   type="checkbox"
                   name="transfer"
                   checked={worksheet.transfer}
-                  onChange={(e) => handleWorksheetChange(index, e.target.name, e.target.checked)}
+                  onChange={(e) =>
+                    handleWorksheetChange(index, "transfer", e.target.checked)
+                  }
                 />
                 <FormField
                   label="Condoleance"
                   type="checkbox"
                   name="condolence"
                   checked={worksheet.condolence}
-                  onChange={(e) => handleWorksheetChange(index, e.target.name, e.target.checked)}
+                  onChange={(e) =>
+                    handleWorksheetChange(index, "condolence", e.target.checked)
+                  }
                 />
               </FormRow>
+
+              <div className="flex justify-end mt-2">
+                {formData.worksheets.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeWorksheet(index)}
+                    className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
+                  >
+                    Verwijder werkbon
+                  </button>
+                )}
+              </div>
             </div>
           ))}
+
+          <button
+            type="button"
+            onClick={addWorksheet}
+            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+          >
+            Werkbon toevoegen
+          </button>
         </FormCard>
       </div>
+
+      <CompleteDossierModal
+        isOpen={isCompleteModalOpen}
+        onClose={handleCloseCompleteModal}
+        onConfirm={handleConfirmComplete}
+        initialCustomerScore={formData.customerScore}
+        initialNotificationEnabled={formData.isNotificationEnabled}
+      />
     </DashboardLayout>
   );
 }

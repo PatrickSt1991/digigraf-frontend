@@ -68,7 +68,7 @@ export default function Deceased() {
     ? `${endpoints.deceased}/${dossierId}`
     : `${endpoints.deceased}/new`;
 
-  const handleNext = useSaveAndNext<DossierDto>({
+  const {handleNext} = useSaveAndNext<DossierDto>({
     formData,
     endpoint: saveUrl,
     id: dossierId,

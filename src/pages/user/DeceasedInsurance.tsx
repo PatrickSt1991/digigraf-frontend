@@ -42,8 +42,21 @@ export default function DeceasedInsurance() {
     ? `${endpoints.insuranceDeceased}/${dossierId}`
     : endpoints.insuranceDeceased;
 
-  const handleNext = useSaveAndNext({
-    formData,
+  const sanitizedFormData = {
+    ...formData,
+    insuranceEntries: (formData.insuranceEntries ?? []).filter((entry) => {
+      const hasInsurancePartyId = !!entry.insurancePartyId?.trim();
+      const hasPolicyNumber = !!entry.policyNumber?.trim();
+      const hasPremium =
+        entry.premium !== undefined &&
+        entry.premium !== null
+
+      return hasInsurancePartyId || hasPolicyNumber || hasPremium;
+    }),
+  };
+
+  const { handleNext } = useSaveAndNext({
+    formData: sanitizedFormData,
     endpoint: saveUrl,
     id: dossierId,
     getNextPath: (_result, currentId) => {
@@ -123,24 +136,14 @@ export default function DeceasedInsurance() {
   const removeEntry = (index: number) => {
     setFormData((prev) => {
       const current = prev.insuranceEntries ?? [];
-
-      if (current.length <= 3) {
-        const updated = [...current];
-        updated[index] = {
-          insurancePartyId: "",
-          policyNumber: "",
-          premium: undefined,
-        };
-
-        return {
-          ...prev,
-          insuranceEntries: updated,
-        };
-      }
+      const updated = current.filter((_, i) => i !== index);
 
       return {
         ...prev,
-        insuranceEntries: current.filter((_, i) => i !== index),
+        insuranceEntries:
+          updated.length > 0
+            ? updated
+            : [{ insurancePartyId: "", policyNumber: "", premium: undefined }],
       };
     });
   };

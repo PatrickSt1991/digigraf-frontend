@@ -61,7 +61,7 @@ export default function FuneralDeceased() {
     const saveurl = dossierId ? `${endpoints.funeral}/${dossierId}`
       : endpoints.funeral;
 
-    const handleNext = useSaveAndNext({
+    const {handleNext} = useSaveAndNext({
       formData,
       endpoint: saveurl,
       id: dossierId as string | undefined,

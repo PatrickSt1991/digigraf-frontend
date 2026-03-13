@@ -49,7 +49,7 @@ export default function LayoutDeceased() {
 
   const saveUrl = dossierId ? `${endpoints.layoutDeceased}/${dossierId}` : endpoints.layoutDeceased;
 
-  const handleNext = useSaveAndNext({
+  const {handleNext} = useSaveAndNext({
     formData,
     endpoint: saveUrl,
     id: dossierId as string | undefined,

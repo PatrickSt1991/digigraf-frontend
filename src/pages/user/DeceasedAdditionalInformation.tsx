@@ -74,7 +74,7 @@ export default function AdditionalInformationDeceased() {
     ? `${endpoints.additional}/${dossierId}`
     : endpoints.additional;
 
-  const handleNext = useSaveAndNext({
+  const {handleNext} = useSaveAndNext({
     formData,
     endpoint: saveurl,
     id: dossierId,
