@@ -28,6 +28,7 @@ export const endpoints = {
     employeesOverview: `${API_BASE}/Employee/overview`,
     searchDossier: `${API_BASE}/deceased/search`,
     upcomingAgenda: `${API_BASE}/deceased/upcoming-agenda`,
+    allPaged: `${API_BASE}/deceased/all-paged`,
 };
 
 export const licenseEndpoints = {
