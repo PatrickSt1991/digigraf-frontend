@@ -12,3 +12,10 @@ export interface DocumentTemplate {
   dossierId?: string;
   sections: Section[];
 }
+
+export type DeceasedDocumentsFormData = {
+  id?: string;
+  funeralLeader: string;
+  funeralNumber: string;
+  templates?: DocumentTemplate[];
+};

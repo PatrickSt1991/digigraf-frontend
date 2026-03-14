@@ -20,6 +20,7 @@ interface Funeral {
   location: string;
   funeralLeader: string;
   type: "begrafenis" | "crematie" | "";
+  voorregeling: boolean;
 }
 
 interface AllFuneralsResponse {
@@ -250,6 +251,7 @@ export default function AllFunerals() {
                   <option value="">Alle types</option>
                   <option value="begrafenis">Begrafenis</option>
                   <option value="crematie">Crematie</option>
+                  <option value="voorregeling">Voorregeling</option>
                 </select>
               </div>
             </div>
@@ -289,12 +291,13 @@ export default function AllFunerals() {
               )}
               {selectedType && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                  Type: {selectedType}
+                  Type: {selectedType === "voorregeling" ? "Voorregeling" : selectedType}
                   <button onClick={() => setSelectedType("")} className="ml-2 hover:text-green-900">
                     ×
                   </button>
                 </span>
               )}
+
               <button
                 onClick={() => {
                   setSearchInput("");
@@ -346,10 +349,17 @@ export default function AllFunerals() {
                     >
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <h3 className="text-xl font-semibold text-gray-800">
                               {f.lastName}, {f.firstName}
                             </h3>
+
+                            {f.voorregeling && (
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                Voorregeling
+                              </span>
+                            )}
+
                             {!!f.type && (
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -367,14 +377,18 @@ export default function AllFunerals() {
                             <span className="flex items-center gap-2">
                               <FaCalendarAlt className="text-red-600 flex-shrink-0" />
                               <span>
-                                {new Date(`${f.date}T00:00:00`).toLocaleDateString("nl-NL", {
-                                  weekday: "long",
-                                  day: "numeric",
-                                  month: "long",
-                                  year: "numeric",
-                                })}{" "}
-                                – {f.time || "—"}
+                              {f.date
+                                ? `${new Date(`${f.date}T00:00:00`).toLocaleDateString("nl-NL", {
+                                    weekday: "long",
+                                    day: "numeric",
+                                    month: "long",
+                                    year: "numeric",
+                                  })} – ${f.time || "—"}`
+                                : f.voorregeling
+                                  ? "Nog geen datum gepland (Voorregeling)"
+                                  : "Nog geen datum gepland"}
                               </span>
+
                             </span>
                             <span className="flex items-center gap-2">
                               <FaMapMarkerAlt className="text-red-600 flex-shrink-0" />

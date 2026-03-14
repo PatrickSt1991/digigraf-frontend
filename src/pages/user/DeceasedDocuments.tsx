@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import { DocumentTemplate, Section } from "../../types";
+import { DeceasedDocumentsFormData, DocumentTemplate, Section } from "../../types";
 import {
   DashboardLayout,
   FormCard,
@@ -10,15 +10,6 @@ import {
 import { useFormHandler } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 
-type DeceasedDocumentsFormData = {
-  id?: string;
-  funeralLeader: string;
-  funeralNumber: string;
-  templates?: DocumentTemplate[];
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -26,6 +17,17 @@ function downloadBlob(blob: Blob, fileName: string) {
   a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function getFileName(response: Response, fallback: string): string {
+  const disposition = response.headers.get("Content-Disposition");
+  if (disposition) {
+    const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match) return decodeURIComponent(utf8Match[1].trim());
+    const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+    if (plainMatch) return plainMatch[1].trim();
+  }
+  return fallback;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -124,7 +126,8 @@ export default function DeceasedDocuments() {
     try {
       const response = await fetch(`${endpoints.documentsdeceased}/${template.id}/pdf`);
       if (!response.ok) throw new Error("PDF genereren mislukt.");
-      downloadBlob(await response.blob(), `${template.title}.pdf`);
+      const blob = await response.blob();
+      downloadBlob(blob, getFileName(response, `${template.title}.pdf`));
     } catch (err) {
       console.error(err);
       alert("PDF downloaden mislukt.");
@@ -138,7 +141,8 @@ export default function DeceasedDocuments() {
     try {
       const response = await fetch(`${endpoints.documentsdeceased}/${template.id}/docx`);
       if (!response.ok) throw new Error("Word-document genereren mislukt.");
-      downloadBlob(await response.blob(), `${template.title}.docx`);
+      const blob = await response.blob();
+      downloadBlob(blob, getFileName(response, `${template.title}.docx`));
     } catch (err) {
       console.error(err);
       alert("Word-document downloaden mislukt.");
@@ -215,7 +219,7 @@ export default function DeceasedDocuments() {
                         disabled={downloadingPdf === template.id}
                         className="px-4 py-2 rounded-xl border border-red-500 bg-red-500 text-white hover:bg-red-600 disabled:opacity-60 transition"
                       >
-                        {downloadingPdf === template.id ? "Genereren..." : "PDF"}
+                        {downloadingPdf === template.id ? "PDF..." : "PDF"}
                       </button>
 
                       <button
@@ -224,7 +228,7 @@ export default function DeceasedDocuments() {
                         disabled={downloadingDocx === template.id}
                         className="px-4 py-2 rounded-xl border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition"
                       >
-                        {downloadingDocx === template.id ? "Genereren..." : "Word"}
+                        {downloadingDocx === template.id ? "Word..." : "Word"}
                       </button>
                     </>
                   )}
