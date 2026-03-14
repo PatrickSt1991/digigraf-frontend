@@ -9,6 +9,6 @@ export interface Section {
 export interface DocumentTemplate {
   id: string;
   title: string;
-  overledeneId?: string;  // optional link to deceased person
+  dossierId?: string;
   sections: Section[];
 }
