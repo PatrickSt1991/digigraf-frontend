@@ -1,6 +1,26 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import {
+  ClassicEditor,
+  Essentials,
+  Paragraph,
+  Heading,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Font,
+  Alignment,
+  BlockQuote,
+  HorizontalLine,
+  Indent,
+  Link,
+  List,
+  Table,
+  TableToolbar,
+  MediaEmbed
+} from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
 import { useResizable } from "../hooks/useResizable";
 
 interface DocumentEditorModalProps {
@@ -26,7 +46,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [maxWidth, setMaxWidth] = useState<number | undefined>(undefined);
 
-  // 🧩 Track both modal and resize target
   const { targetRef, startResizing } = useResizable({
     minHeight: 300,
     minWidth: 400,
@@ -34,27 +53,27 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
     maxWidth,
   });
 
-  // ✅ Stable combined ref (avoids re-creation on each render)
-  const combinedRef = useCallback((el: HTMLDivElement | null) => {
-    targetRef.current = el;
-    modalRef.current = el;
-  }, [targetRef]);
+  const combinedRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      targetRef.current = el;
+      modalRef.current = el;
+    },
+    [targetRef]
+  );
 
-  // ✅ Lock width after opening
   useEffect(() => {
     if (isOpen && modalRef.current) {
       setMaxWidth(modalRef.current.offsetWidth);
     }
   }, [isOpen]);
 
-  // ✅ Update content when initialContent changes
   useEffect(() => {
     setBodyContent(initialContent);
   }, [initialContent]);
 
   const handleSave = () => onSave(bodyContent);
 
-  const handleEditorChange = (_: any, editor: any) => {
+  const handleEditorChange = (_event: unknown, editor: any) => {
     setBodyContent(editor.getData());
   };
 
@@ -66,25 +85,41 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
         ref={combinedRef}
         className="bg-white rounded-xl shadow-xl p-6 relative flex flex-col overflow-hidden w-[90vw] md:w-[70vw] h-[90vh] min-w-[400px] min-h-[300px]"
       >
-        {/* Title */}
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
 
-        {/* Optional header */}
         {header && (
           <div className="rounded mb-4">
             <div dangerouslySetInnerHTML={{ __html: header }} />
           </div>
         )}
 
-        {/* Editor container */}
         <div className="flex-1 flex flex-col overflow-hidden mb-4">
-          <div className="flex-1 overflow-auto border rounded">
+          <div className="editor-container flex-1 overflow-auto border rounded">
             <CKEditor
-              key={isOpen ? "open" : "closed"} // prevents CKEditor re-mount warning
               editor={ClassicEditor}
               data={bodyContent}
               onChange={handleEditorChange}
               config={{
+                licenseKey: "GPL",
+                plugins: [
+                  Essentials,
+                  Paragraph,
+                  Heading,
+                  Bold,
+                  Italic,
+                  Underline,
+                  Strikethrough,
+                  Font,
+                  Alignment,
+                  BlockQuote,
+                  HorizontalLine,
+                  Indent,
+                  Link,
+                  List,
+                  Table,
+                  TableToolbar,
+                  MediaEmbed,
+                ],
                 toolbar: [
                   "heading",
                   "|",
@@ -105,7 +140,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
                   "blockQuote",
                   "link",
                   "insertTable",
-                  "imageUpload",
                   "mediaEmbed",
                   "|",
                   "horizontalLine",
@@ -118,14 +152,12 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           </div>
         </div>
 
-        {/* Optional footer */}
         {footer && (
           <div className="bg-gray-100 p-3 rounded mb-4">
             <div dangerouslySetInnerHTML={{ __html: footer }} />
           </div>
         )}
 
-        {/* Buttons */}
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
@@ -141,7 +173,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           </button>
         </div>
 
-        {/* Resize handle */}
         <div
           className="absolute bottom-0 right-0 w-4 h-4 bg-gray-400 cursor-se-resize rounded"
           onMouseDown={startResizing}

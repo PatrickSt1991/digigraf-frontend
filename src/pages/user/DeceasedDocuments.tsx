@@ -140,7 +140,7 @@ export default function DeceasedDocuments() {
       />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(formData.templates || []).map((template) => (
+          {(formData.templates || []).sort((a, b) => a.title.localeCompare(b.title)).map((template) => (
             <FormCard key={template.id} title={template.title}>
               <div className="flex gap-3 mt-4 flex-wrap">
                 <button
