@@ -1,4 +1,4 @@
-export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5027/api";
+export const API_BASE = import.meta.env.VITE_API_BASE;
 
 export const endpoints = {
     authentication: `${API_BASE}/Auth`,
