@@ -39,76 +39,52 @@ export const licenseEndpoints = {
 };
 
 export const adminEndpoints = {
-  // -------------------- DECEASED --------------------
   deceased: `${API_BASE}/admin/deceased`,
 
-  // -------------------- SUPPLIERS --------------------
   suppliers: `${API_BASE}/Suppliers/all`,
   supplier: (id: string) => `${API_BASE}/Suppliers/${id}`,
-
   createSupplier: `${API_BASE}/Suppliers/createSupplier`,
   updateSupplier: (id: string) => `${API_BASE}/Suppliers/${id}`,
   deleteSupplier: (id: string) => `${API_BASE}/Suppliers/${id}`,
-
   supplierTypes: `${API_BASE}/Suppliers/types`,
-
-  // -------------------- INSURANCE --------------------
+  
   insuranceParties: `${API_BASE}/insurance/parties`,
   insuranceParty: (id: string) => `${API_BASE}/insurance/parties/${id}`,
-
   createInsuranceParty: `${API_BASE}/insurance/parties`,
   updateInsuranceParty: (id: string) => `${API_BASE}/insurance/parties/${id}`,
   deleteInsuranceParty: (id: string) => `${API_BASE}/insurance/parties/${id}`,
-
-  insurancePolicies: (overledeneId: string) =>
-    `${API_BASE}/insurance/policies?overledeneId=${overledeneId}`,
-
-  deleteInsurancePolicy: (id: string) =>
-    `${API_BASE}/insurance/policies/${id}`,
-  // -------------------- COFFINS --------------------
+  insurancePolicies: (overledeneId: string) => `${API_BASE}/insurance/policies?overledeneId=${overledeneId}`,
+  deleteInsurancePolicy: (id: string) => `${API_BASE}/insurance/policies/${id}`,
 
   coffins: `${API_BASE}/coffins/all`,
   updateCoffin: (id: string) => `${API_BASE}/coffins/${id}`,
   createCoffin: `${API_BASE}/coffins/createCoffin`,
   deleteCoffin: (id: string) => `${API_BASE}/coffins/${id}`,
 
-  // -------------------- ASBESTEMMINGEN --------------------
   asbestemmingen: `${API_BASE}/asbestemming/all`,
   updateAsbestemming: (id: string) => `${API_BASE}/asbestemming/${id}`,
   createAsbestemming: `${API_BASE}/asbestemming/createAsbestemming`,
   deleteAsbestemming: (id: string) => `${API_BASE}/asbestemmingen/${id}`,
 
-  // -------------------- ROUWBRIEVEN --------------------
   rouwbrieven: `${API_BASE}/rouwbrieven/all`,
   updateRouwbrief: (id: string) => `${API_BASE}/rouwbrieven/${id}`,
   createRouwbrief: `${API_BASE}/rouwbrieven/createRouwbrief`,
   deleteRouwbrief: (id: string) => `${API_BASE}/rouwbrieven/${id}`,
 
-  // -------------------- PRICECOMPONENTS --------------------
-
   insurancePriceComponents: `${API_BASE}/InsurancePriceComponents/all`,
   createInsurancePriceComponent: `${API_BASE}/InsurancePriceComponents/createInsurancePriceComponent`,
   updateInsurancePriceComponent: (id: string) => `${API_BASE}/InsurancePriceComponents/${id}`,
 
-
-  // -------------------- EMPLOYEES --------------------
   employees: `${API_BASE}/employee/employeesadmin`,
   employeesRoles: `${API_BASE}/employee/employeeRoles`,
-
   createEmployee: `${API_BASE}/employee/createEmployee`,
-  updateEmployee: (id: string) =>
-    `${API_BASE}/employee/updateEmployee/${id}`,
-  getEmployee: (id: string) =>
-    `${API_BASE}/employee/getEmployee/${id}`,
+  updateEmployee: (id: string) => `${API_BASE}/employee/updateEmployee/${id}`,
+  getEmployee: (id: string) => `${API_BASE}/employee/getEmployee/${id}`,
 
-  createLogin: (id: string) =>
-    `${API_BASE}/employee/createLogin/${id}`,
-  blockLogin: (id: string) =>
-    `${API_BASE}/employee/blockLogin/${id}`,
-  unblockLogin: (id: string) =>
-    `${API_BASE}/employee/unblockLogin/${id}`,
+  createLogin: (id: string) => `${API_BASE}/employee/createLogin/${id}`,
+  blockLogin: (id: string) => `${API_BASE}/employee/blockLogin/${id}`,
+  unblockLogin: (id: string) => `${API_BASE}/employee/unblockLogin/${id}`,
 
-  // -------------------- FINANCIAL --------------------
   financialFacturen: `${API_BASE}/financial/facturen`,
   financialBloemen: `${API_BASE}/financial/bloemen`,
   financialSteenhouwerij: `${API_BASE}/financial/steenhouwerij`,
@@ -121,4 +97,9 @@ export const adminEndpoints = {
   invoiceSave: `${API_BASE}/invoice`,
   invoiceUpdate: (id: string) => `${API_BASE}/invoice/${id}`,
   invoiceExcel: `${API_BASE}/invoice/generate-excel`,
+
+  documentsdefault: `${API_BASE}/DocumentTemplates/defaults`,
+  documentsdefaultById: (id: string) => `${API_BASE}/DocumentTemplates/defaults/${id}`,
+
+  company: `${API_BASE}/company`,
 };

@@ -1,3 +1,8 @@
+export type FinancialQuery = {
+   q?: string;
+  status?: string 
+};
+
 export interface FinancialRowDto {
   id?: string;
   uitvaartNummer: string;

@@ -8,3 +8,5 @@ export * from './employee';
 export * from './suppliers';
 export * from './priceComponents';
 export * from './financial';
+export * from './license';
+export * from './settings';

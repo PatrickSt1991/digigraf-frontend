@@ -1,6 +1,6 @@
 import apiClient from "./apiClient";
 import { licenseEndpoints } from "./apiConfig";
-import { LicenseInfo } from "../types/license";
+import { LicenseInfo, CompanySettings } from "../types";
 
 export async function getLicenseInfo(): Promise<LicenseInfo> {
     return apiClient<LicenseInfo>(licenseEndpoints.licenseInfo, {

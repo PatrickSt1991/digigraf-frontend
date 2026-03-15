@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -16,15 +16,35 @@ import { useResizable } from "../hooks/useResizable";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface DocumentEditorModalProps {
+export type AdminDocumentSavePayload = {
+  title: string;
+  header: string;
+  body: string;
+  footer: string;
+};
+
+type BaseDocumentEditorModalProps = {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   initialContent: string;
   header?: string;
   footer?: string;
-  onSave: (content: string) => void;
-}
+};
+
+type UserDocumentEditorModalProps = BaseDocumentEditorModalProps & {
+  adminMode?: false;
+  onSave: (content: string) => void | Promise<void>;
+};
+
+type AdminDocumentEditorModalProps = BaseDocumentEditorModalProps & {
+  adminMode: true;
+  onSave: (payload: AdminDocumentSavePayload) => void | Promise<void>;
+};
+
+type DocumentEditorModalProps =
+  | UserDocumentEditorModalProps
+  | AdminDocumentEditorModalProps;
 
 // ─── Toolbar helpers ──────────────────────────────────────────────────────────
 
@@ -49,9 +69,10 @@ function ToolbarButton({
       onClick={onClick}
       className={`
         px-1.5 py-1 rounded text-sm leading-none transition-colors select-none
-        ${active
-          ? "bg-blue-100 text-blue-700 font-semibold"
-          : "text-gray-700 hover:bg-gray-100"
+        ${
+          active
+            ? "bg-blue-100 text-blue-700 font-semibold"
+            : "text-gray-700 hover:bg-gray-100"
         }
         ${disabled ? "opacity-30 cursor-default" : "cursor-pointer"}
       `}
@@ -67,16 +88,25 @@ function Divider() {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
-  isOpen,
-  onClose,
-  title,
-  initialContent,
-  header,
-  footer,
-  onSave,
-}) => {
+export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
+  props
+) => {
+  const {
+    isOpen,
+    onClose,
+    title,
+    initialContent,
+    header,
+    footer,
+  } = props;
+
+  const adminMode = props.adminMode === true;
+
   const modalRef = useRef<HTMLDivElement | null>(null);
+
+  const [documentTitle, setDocumentTitle] = useState(title ?? "");
+  const [headerContent, setHeaderContent] = useState(header ?? "");
+  const [footerContent, setFooterContent] = useState(footer ?? "");
 
   const { targetRef, startResizing } = useResizable({
     minHeight: 400,
@@ -97,13 +127,12 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
-        // Disabled here because we add configured versions below
         underline: false,
         link: false,
       }),
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      TextStyle, // Required base for Color and FontFamily
+      TextStyle,
       Color,
       Highlight.configure({ multicolor: true }),
       FontFamily,
@@ -121,6 +150,18 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
     },
   });
 
+  useEffect(() => {
+    setDocumentTitle(title ?? "");
+  }, [title]);
+
+  useEffect(() => {
+    setHeaderContent(header ?? "");
+  }, [header]);
+
+  useEffect(() => {
+    setFooterContent(footer ?? "");
+  }, [footer]);
+
   // Sync content when the modal is reopened for a different template
   useEffect(() => {
     if (editor && initialContent !== editor.getHTML()) {
@@ -128,14 +169,31 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
     }
   }, [initialContent, editor]);
 
-  const handleSave = () => {
-    if (editor) onSave(editor.getHTML());
+  const handleSave = async () => {
+    if (!editor) return;
+
+    const bodyContent = editor.getHTML();
+
+    if (adminMode) {
+      await props.onSave({
+        title: documentTitle,
+        header: headerContent,
+        body: bodyContent,
+        footer: footerContent,
+      });
+      return;
+    }
+
+    await props.onSave(bodyContent);
   };
 
   if (!isOpen || !editor) return null;
 
   const addLink = () => {
-    const url = window.prompt("URL:", editor.getAttributes("link").href ?? "https://");
+    const url = window.prompt(
+      "URL:",
+      editor.getAttributes("link").href ?? "https://"
+    );
     if (url === null) return;
     if (url === "") {
       editor.chain().focus().unsetLink().run();
@@ -145,14 +203,16 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
   };
 
   const insertTable = () => {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    editor
+      .chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+      .run();
   };
 
   return (
     <>
-      {/* ── Page-level styles injected once ── */}
       <style>{`
-        /* Gray print-area background */
         .tiptap-scroll-area {
           background: #c8c8c8;
           overflow-y: auto;
@@ -160,7 +220,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           flex: 1;
         }
 
-        /* The white A4 "page" */
         .tiptap-page {
           min-height: 1122px;
           width: 794px;
@@ -175,7 +234,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           color: #000;
         }
 
-        /* Typography inside editor */
         .tiptap-page h1 { font-size: 20pt; font-weight: bold; color: #2E74B5; margin: 0 0 10px; }
         .tiptap-page h2 { font-size: 16pt; font-weight: bold; color: #2E74B5; margin: 0 0 8px; }
         .tiptap-page h3 { font-size: 13pt; font-weight: bold; color: #1F4E79; margin: 0 0 6px; }
@@ -191,7 +249,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
         .tiptap-page hr { border: none; border-top: 1px solid #ccc; margin: 12pt 0; }
         .tiptap-page a  { color: #2E74B5; text-decoration: underline; }
 
-        /* Tables */
         .tiptap-page table {
           border-collapse: collapse;
           width: 100%;
@@ -209,7 +266,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           font-weight: bold;
         }
 
-        /* TipTap table internals */
         .tiptap-page .selectedCell:after {
           background: rgba(46, 116, 181, 0.08);
           content: "";
@@ -234,14 +290,27 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
           ref={combinedRef}
           className="bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden w-[92vw] md:w-[82vw] h-[92vh] min-w-[640px] min-h-[400px] relative"
         >
-          {/* ── Title bar ── */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gray-50 rounded-t-xl flex-shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center w-7 h-7 bg-blue-700 rounded text-white text-xs font-bold select-none">
                 W
               </div>
-              <span className="text-sm font-semibold text-gray-800">{title}</span>
+
+              {adminMode ? (
+                <input
+                  type="text"
+                  value={documentTitle}
+                  onChange={(e) => setDocumentTitle(e.target.value)}
+                  className="text-sm font-semibold text-gray-800 bg-white border border-gray-300 rounded px-2 py-1 min-w-[280px]"
+                  placeholder="Document titel"
+                />
+              ) : (
+                <span className="text-sm font-semibold text-gray-800">
+                  {title}
+                </span>
+              )}
             </div>
+
             <button
               type="button"
               onClick={onClose}
@@ -251,22 +320,27 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
             </button>
           </div>
 
-          {/* ── Toolbar ── */}
           <div className="flex flex-wrap items-center gap-0.5 px-3 py-1.5 border-b bg-white flex-shrink-0 overflow-x-auto">
-
-            {/* Heading / paragraph style */}
             <select
               className="text-sm border border-gray-200 rounded px-1.5 py-0.5 text-gray-700 bg-white cursor-pointer hover:bg-gray-50 mr-1"
               value={
-                editor.isActive("heading", { level: 1 }) ? "1"
-                  : editor.isActive("heading", { level: 2 }) ? "2"
-                  : editor.isActive("heading", { level: 3 }) ? "3"
+                editor.isActive("heading", { level: 1 })
+                  ? "1"
+                  : editor.isActive("heading", { level: 2 })
+                  ? "2"
+                  : editor.isActive("heading", { level: 3 })
+                  ? "3"
                   : "0"
               }
               onChange={(e) => {
                 const level = parseInt(e.target.value);
                 if (level === 0) editor.chain().focus().setParagraph().run();
-                else editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 }).run();
+                else
+                  editor
+                    .chain()
+                    .focus()
+                    .toggleHeading({ level: level as 1 | 2 | 3 })
+                    .run();
               }}
             >
               <option value="0">Normaal</option>
@@ -275,7 +349,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
               <option value="3">Koptekst 3</option>
             </select>
 
-            {/* Font family */}
             <select
               className="text-sm border border-gray-200 rounded px-1.5 py-0.5 text-gray-700 bg-white cursor-pointer hover:bg-gray-50 mr-1"
               value={editor.getAttributes("textStyle").fontFamily ?? "Arial"}
@@ -296,7 +369,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
 
             <Divider />
 
-            {/* Marks */}
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBold().run()}
               active={editor.isActive("bold")}
@@ -328,7 +400,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
 
             <Divider />
 
-            {/* Text color */}
             <label
               title="Tekstkleur"
               className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
@@ -338,11 +409,12 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
                 type="color"
                 className="w-4 h-4 cursor-pointer border-0 p-0 rounded"
                 value={editor.getAttributes("textStyle").color ?? "#000000"}
-                onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
+                onChange={(e) =>
+                  editor.chain().focus().setColor(e.target.value).run()
+                }
               />
             </label>
 
-            {/* Highlight */}
             <label
               title="Markeerkleur"
               className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
@@ -353,14 +425,17 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
                 className="w-4 h-4 cursor-pointer border-0 p-0 rounded"
                 defaultValue="#fef08a"
                 onChange={(e) =>
-                  editor.chain().focus().toggleHighlight({ color: e.target.value }).run()
+                  editor
+                    .chain()
+                    .focus()
+                    .toggleHighlight({ color: e.target.value })
+                    .run()
                 }
               />
             </label>
 
             <Divider />
 
-            {/* Lists + indent */}
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBulletList().run()}
               active={editor.isActive("bulletList")}
@@ -390,7 +465,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
 
             <Divider />
 
-            {/* Alignment */}
             <ToolbarButton
               onClick={() => editor.chain().focus().setTextAlign("left").run()}
               active={editor.isActive({ textAlign: "left" })}
@@ -422,7 +496,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
 
             <Divider />
 
-            {/* Block elements */}
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
               active={editor.isActive("blockquote")}
@@ -449,7 +522,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
 
             <Divider />
 
-            {/* History */}
             <ToolbarButton
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().undo()}
@@ -466,28 +538,50 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
             </ToolbarButton>
           </div>
 
-          {/* ── Header (read-only) ── */}
-          {header && (
-            <div
-              className="flex-shrink-0 border-b px-6 py-2 text-sm text-gray-600 bg-white"
-              dangerouslySetInnerHTML={{ __html: header }}
-            />
+          {adminMode ? (
+            <div className="flex-shrink-0 border-b px-6 py-3 bg-white">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Header
+              </label>
+              <textarea
+                value={headerContent}
+                onChange={(e) => setHeaderContent(e.target.value)}
+                className="w-full min-h-[100px] border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700"
+              />
+            </div>
+          ) : (
+            header && (
+              <div
+                className="flex-shrink-0 border-b px-6 py-2 text-sm text-gray-600 bg-white"
+                dangerouslySetInnerHTML={{ __html: header }}
+              />
+            )
           )}
 
-          {/* ── Gray print area containing the white A4 page ── */}
           <div className="tiptap-scroll-area">
             <EditorContent editor={editor} />
           </div>
 
-          {/* ── Footer (read-only) ── */}
-          {footer && (
-            <div
-              className="flex-shrink-0 border-t px-6 py-2 text-sm text-gray-500 bg-gray-50"
-              dangerouslySetInnerHTML={{ __html: footer }}
-            />
+          {adminMode ? (
+            <div className="flex-shrink-0 border-t px-6 py-3 bg-gray-50">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Footer
+              </label>
+              <textarea
+                value={footerContent}
+                onChange={(e) => setFooterContent(e.target.value)}
+                className="w-full min-h-[100px] border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700"
+              />
+            </div>
+          ) : (
+            footer && (
+              <div
+                className="flex-shrink-0 border-t px-6 py-2 text-sm text-gray-500 bg-gray-50"
+                dangerouslySetInnerHTML={{ __html: footer }}
+              />
+            )
           )}
 
-          {/* ── Action bar ── */}
           <div className="flex items-center justify-end gap-2 px-4 py-3 border-t bg-gray-50 rounded-b-xl flex-shrink-0">
             <button
               type="button"
@@ -505,7 +599,6 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = ({
             </button>
           </div>
 
-          {/* ── Resize handle ── */}
           <div
             className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
             onMouseDown={startResizing}

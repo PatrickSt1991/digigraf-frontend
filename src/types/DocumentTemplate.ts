@@ -11,6 +11,7 @@ export interface DocumentTemplate {
   title: string;
   dossierId?: string;
   sections: Section[];
+  isDefault: boolean;
 }
 
 export type DeceasedDocumentsFormData = {

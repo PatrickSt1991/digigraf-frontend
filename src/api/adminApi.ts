@@ -12,10 +12,10 @@ import { AdminEmployee,
   SupplierTypeDto, 
   InsurancePriceComponentDto, 
   FinancialRowDto,
-  InvoiceFormData
+  InvoiceFormData,
+  FinancialQuery,
+  CompanySettings
 } from "../types";
-
-/* ===================== EMPLOYEES (existing) ===================== */
 
 export async function getEmployeeRoles(): Promise<RoleDto[]> {
   return apiClient<RoleDto[]>(adminEndpoints.employeesRoles, {
@@ -80,8 +80,6 @@ export async function getEmployee(
   });
 }
 
-/* ===================== INSURANCE PARTIES ===================== */
-
 export async function getInsuranceParties(): Promise<InsurancePartyDto[]> {
   return apiClient<InsurancePartyDto[]>(adminEndpoints.insuranceParties, {
     method: "GET",
@@ -138,8 +136,6 @@ export async function deleteInsuranceParty(
   );
 }
 
-/* ===================== INSURANCE POLICIES ===================== */
-
 export async function getInsurancePolicies(
   overledeneId: string
 ): Promise<InsurancePolicyDto[]> {
@@ -174,8 +170,6 @@ export async function deleteInsurancePolicy(
     }
   );
 }
-
-/* ===================== SUPPLIERS ===================== */
 
 export async function getSuppliers(): Promise<SupplierDto[]> {
   return apiClient<SupplierDto[]>(adminEndpoints.suppliers, {
@@ -239,8 +233,6 @@ export async function deleteSupplier(
   );
 }
 
-/* ===================== ASBESTEMMINGEN ===================== */
-
 export async function getAsbestemmingen(): Promise<AsbestemmingDto[]> {
   return apiClient<AsbestemmingDto[]>(adminEndpoints.asbestemmingen, {
     method: "GET",
@@ -275,7 +267,6 @@ export async function updateAsbestemming(
   );
 }
 
-/* ===================== Rouwbrieven ===================== */
 export async function getRouwbrieven(): Promise<RouwbriefDto[]> {
   return apiClient<RouwbriefDto[]>(adminEndpoints.rouwbrieven, {
     method: "GET",
@@ -305,8 +296,6 @@ export async function updateRouwbrief(rouwbrief: RouwbriefDto): Promise<void> {
     }
   );
 }
-
-/* ===================== PRICECOMPONENTS ===================== */
 
 export async function getInsurancePriceComponents(): Promise<InsurancePriceComponentDto[]> {
   return apiClient<InsurancePriceComponentDto[]>(adminEndpoints.insurancePriceComponents, {
@@ -339,8 +328,6 @@ export async function getInsurancePartiesAll(): Promise<InsurancePartyDto[]> {
     method: "GET",
   });
 }
-
-/* ===================== COFFINS ===================== */
 
 export async function getCoffins(): Promise<CoffinsDto[]> {
   return apiClient<CoffinsDto[]>(adminEndpoints.coffins, {
@@ -386,9 +373,6 @@ export async function deleteCoffin(
     }
   );
 }
-
-// ===================== FINANCIAL EXPORTS =====================
-type FinancialQuery = { q?: string; status?: string };
 
 export async function getFinancialInvoices(params: FinancialQuery): Promise<FinancialRowDto[]> {
   const qs = new URLSearchParams();
@@ -497,3 +481,21 @@ export async function generateInvoiceExcelForDossier(
 
   URL.revokeObjectURL(url);
 }
+
+export const getCompanySettings = async (): Promise<CompanySettings> => {
+  const res = await fetch(adminEndpoints.company);
+  if (!res.ok) throw new Error("Ophalen mislukt");
+  return res.json();
+};
+ 
+export const saveCompanySettings = async (data: CompanySettings): Promise<void> => {
+  const res = await fetch(adminEndpoints.company, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? "Opslaan mislukt");
+  }
+};
