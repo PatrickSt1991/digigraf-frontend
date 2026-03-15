@@ -22,6 +22,8 @@ import {
   getFinancialUrnen,
   updateFinancialPayout,
   exportFinancialExcel,
+  generateOpdrachtgeverInvoice,
+  generateVerenigingInvoice,
 } from '../../api/adminApi';
 
 import { FinancialRowDto } from '../../types';
@@ -63,10 +65,33 @@ const AdminFinancial: React.FC = () => {
   const [payoutRow, setPayoutRow] = useState<FinancialRowDto | null>(null);
   const [payoutSaving, setPayoutSaving] = useState(false);
 
-  // kostenbegroting/invoice modal (admin)
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [invoiceDeceasedId, setInvoiceDeceasedId] = useState<string | null>(null);
 
+  const [invoiceLoading, setInvoiceLoading] = useState<string | null>(null);
+
+  const handleOpdrachtgeverInvoice = async (dossierId: string) => {
+    setInvoiceLoading(dossierId + '_opdrachtgever');
+    try {
+      await generateOpdrachtgeverInvoice(dossierId);
+    } catch (e) {
+      alert((e as Error)?.message ?? 'Factuur genereren mislukt.');
+    } finally {
+      setInvoiceLoading(null);
+    }
+  };
+
+  const handleVerenigingInvoice = async (dossierId: string) => {
+    setInvoiceLoading(dossierId + '_vereniging');
+    try {
+      await generateVerenigingInvoice(dossierId);
+    } catch (e) {
+      alert((e as Error)?.message ?? 'Factuur genereren mislukt.');
+    } finally {
+      setInvoiceLoading(null);
+    }
+  };
+    
   const refresh = async () => {
     try {
       setLoadError(null);
@@ -361,25 +386,23 @@ const AdminFinancial: React.FC = () => {
                                 </button>
 
                                 <button
-                                  className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                                  className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
                                   title="Opdrachtgever factuur openen"
                                   hidden={!r.canOpenOpdrachtgeverInvoice}
-                                  onClick={() => {
-                                    // TODO: open opdrachtgever invoice
-                                  }}
+                                  disabled={invoiceLoading === r.dossierId + '_opdrachtgever'}
+                                  onClick={() => void handleOpdrachtgeverInvoice(r.dossierId!)}
                                 >
                                   <FaFileInvoiceDollar size={16} />
                                 </button>
 
                                 <button
-                                  className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                                  className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
                                   title="Herkomst factuur openen"
                                   hidden={!r.canOpenHerkomstInvoice}
-                                  onClick={() => {
-                                    // TODO: open herkomst invoice
-                                  }}
+                                  disabled={invoiceLoading === r.dossierId + '_vereniging'}
+                                  onClick={() => void handleVerenigingInvoice(r.dossierId!)}
                                 >
-                                  <FaFileInvoice  size={16} />
+                                  <FaFileInvoice size={16} />
                                 </button>
                               </div>
                             </td>

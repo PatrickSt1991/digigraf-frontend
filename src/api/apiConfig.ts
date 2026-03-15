@@ -97,6 +97,8 @@ export const adminEndpoints = {
   invoiceSave: `${API_BASE}/invoice`,
   invoiceUpdate: (id: string) => `${API_BASE}/invoice/${id}`,
   invoiceExcel: `${API_BASE}/invoice/generate-excel`,
+  generateVerenigingInvoice: `${API_BASE}/invoice/generate-vereniging-invoice`,
+  generateOpdrachtgeverInvoice: `${API_BASE}/invoice/generate-opdrachtgever-invoice`,
 
   documentsdefault: `${API_BASE}/DocumentTemplates/defaults`,
   documentsdefaultById: (id: string) => `${API_BASE}/DocumentTemplates/defaults/${id}`,

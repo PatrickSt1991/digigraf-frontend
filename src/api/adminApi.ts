@@ -499,3 +499,56 @@ export const saveCompanySettings = async (data: CompanySettings): Promise<void> 
     throw new Error(err?.message ?? "Opslaan mislukt");
   }
 };
+
+async function downloadInvoiceFile(
+  dossierId: string,
+  type: 'opdrachtgever' | 'vereniging',
+): Promise<void> {
+  const invoiceRes = await fetch(adminEndpoints.invoiceByDossier(dossierId));
+  if (!invoiceRes.ok) throw new Error('Kon factuurgegevens niet ophalen.');
+  const invoiceDto = await invoiceRes.json();
+
+  const endpoint =
+    type === 'opdrachtgever'
+      ? adminEndpoints.generateOpdrachtgeverInvoice
+      : adminEndpoints.generateVerenigingInvoice;
+
+  const fileRes = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(invoiceDto),
+  });
+
+  if (!fileRes.ok) throw new Error('Factuur kon niet worden gegenereerd.');
+
+  const disposition = fileRes.headers.get('Content-Disposition') ?? '';
+  const headerMatch = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+  
+  let filename: string;
+  if (headerMatch) {
+    filename = headerMatch[1].replace(/['"]/g, '');
+  } else {
+    // Construct from invoiceDto data
+    const funeralNumber = invoiceDto.funeralNumber ?? dossierId;
+    const deceasedFullName: string = invoiceDto.personalInfo?.deceasedName ?? '';
+    const lastName = deceasedFullName.trim().split(' ').pop() ?? '';
+    const safeName = lastName.replace(/[/\\]/g, '-');
+    filename = type === 'vereniging'
+      ? `Factuur_${funeralNumber}A_${safeName}.xls`
+      : `Factuur_${funeralNumber}_${safeName}.xls`;
+  }
+
+  const blob = await fileRes.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export const generateOpdrachtgeverInvoice = (dossierId: string) =>
+  downloadInvoiceFile(dossierId, 'opdrachtgever');
+
+export const generateVerenigingInvoice = (dossierId: string) =>
+  downloadInvoiceFile(dossierId, 'vereniging');
