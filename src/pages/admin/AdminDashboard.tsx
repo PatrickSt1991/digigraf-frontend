@@ -3,6 +3,8 @@ import { DashboardLayout } from "../../components";
 import { FaUsers, FaBuilding, FaFileInvoiceDollar, FaTruck, FaBox, FaScroll, FaMoneyBillWave, FaChartBar, FaCog } from "react-icons/fa";
 import { IconType } from "react-icons";
 import { GiCoffin } from "react-icons/gi";
+import { endpoints } from "../../api/apiConfig";
+import { useEffect, useState } from "react";
 
 interface AdminCard {
   title: string;
@@ -56,6 +58,28 @@ export default function AdminDashboard() {
       default: return 'Algemeen';
     }
   };
+
+const [systemHealth, setSystemHealth] = useState<string>("Laden...");
+
+useEffect(() => {
+  const checkHealth = async () => {
+    try {
+      const response = await fetch(`${endpoints.health}`);
+
+      if (!response.ok) {
+        setSystemHealth("Offline!");
+        return;
+      }
+
+      const status = await response.text();
+      setSystemHealth(`${status}`);
+    } catch {
+      setSystemHealth("Offline!");
+    }
+  };
+
+  checkHealth();
+}, []); // empty array = runs once on mount
 
   return (
     <DashboardLayout>
@@ -135,17 +159,9 @@ export default function AdminDashboard() {
           {/* Quick Stats Section */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Systeem Overzicht</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">4</div>
-                <div className="text-sm text-gray-600">Actieve Modules</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">10</div>
-                <div className="text-sm text-gray-600">Beschikbare Functies</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">100%</div>
+                <div className="text-2xl font-bold text-purple-600">{systemHealth}</div>
                 <div className="text-sm text-gray-600">Systeem Status</div>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">

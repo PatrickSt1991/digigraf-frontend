@@ -4,7 +4,6 @@ import {
   FaArrowLeft,
   FaFileAlt,
   FaPlus,
-  FaEdit,
   FaSearch,
 } from "react-icons/fa";
 

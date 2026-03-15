@@ -10,7 +10,6 @@ export function RequireUser({ children }: { children: JSX.Element }) {
   const location = useLocation();
 
   if (loading) {
-    // Wait until auth is loaded from localStorage
     return <div>Loading...</div>;
   }
 

@@ -5,6 +5,7 @@ interface ApiOptions extends RequestInit {
 async function apiClient<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
     const { body, headers, ...rest } = options;
     const res = await fetch(`${endpoint}`, {
+        credentials: "include",
         headers: {
             "Content-Type": "application/json",
             ...headers,

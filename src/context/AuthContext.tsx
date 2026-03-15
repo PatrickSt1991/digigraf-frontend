@@ -1,58 +1,76 @@
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useEffect, useState, ReactNode } from "react";
 
 type User = {
   id: string;
-  name: string;
   email: string;
+  fullName: string;
   roles: string[];
 };
 
 type AuthContextType = {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
   loading: boolean;
-  login: (user: User, token: string) => void;
-  logout: () => void;
+  login: (user: User) => void;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
+  const refreshUser = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        method: "GET",
+        credentials: "include",
+      });
 
-    if (savedToken && savedUser) {
-      try {
-        const parsedUser: User = JSON.parse(savedUser);
-        setToken(savedToken);
-        setUser(parsedUser);
-      } catch {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+      if (!response.ok) {
+        setUser(null);
+        return;
       }
-    }
-    setLoading(false);
-  }, []);
 
-  const login = (user: User, token: string) => {
-    setUser(user);
-    setToken(token);
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
+      const data = await response.json();
+      setUser(data);
+    } catch {
+      setUser(null);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await refreshUser();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void initAuth();
+  }, []);
+
+  const login = (user: User) => {
+    setUser(user);
+  };
+
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // ignore network errors here and still clear local auth state
+    } finally {
+      setUser(null);
+    }
   };
 
   const isAdmin = user?.roles?.includes("Admin") ?? false;
@@ -61,12 +79,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
-        token,
-        isAuthenticated: !!user && !!token,
+        isAuthenticated: !!user,
         isAdmin,
         loading,
         login,
         logout,
+        refreshUser,
       }}
     >
       {children}

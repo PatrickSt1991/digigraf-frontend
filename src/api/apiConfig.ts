@@ -1,6 +1,8 @@
-export const API_BASE = import.meta.env.VITE_API_BASE;
+export const API = import.meta.env.VITE_API_BASE;
+export const API_BASE = `${API}/api`;
 
 export const endpoints = {
+    health: `${API}/health`,
     authentication: `${API_BASE}/Auth`,
     deceased: `${API_BASE}/deceased`,
     additional: `${API_BASE}/clientinfo`,
