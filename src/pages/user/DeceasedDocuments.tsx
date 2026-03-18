@@ -9,6 +9,7 @@ import {
 } from "../../components";
 import { useFormHandler } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
+import apiClient from "../../api/apiClient";
 
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
@@ -94,10 +95,9 @@ export default function DeceasedDocuments() {
     };
 
     try {
-      await fetch(`${endpoints.documentsdeceased}/${activeTemplate.id}`, {
+      await apiClient(`${endpoints.documentsdeceased}/${activeTemplate.id}`, {
         method: "PUT",
-        body: JSON.stringify(updatedTemplate),
-        headers: { "Content-Type": "application/json" },
+        body: updatedTemplate,
       });
 
       setFormData((prev) => ({
@@ -124,7 +124,11 @@ export default function DeceasedDocuments() {
   const handleDownloadPdf = async (template: DocumentTemplate) => {
     setDownloadingPdf(template.id);
     try {
-      const response = await fetch(`${endpoints.documentsdeceased}/${template.id}/pdf`);
+      const response = await fetch(
+        `${endpoints.documentsdeceased}/${template.id}/pdf`,{
+          credentials: "include",
+        }
+      );
       if (!response.ok) throw new Error("PDF genereren mislukt.");
       const blob = await response.blob();
       downloadBlob(blob, getFileName(response, `${template.title}.pdf`));
@@ -139,7 +143,10 @@ export default function DeceasedDocuments() {
   const handleDownloadDocx = async (template: DocumentTemplate) => {
     setDownloadingDocx(template.id);
     try {
-      const response = await fetch(`${endpoints.documentsdeceased}/${template.id}/docx`);
+      
+      const response = await fetch(`${endpoints.documentsdeceased}/${template.id}/docx`,{
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Word-document genereren mislukt.");
       const blob = await response.blob();
       downloadBlob(blob, getFileName(response, `${template.title}.docx`));

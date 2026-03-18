@@ -10,6 +10,7 @@ import {
 import { DashboardLayout, DocumentEditorModal } from "../../components";
 import { DocumentTemplate, Section } from "../../types";
 import { endpoints } from "../../api/apiConfig";
+import apiClient from "../../api/apiClient";
 
 type AdminTab = "overview" | "add" | "edit";
 
@@ -100,16 +101,14 @@ const AdminDocuments: React.FC = () => {
       setLoadingTemplates(true);
       setTemplatesError(null);
 
-      const response = await fetch(`${endpoints.documentsdefault}`);
-      if (!response.ok) {
-        throw new Error("Kon document templates niet laden.");
-      }
+      
+      type DocumentTemplatesResponse = {
+        templates?: DocumentTemplate[];
+      };
 
-      const data = await response.json();
-      const defaults = (data?.templates ?? []).filter(
-        (t: DocumentTemplate) => t.isDefault === true
-      );
+      const data = await apiClient<DocumentTemplatesResponse>(endpoints.documentsdefault);
 
+      const defaults = (data.templates ?? []).filter((t) => t.isDefault);
       setTemplates(defaults);
     } catch (err) {
       setTemplatesError(
@@ -128,16 +127,16 @@ const AdminDocuments: React.FC = () => {
         setLoadingTemplates(true);
         setTemplatesError(null);
 
-        const response = await fetch(`${endpoints.documentsdefault}`);
-        if (!response.ok) {
-          throw new Error("Kon document templates niet laden.");
-        }
+        type DocumentTemplatesResponse = {
+          templates?: DocumentTemplate[];
+        };
 
-        const data = await response.json();
+        const data = await apiClient<DocumentTemplatesResponse>(
+          endpoints.documentsdefault
+        );
+
         if (!cancelled) {
-          const defaults = (data?.templates ?? []).filter(
-            (t: DocumentTemplate) => t.isDefault === true
-          );
+          const defaults = (data.templates ?? []).filter((t) => t.isDefault);
           setTemplates(defaults);
         }
       } catch (err) {
@@ -208,20 +207,15 @@ const AdminDocuments: React.FC = () => {
 
     const isNew = !payload.id;
 
-    const response = await fetch(
+    await apiClient(
       isNew
-        ? `${endpoints.documentsdefault}`
+        ? endpoints.documentsdefault
         : `${endpoints.documentsdefault}/${payload.id}`,
       {
         method: isNew ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: payload,
       }
     );
-
-    if (!response.ok) {
-      throw new Error(isNew ? "Aanmaken mislukt." : "Opslaan mislukt.");
-    }
 
     await loadTemplates();
     setModalOpen(false);
@@ -246,7 +240,7 @@ const AdminDocuments: React.FC = () => {
                 </Link>
 
                 <div className="flex items-center gap-3 h-full">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
                     <FaFileAlt className="text-white" size={22} />
                   </div>
                   <div className="flex flex-col justify-center">
@@ -265,7 +259,7 @@ const AdminDocuments: React.FC = () => {
                   onClick={() => setActiveTab("overview")}
                   className={`px-4 py-2 rounded-lg transition-colors ${
                     activeTab === "overview"
-                      ? "bg-blue-100 text-blue-700 font-medium"
+                      ? "bg-purple-100 text-purple-700 font-medium"
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
@@ -274,10 +268,10 @@ const AdminDocuments: React.FC = () => {
 
                 <button
                   onClick={handleCreate}
-                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
                 >
                   <FaPlus size={16} />
-                  Nieuw Template
+                  Nieuw Document
                 </button>
               </div>
             </div>
@@ -295,7 +289,7 @@ const AdminDocuments: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Zoek templates..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -350,12 +344,12 @@ const AdminDocuments: React.FC = () => {
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-3 group">
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold flex items-center justify-center">
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 text-white text-sm font-semibold flex items-center justify-center">
                                   <FaFileAlt size={14} />
                                 </div>
 
                                 <div className="flex flex-col">
-                                  <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                                  <span className="font-medium text-gray-900 group-hover:text-purple-600 transition-colors">
                                     {template.title}
                                   </span>
                                   <span className="text-sm text-gray-500">
@@ -366,7 +360,7 @@ const AdminDocuments: React.FC = () => {
                             </td>
 
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                 Template
                               </span>
                             </td>
@@ -382,7 +376,7 @@ const AdminDocuments: React.FC = () => {
 
                                 {/* <button
                                   onClick={() => handleEdit(template)}
-                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                                 >
                                   <FaEdit size={16} />
                                 </button> */}
@@ -436,7 +430,7 @@ const AdminDocuments: React.FC = () => {
                   onClick={() =>
                     openEditor(editorTemplate ?? createEmptyTemplate())
                   }
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                 >
                   Open editor
                 </button>

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { InvoiceFormData } from "../types/invoiceTypes";
+import apiClient from "../api/apiClient";
 
 interface UseFormHandlerProps<T extends Record<string, any> & { age?: string }> {
   initialData: T;
@@ -35,43 +36,43 @@ export const useFormHandler = <
 
   const navigate = useNavigate();
 
-useEffect(() => {
-  if (!fetchUrl) {
-    setLoading(false);
-    return;
-  }
-
-  const fetchData = async () => {
-    try {
-      setError(null);
-
-      const res = await fetch(fetchUrl);
-
-      if (res.status === 404 && allow404AsEmpty) {
-        setFormData((prev) => ({
-          ...initialData,
-          ...prev,
-        }));
-        return;
-      }
-
-      if (!res.ok) throw new Error("Failed to fetch data");
-
-      const data = await res.json();
-
-      setFormData((prev) => ({
-        ...prev,
-        ...data,
-      }));
-    } catch (err: any) {
-      setError(err.message || "Unknown error");
-    } finally {
+  useEffect(() => {
+    if (!fetchUrl) {
       setLoading(false);
+      return;
     }
-  };
 
-  fetchData();
-}, [fetchUrl, allow404AsEmpty]);
+    const fetchData = async () => {
+      try {
+        setError(null);
+
+        const data = await apiClient<T>(fetchUrl, {
+          method: "GET",
+        });
+
+        setFormData((prev) => ({
+          ...prev,
+          ...data,
+        }));
+      } catch (err: any) {
+        const message = err?.message || "Unknown error";
+
+        if (allow404AsEmpty && message.includes("404")) {
+          setFormData((prev) => ({
+            ...initialData,
+            ...prev,
+          }));
+          return;
+        }
+
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [fetchUrl, allow404AsEmpty]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

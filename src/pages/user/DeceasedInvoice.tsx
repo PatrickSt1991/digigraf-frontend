@@ -13,6 +13,7 @@ import {
 } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 import { InvoiceFormData, PriceComponent } from "../../types";
+import apiClient from "../../api/apiClient";
 
 type DeceasedInvoiceFormData = InvoiceFormData & {
   funeralLeader: string;
@@ -113,13 +114,9 @@ export default function DeceasedInvoice() {
     }
 
     try {
-      const res = await fetch(
+      const components = await apiClient<PriceComponent[]>(
         `${endpoints.invoiceDeceased}/templates?insurancePartyId=${insuranceId}`
       );
-
-      if (!res.ok) throw new Error("Failed to load price template");
-
-      const components: PriceComponent[] = await res.json();
 
       setFormData((prev) => ({
         ...prev,
@@ -212,6 +209,7 @@ export default function DeceasedInvoice() {
       `${endpoints.invoiceDeceased}/generate-excel`,
       {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       }

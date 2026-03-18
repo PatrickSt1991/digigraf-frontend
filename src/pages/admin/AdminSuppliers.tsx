@@ -601,7 +601,7 @@ const AdminSuppliers: React.FC = () => {
                     setSelectedSupplier(null);
                     setActiveTab('add');
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
                 >
                   {(() => {
                     const PlusIcon =
@@ -784,7 +784,7 @@ const AdminSuppliers: React.FC = () => {
                                   className={`p-2 rounded-lg transition-colors ${
                                     s.isActive
                                       ? 'text-red-600 hover:bg-red-50'
-                                      : 'text-green-700 hover:bg-green-50'
+                                      : 'text-blue-700 hover:bg-blue-50'
                                   }`}
                                   title={s.isActive ? 'Deactiveren' : 'Activeren'}
                                 >

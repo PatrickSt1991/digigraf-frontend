@@ -11,75 +11,77 @@ interface AdminCard {
   description: string;
   path: string;
   icon: IconType;
-  category: 'management' | 'financial' | 'inventory' | 'settings';
+  category: 'relaties' | 'financieel' | 'diensten' | 'instellingen';
 }
 
 export default function AdminDashboard() {
   const cards: AdminCard[] = [
-    { title: "Werknemers", description: "Voeg nieuwe werknemers toe of bewerk bestaande.", path: "/admin/employees", icon: FaUsers, category: 'management' },
-    { title: "Verzekeraars & Verenigingen", description: "Voeg nieuwe verzekeraars & verenigingen toe of bewerk bestaande.", path: "/admin/insurance", icon: FaBuilding, category: 'management' },
-    { title: "Leveranciers", description: "Voeg nieuwe leveranciers toe of bewerk bestaande.", path: "/admin/suppliers", icon: FaTruck, category: 'management' },
-    { title: "Uitvaartkisten", description: "Voeg nieuwe uitvaartkisten toe of bewerk bestaande.", path: "/admin/coffins", icon: GiCoffin, category: 'management' },
-    { title: "Asbestemming", description: "Voeg nieuwe asbestemmingen toe of bewerk bestaande.", path: "/admin/ashes", icon: FaBox, category: 'management' },
-    { title: "Rouwbrieven", description: "Voeg nieuwe rouwbrieven toe of bewerk bestaande.", path: "/admin/letters", icon: FaScroll, category: 'management' },
-    { title: "Documenten", description: "Voeg nieuwe documenten toe of bewerk bestaande.", path: "/admin/documents", icon: FaScroll, category: 'management' },
-    { title: "Prijsafspraken", description: "Voeg nieuwe prijsafspraken toe of bewerk bestaande.", path: "/admin/pricecomponents", icon: FaMoneyBillWave, category: 'financial' },
-    { title: "Financieel", description: "Bekijk en exporteer financiële gegevens van overledenen.", path: "/admin/financial", icon: FaFileInvoiceDollar, category: 'financial' },
-    { title: "Rapportages", description: "Bekijk en exporteer rapportages.", path: "/admin/reports", icon: FaChartBar, category: 'financial' },
-    { title: "Algemene Instellingen", description: "Systeem instellingen beheren.", path: "/admin/licenses", icon: FaCog, category: 'settings' },
+    // Relaties — people & organisations you work with
+    { title: "Werknemers", description: "Voeg nieuwe werknemers toe of bewerk bestaande.", path: "/admin/employees", icon: FaUsers, category: 'relaties' },
+    { title: "Verzekeraars & Verenigingen", description: "Voeg nieuwe verzekeraars & verenigingen toe of bewerk bestaande.", path: "/admin/insurance", icon: FaBuilding, category: 'relaties' },
+    { title: "Leveranciers", description: "Voeg nieuwe leveranciers toe of bewerk bestaande.", path: "/admin/suppliers", icon: FaTruck, category: 'relaties' },
+    // Diensten — configurable service offerings
+    { title: "Uitvaartkisten", description: "Voeg nieuwe uitvaartkisten toe of bewerk bestaande.", path: "/admin/coffins", icon: GiCoffin, category: 'diensten' },
+    { title: "Asbestemming", description: "Voeg nieuwe asbestemmingen toe of bewerk bestaande.", path: "/admin/ashes", icon: FaBox, category: 'diensten' },
+    { title: "Rouwbrieven", description: "Voeg nieuwe rouwbrieven toe of bewerk bestaande.", path: "/admin/letters", icon: FaScroll, category: 'diensten' },
+    { title: "Documenten", description: "Voeg nieuwe documenten toe of bewerk bestaande.", path: "/admin/documents", icon: FaScroll, category: 'diensten' },
+    // Financieel — pricing, invoicing & reporting
+    { title: "Prijsafspraken", description: "Voeg nieuwe prijsafspraken toe of bewerk bestaande.", path: "/admin/pricecomponents", icon: FaMoneyBillWave, category: 'financieel' },
+    { title: "Financieel", description: "Bekijk en exporteer financiële gegevens van overledenen.", path: "/admin/financial", icon: FaFileInvoiceDollar, category: 'financieel' },
+    { title: "Rapportages", description: "Bekijk en exporteer rapportages.", path: "/admin/reports", icon: FaChartBar, category: 'financieel' },
+    // Instellingen — system configuration
+    { title: "Algemene Instellingen", description: "Systeem instellingen beheren.", path: "/admin/licenses", icon: FaCog, category: 'instellingen' },
   ];
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'management': return 'from-blue-500 to-blue-600';
-      case 'financial': return 'from-green-500 to-green-600';
-      case 'inventory': return 'from-purple-500 to-purple-600';
-      case 'settings': return 'from-gray-500 to-gray-600';
-      default: return 'from-blue-500 to-blue-600';
+      case 'relaties':     return 'from-blue-500 to-blue-600';
+      case 'diensten':     return 'from-purple-500 to-purple-600';
+      case 'financieel':   return 'from-green-500 to-green-600';
+      case 'instellingen': return 'from-gray-500 to-gray-600';
+      default:             return 'from-blue-500 to-blue-600';
     }
   };
 
   const getCategoryBadgeColor = (category: string) => {
     switch (category) {
-      case 'management': return 'bg-blue-100 text-blue-800';
-      case 'financial': return 'bg-green-100 text-green-800';
-      case 'inventory': return 'bg-purple-100 text-purple-800';
-      case 'settings': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'relaties':     return 'bg-blue-100 text-blue-800';
+      case 'diensten':     return 'bg-purple-100 text-purple-800';
+      case 'financieel':   return 'bg-green-100 text-green-800';
+      case 'instellingen': return 'bg-gray-100 text-gray-800';
+      default:             return 'bg-blue-100 text-blue-800';
     }
   };
 
   const getCategoryName = (category: string) => {
     switch (category) {
-      case 'management': return 'Beheer';
-      case 'financial': return 'Financieel';
-      case 'inventory': return 'Voorraad';
-      case 'settings': return 'Instellingen';
-      default: return 'Algemeen';
+      case 'relaties':     return 'Relaties';
+      case 'diensten':     return 'Diensten';
+      case 'financieel':   return 'Financieel';
+      case 'instellingen': return 'Instellingen';
+      default:             return 'Algemeen';
     }
   };
 
-const [systemHealth, setSystemHealth] = useState<string>("Laden...");
+  const [systemHealth, setSystemHealth] = useState<string>("Laden...");
 
-useEffect(() => {
-  const checkHealth = async () => {
-    try {
-      const response = await fetch(`${endpoints.health}`);
-
-      if (!response.ok) {
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const response = await fetch(`${endpoints.health}`);
+        if (!response.ok) {
+          setSystemHealth("Offline!");
+          return;
+        }
+        const status = await response.text();
+        setSystemHealth(`${status}`);
+      } catch {
         setSystemHealth("Offline!");
-        return;
       }
+    };
 
-      const status = await response.text();
-      setSystemHealth(`${status}`);
-    } catch {
-      setSystemHealth("Offline!");
-    }
-  };
-
-  checkHealth();
-}, []); // empty array = runs once on mount
+    checkHealth();
+  }, []);
 
   return (
     <DashboardLayout>
@@ -112,13 +114,13 @@ useEffect(() => {
             {cards.map((card) => {
               const Icon = card.icon as unknown as React.ComponentType<{ size?: number; className?: string }>;
               return (
-                <div 
+                <div
                   key={card.title}
                   className="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 overflow-hidden flex flex-col"
                 >
                   {/* Card Header with Gradient */}
                   <div className={`h-2 bg-gradient-to-r ${getCategoryColor(card.category)}`}></div>
-                  
+
                   <div className="p-6 flex flex-col flex-grow">
                     {/* Category Badge */}
                     <div className="flex items-center justify-between mb-4">

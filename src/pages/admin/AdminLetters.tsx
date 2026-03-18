@@ -118,7 +118,7 @@ const AdminLetters: React.FC = () => {
                 size?: number;
                 className?: string;
               }>;
-              return <Icon size={20} className="text-blue-600" />;
+              return <Icon size={20} className="text-purple-600" />;
             })()}
             {rouwbrief ? 'Bewerken' : 'Nieuwe'} rouwbrief
           </h2>
@@ -135,7 +135,7 @@ const AdminLetters: React.FC = () => {
                   Status
                 </label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                   value={formData.isActive ? 'active' : 'inactive'}
                   onChange={e =>
                     setFormData({
@@ -182,8 +182,8 @@ const AdminLetters: React.FC = () => {
               disabled={!formData.description.trim()}
               className={`px-6 py-2 rounded-lg text-white ${
                 formData.description.trim()
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-blue-300 cursor-not-allowed'
+                  ? 'bg-purple-600 hover:bg-purple-700'
+                  : 'bg-purple-300 cursor-not-allowed'
               }`}
             >
               Opslaan
@@ -223,7 +223,7 @@ const AdminLetters: React.FC = () => {
                 </Link>
 
                 <div className="flex items-center gap-3 h-full">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
                     {(() => {
                       const Icon =
                         FaEnvelope as unknown as React.ComponentType<{
@@ -245,7 +245,7 @@ const AdminLetters: React.FC = () => {
                   onClick={() => setActiveTab('overview')}
                   className={`px-4 py-2 rounded-lg transition-colors ${
                     activeTab === 'overview'
-                      ? 'bg-blue-100 text-blue-700 font-medium'
+                      ? 'bg-purple-100 text-purple-700 font-medium'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -257,7 +257,7 @@ const AdminLetters: React.FC = () => {
                     setSelected(null);
                     setActiveTab('add');
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
                 >
                   {(() => {
                     const PlusIcon =
@@ -298,14 +298,14 @@ const AdminLetters: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Zoek rouwbrieven..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                       />
                     </div>
 
                     <select
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       value={statusFilter}
                       onChange={e => setStatusFilter(e.target.value as StatusFilter)}
                     >
@@ -379,7 +379,7 @@ const AdminLetters: React.FC = () => {
                                     setSelected(x);
                                     setActiveTab('edit');
                                   }}
-                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                                   title="Bewerken"
                                 >
                                   {(() => {
@@ -401,7 +401,7 @@ const AdminLetters: React.FC = () => {
                                   className={`p-2 rounded-lg transition-colors ${
                                     x.isActive
                                       ? 'text-red-600 hover:bg-red-50'
-                                      : 'text-green-700 hover:bg-green-50'
+                                      : 'text-purple-700 hover:bg-purple-50'
                                   }`}
                                   title={x.isActive ? 'Deactiveren' : 'Activeren'}
                                 >

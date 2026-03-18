@@ -11,6 +11,7 @@ import {
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { endpoints } from "../../api/apiConfig";
+import apiClient from "../../api/apiClient";
 
 type AgendaItemDto = {
   dossierId: string;
@@ -76,22 +77,9 @@ useEffect(() => {
       const monthParam = toMonthParam(visibleMonth);
 
       // 1) Calendar highlights always depend on visible month
-      const highlightsResponse = await fetch(
-        `${endpoints.upcomingAgenda}?month=${monthParam}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!highlightsResponse.ok) {
-        const text = await highlightsResponse.text();
-        throw new Error(text || "Kon kalenderdata niet laden.");
-      }
-
-      const highlightsData: AgendaResponse = await highlightsResponse.json();
+        const highlightsData = await apiClient<AgendaResponse>(
+          `${endpoints.upcomingAgenda}?month=${monthParam}`
+        );
 
       const mappedHighlightedDates = (highlightsData.highlightedDates ?? [])
         .map((d) => new Date(`${d}T00:00:00`))
@@ -113,22 +101,9 @@ useEffect(() => {
         params.set("search", search.trim());
       }
 
-      const resultsResponse = await fetch(
-        `${endpoints.upcomingAgenda}?${params.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!resultsResponse.ok) {
-        const text = await resultsResponse.text();
-        throw new Error(text || "Kon uitvaarten niet laden.");
-      }
-
-      const resultsData: AgendaResponse = await resultsResponse.json();
+        const resultsData = await apiClient<AgendaResponse>(
+          `${endpoints.upcomingAgenda}?${params.toString()}`
+        );
 
       const mappedResults: Funeral[] = (resultsData.results ?? [])
         .map((item) => ({

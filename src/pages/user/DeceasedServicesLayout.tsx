@@ -255,6 +255,7 @@ export default function DeceasedServicesLayout() {
       `${endpoints.deceasedServices}/${resolvedDossierId}/complete`,
       {
         method: "POST",
+        credentials: "include",
         body: uploadData,
       }
     );

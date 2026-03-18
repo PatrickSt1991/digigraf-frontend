@@ -226,7 +226,7 @@ const getStatusBadge = (loginIsActive: boolean | null) => {
               </button>
               <button
                 onClick={() => setActiveTab('add')}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
               >
                 {(() => {
                   const PlusIcon = FaPlus as unknown as React.ComponentType<{ size?: number; className?: string }>;
@@ -379,7 +379,7 @@ const getStatusBadge = (loginIsActive: boolean | null) => {
                             {!e.loginIsActive && (
                               <button
                                 onClick={() => handleUnblockLogin(e)}
-                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               >
                                 <FaUser size={16} />
                               </button>

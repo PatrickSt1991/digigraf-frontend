@@ -137,7 +137,7 @@ const LicenseManagement: React.FC = () => {
               <FaArrowLeft />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
                 <FaShieldAlt className="text-white" size={24} />
               </div>
               <div>
@@ -156,7 +156,7 @@ const LicenseManagement: React.FC = () => {
                   onClick={() => { setActiveTab(tab.id); setMessage(null); }}
                   className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
                     activeTab === tab.id
-                      ? "border-b-2 border-blue-600 text-blue-600 bg-blue-50/40"
+                      ? "border-b-2 border-gray-600 text-gray-600 bg-gray-50/40"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                   }`}
                 >
@@ -172,13 +172,13 @@ const LicenseManagement: React.FC = () => {
               {activeTab === "license" && (
                 licenseLoading ? (
                   <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500" />
                   </div>
                 ) : (
                   <div className="grid lg:grid-cols-2 gap-6">
                     {/* Current status */}
                     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                      <div className={`p-6 ${isOverLimit ? "bg-red-600" : isNearLimit ? "bg-yellow-500" : "bg-gradient-to-r from-blue-600 to-blue-700"}`}>
+                      <div className={`p-6 ${isOverLimit ? "bg-red-600" : isNearLimit ? "bg-yellow-500" : "bg-gradient-to-r from-gray-600 to-gray-700"}`}>
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-white/80 text-sm font-medium mb-1">Huidig plan</p>
@@ -201,7 +201,7 @@ const LicenseManagement: React.FC = () => {
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                             <div
-                              className={`h-full transition-all duration-300 ${isOverLimit ? "bg-red-500" : isNearLimit ? "bg-yellow-500" : "bg-gradient-to-r from-blue-500 to-blue-600"}`}
+                              className={`h-full transition-all duration-300 ${isOverLimit ? "bg-red-500" : isNearLimit ? "bg-yellow-500" : "bg-gradient-to-r from-gray-500 to-gray-600"}`}
                               style={{ width: `${Math.min(usagePercentage, 100)}%` }}
                             />
                           </div>
@@ -246,7 +246,7 @@ const LicenseManagement: React.FC = () => {
                             <p className="text-gray-500 text-sm mb-3">Actieve functies</p>
                             <div className="flex flex-wrap gap-2">
                               {licenseInfo.features.map((feature, idx) => (
-                                <span key={idx} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">{feature}</span>
+                                <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">{feature}</span>
                               ))}
                             </div>
                           </div>
@@ -258,10 +258,10 @@ const LicenseManagement: React.FC = () => {
                     <div className="bg-white rounded-xl border border-gray-200 p-6">
                       <h2 className="text-xl font-bold text-gray-900 mb-6">Licentie activeren</h2>
                       <div className="flex gap-2 mb-6 bg-gray-100 p-2 rounded-lg">
-                        <button className={`flex-1 p-2 rounded-lg ${uploadMode === "file" ? "bg-blue-600 text-white" : "text-gray-700"}`} onClick={() => setUploadMode("file")}>
+                        <button className={`flex-1 p-2 rounded-lg ${uploadMode === "file" ? "bg-gray-600 text-white" : "text-gray-700"}`} onClick={() => setUploadMode("file")}>
                           <FaUpload className="inline mr-2" /> Bestand
                         </button>
-                        <button className={`flex-1 p-2 rounded-lg ${uploadMode === "key" ? "bg-blue-600 text-white" : "text-gray-700"}`} onClick={() => setUploadMode("key")}>
+                        <button className={`flex-1 p-2 rounded-lg ${uploadMode === "key" ? "bg-gray-600 text-white" : "text-gray-700"}`} onClick={() => setUploadMode("key")}>
                           <FaKey className="inline mr-2" /> Sleutel
                         </button>
                       </div>
@@ -273,14 +273,14 @@ const LicenseManagement: React.FC = () => {
                             {selectedFile && <span className="text-gray-500 text-sm">{selectedFile.name}</span>}
                           </label>
                           <input id="licenseFile" type="file" className="hidden" onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)} />
-                          <button onClick={handleFileUpload} disabled={uploading || !selectedFile} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                          <button onClick={handleFileUpload} disabled={uploading || !selectedFile} className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50">
                             {uploading ? "Uploaden..." : "Licentie uploaden"}
                           </button>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-4">
                           <textarea value={licenseKey} onChange={(e) => setLicenseKey(e.target.value)} placeholder="Plak uw licentiesleutel hier" className="w-full border border-gray-300 rounded-lg p-2 resize-none" rows={4} />
-                          <button onClick={handleKeyActivation} disabled={uploading || !licenseKey.trim()} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                          <button onClick={handleKeyActivation} disabled={uploading || !licenseKey.trim()} className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50">
                             {uploading ? "Activeren..." : "Licentie activeren"}
                           </button>
                         </div>
@@ -295,7 +295,7 @@ const LicenseManagement: React.FC = () => {
               {activeTab === "company" && (
                 companyLoading ? (
                   <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500" />
                   </div>
                 ) : (
                   <div className="max-w-3xl space-y-6">
@@ -311,7 +311,7 @@ const LicenseManagement: React.FC = () => {
                           value={company.name}
                           onChange={(e) => updateCompany("name", e.target.value)}
                           placeholder="Uw bedrijfsnaam"
-                          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                         />
                       </div>
                     </div>
@@ -326,7 +326,7 @@ const LicenseManagement: React.FC = () => {
                           value={company.address}
                           onChange={(e) => updateCompany("address", e.target.value)}
                           placeholder="Straat en huisnummer"
-                          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                         />
                       </div>
                     </div>
@@ -340,7 +340,7 @@ const LicenseManagement: React.FC = () => {
                           value={company.postalCode}
                           onChange={(e) => updateCompany("postalCode", e.target.value)}
                           placeholder="1234 AB"
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                         />
                       </div>
                       <div>
@@ -350,7 +350,7 @@ const LicenseManagement: React.FC = () => {
                           value={company.city}
                           onChange={(e) => updateCompany("city", e.target.value)}
                           placeholder="Amsterdam"
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                         />
                       </div>
                     </div>
@@ -361,7 +361,7 @@ const LicenseManagement: React.FC = () => {
                       <select
                         value={company.country}
                         onChange={(e) => updateCompany("country", e.target.value)}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none bg-white"
                       >
                         <option>Nederland</option>
                         <option>België</option>
@@ -382,7 +382,7 @@ const LicenseManagement: React.FC = () => {
                             value={company.phone}
                             onChange={(e) => updateCompany("phone", e.target.value)}
                             placeholder="+31 20 000 0000"
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                           />
                         </div>
                       </div>
@@ -396,7 +396,7 @@ const LicenseManagement: React.FC = () => {
                             value={company.email}
                             onChange={(e) => updateCompany("email", e.target.value)}
                             placeholder="info@bedrijf.nl"
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                           />
                         </div>
                       </div>
@@ -412,7 +412,7 @@ const LicenseManagement: React.FC = () => {
                           value={company.website}
                           onChange={(e) => updateCompany("website", e.target.value)}
                           placeholder="https://www.bedrijf.nl"
-                          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                         />
                       </div>
                     </div>
@@ -426,7 +426,7 @@ const LicenseManagement: React.FC = () => {
                           value={company.kvkNumber}
                           onChange={(e) => updateCompany("kvkNumber", e.target.value)}
                           placeholder="12345678"
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                         />
                       </div>
                       <div>
@@ -436,7 +436,7 @@ const LicenseManagement: React.FC = () => {
                           value={company.btwNumber}
                           onChange={(e) => updateCompany("btwNumber", e.target.value)}
                           placeholder="NL123456789B01"
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                         />
                       </div>
                     </div>
@@ -446,7 +446,7 @@ const LicenseManagement: React.FC = () => {
                       <button
                         onClick={handleSaveCompany}
                         disabled={savingCompany || !company.name.trim()}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                        className="flex items-center gap-2 bg-gray-600 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 disabled:opacity-50 font-medium"
                       >
                         <FaSave />
                         {savingCompany ? "Opslaan..." : "Instellingen opslaan"}
@@ -463,7 +463,7 @@ const LicenseManagement: React.FC = () => {
               {activeTab === "terms" && (
                 companyLoading ? (
                   <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500" />
                   </div>
                 ) : (
                   <div className="max-w-3xl space-y-4">
@@ -478,14 +478,14 @@ const LicenseManagement: React.FC = () => {
                       onChange={(e) => updateCompany("termsAndConditions", e.target.value)}
                       placeholder={`Artikel 1 – Definities\n\nIn deze algemene voorwaarden wordt verstaan onder:\n\n1. Opdrachtnemer: ...\n2. Opdrachtgever: ...`}
                       rows={20}
-                      className="w-full border border-gray-300 rounded-lg p-4 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"
+                      className="w-full border border-gray-300 rounded-lg p-4 font-mono text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none resize-y"
                     />
 
                     <div className="flex items-center gap-4 pt-2">
                       <button
                         onClick={handleSaveCompany}
                         disabled={savingCompany}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                        className="flex items-center gap-2 bg-gray-600 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 disabled:opacity-50 font-medium"
                       >
                         <FaSave />
                         {savingCompany ? "Opslaan..." : "Voorwaarden opslaan"}

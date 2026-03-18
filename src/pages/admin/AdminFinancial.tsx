@@ -196,7 +196,7 @@ const AdminFinancial: React.FC = () => {
                 </Link>
 
                 <div className="flex items-center gap-3 h-full">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
                     {(() => {
                       const Icon =
                         FaChartLine as unknown as React.ComponentType<{ size?: number; className?: string }>;
@@ -234,7 +234,7 @@ const AdminFinancial: React.FC = () => {
                   onClick={() => setActiveTab(k)}
                   className={`px-4 py-2 rounded-lg transition-colors ${
                     activeTab === k
-                      ? 'bg-blue-100 text-blue-700 font-medium'
+                      ? 'bg-green-100 text-green-700 font-medium'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -263,14 +263,14 @@ const AdminFinancial: React.FC = () => {
                   <input
                     type="text"
                     placeholder="Zoek op uitvaartnummer, leverancier of werknemer..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
 
                 <select
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value as StatusFilter)}
                 >
@@ -440,7 +440,7 @@ const AdminFinancial: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <button
                                 onClick={() => openPayout(r)}
-                                className="px-3 py-2 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+                                className="px-3 py-2 rounded-lg text-sm bg-green-600 text-white hover:bg-green-700 transition-colors inline-flex items-center gap-2"
                                 title="Uitbetalen"
                               >
                                 <FaMoneyBillWave size={14} />
@@ -555,7 +555,7 @@ const AdminFinancial: React.FC = () => {
                   <button
                     onClick={() => void savePayout()}
                     disabled={payoutSaving}
-                    className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
                   >
                     {payoutSaving ? 'Opslaan...' : 'Opslaan'}
                   </button>

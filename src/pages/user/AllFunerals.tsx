@@ -9,6 +9,7 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import { endpoints } from "../../api/apiConfig";
+import apiClient from "../../api/apiClient";
 
 interface Funeral {
   id: string;
@@ -84,22 +85,9 @@ export default function AllFunerals() {
         if (selectedMonth) params.set("month", selectedMonth);
         if (selectedType) params.set("type", selectedType);
 
-        const response = await fetch(
-          `${endpoints.allPaged}?${params.toString()}`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-          }
+        const data = await apiClient<AllFuneralsResponse>(
+          `${endpoints.allPaged}?${params.toString()}`
         );
-
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text || "Kon uitvaarten niet laden.");
-        }
-
-        const data: AllFuneralsResponse = await response.json();
 
         setFunerals(data.items ?? []);
         setTotalPages(data.totalPages ?? 1);

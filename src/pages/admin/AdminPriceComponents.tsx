@@ -210,12 +210,9 @@ const AdminPriceComponents: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200 h-16 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <FaEuroSign className="text-blue-600" />
+            <FaEuroSign className="text-green-600" />
             {formData.id ? "Prijs component bewerken" : "Nieuwe prijs component"}
           </h2>
-          <span className="text-sm text-gray-500">
-            Beter overzicht, minder “WPF vibes” 🙂
-          </span>
         </div>
 
         <div className="p-6 space-y-6">
@@ -234,7 +231,7 @@ const AdminPriceComponents: React.FC = () => {
                   Omschrijving *
                 </label>
                 <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   placeholder="bv. Akte van Cessie"
                   value={formData.omschrijving}
                   onChange={(e) => setFormData({ ...formData, omschrijving: e.target.value })}
@@ -438,7 +435,7 @@ const AdminPriceComponents: React.FC = () => {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+              className="px-6 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700"
             >
               {saving ? "Opslaan..." : "Opslaan"}
             </button>
@@ -467,7 +464,7 @@ const AdminPriceComponents: React.FC = () => {
                 </Link>
 
                 <div className="flex items-center gap-3 h-full">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
                     <FaEuroSign className="text-white" size={22} />
                   </div>
                   <div className="flex flex-col justify-center">
@@ -484,7 +481,7 @@ const AdminPriceComponents: React.FC = () => {
                   onClick={() => setActiveTab("overview")}
                   className={`px-4 py-2 rounded-lg transition-colors ${
                     activeTab === "overview"
-                      ? "bg-blue-100 text-blue-700 font-medium"
+                      ? "bg-green-100 text-green-700 font-medium"
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
@@ -516,14 +513,14 @@ const AdminPriceComponents: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Zoek op omschrijving..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
 
                     <select
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       value={partyFilter}
                       onChange={(e) => setPartyFilter(e.target.value)}
                       title="Filter verzekeraar"
@@ -539,7 +536,7 @@ const AdminPriceComponents: React.FC = () => {
                     </select>
 
                     <select
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                     >
@@ -632,7 +629,7 @@ const AdminPriceComponents: React.FC = () => {
 
                             <td className="px-6 py-4 whitespace-nowrap">
                               {x.standaardPm ? (
-                                <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                                <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
                                   Ja
                                 </span>
                               ) : (
@@ -665,7 +662,7 @@ const AdminPriceComponents: React.FC = () => {
                                     setSelected(x);
                                     setActiveTab("edit");
                                   }}
-                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                                   title="Bewerken"
                                 >
                                   <FaEdit size={16} />

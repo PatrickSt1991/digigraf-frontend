@@ -10,3 +10,4 @@ export * from './priceComponents';
 export * from './financial';
 export * from './license';
 export * from './settings';
+export * from './reports';
