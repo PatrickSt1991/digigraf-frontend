@@ -1,9 +1,28 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { DashboardLayout, FormCard, FormField, FuneralForm, FormRow } from "../../components";
-import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
+import { useEffect } from "react";
+import {
+  DashboardLayout,
+  FormCard,
+  FuneralForm,
+  FormField,
+  LoadingState,
+  ErrorState,
+} from "../../components";
+import {
+  useDropdownData,
+  useFormHandler,
+  useSaveAndNext,
+} from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
+import { InvoiceFormData, PriceComponent } from "../../types";
+import apiClient from "../../api/apiClient";
 
-export default function LayoutDeceased() {
+type DeceasedInvoiceFormData = InvoiceFormData & {
+  funeralLeader: string;
+  funeralNumber: string;
+};
+
+export default function DeceasedInvoice() {
   const location = useLocation();
   const navigate = useNavigate();
   const navState = location.state as
@@ -13,225 +32,365 @@ export default function LayoutDeceased() {
         funeralNumber?: string;
       }
     | undefined;
-
   const { dossierId } = useParams<{ dossierId: string }>();
 
-  const { formData, handleChange, goBack, loading, error } = useFormHandler({
-    initialData: {
-      id: "",
-      funeralLeader: navState?.funeralLeader ?? "",
-      funeralNumber: navState?.funeralNumber ?? "",
-      layoutLocation: "",
-      coffinType: "",
-      coffinDescription: "",
-      coffinLength: "",
-      relativesVisited: "",
-      firstCaregiver: "",
-      firstCaregiverStartTime: "",
-      firstCaregiverEndTime: "",
-      secondCaregiver: "",
-      secondCaregiverStartTime: "",
-      secondCaregiverEndTime: "",
-      thirdCaregiver: "",
-      thirdCaregiverStartTime: "",
-      thirdCaregiverEndTime: "",
-      coolingHome: "",
-      clothingPresent: "",
-      clothingReturn: "",
-      juwerly: "",
-      juwerlyDescription: "",
-      juwerlyReturn: "",
-      additionalInformation: "",
-    },
-    steps: ["/deceased-insurance", "/deceased-layout", "/deceased-funeral", "/success-deceased"],
-    fetchUrl: dossierId ? `${endpoints.layoutDeceased}/${dossierId}` : undefined,
+  const initialData: DeceasedInvoiceFormData = {
+    insurancePartyId: "",
+    selectedVerzekeraarId: "",
+    priceComponents: [{ omschrijving: "", aantal: 1, bedrag: 0 }],
+    discountAmount: 0,
+    subtotal: 0,
+    total: 0,
+    isExcelButtonEnabled: true,
+    funeralLeader: navState?.funeralLeader ?? "",
+    funeralNumber: navState?.funeralNumber ?? "",
+    invoiceDate: "",
+  };
+
+  const {
+    formData,
+    handleChange,
+    goBack,
+    setFormData,
+    loading,
+    error,
+  } = useFormHandler<DeceasedInvoiceFormData>({
+    initialData,
+    steps: [
+      "/deceased-documents",
+      "/deceased-invoice",
+      "/deceased-services",
+      "/success-deceased",
+    ],
+    fetchUrl: dossierId
+      ? `${endpoints.invoiceDeceased}/${dossierId}`
+      : undefined,
     allow404AsEmpty: true,
   });
 
-  const saveUrl = dossierId ? `${endpoints.layoutDeceased}/${dossierId}` : endpoints.layoutDeceased;
+  const saveUrl = dossierId
+    ? `${endpoints.invoiceDeceased}/${dossierId}`
+    : endpoints.invoiceDeceased;
 
-  const {handleNext} = useSaveAndNext({
+  const { handleNext } = useSaveAndNext({
     formData,
     endpoint: saveUrl,
     id: dossierId as string | undefined,
     getNextPath: (_result, currentId) => {
       return currentId
-        ? `/deceased-funeral/${currentId}`
-        : "/deceased-funeral";
+        ? `/deceased-services/${currentId}`
+        : "/deceased-services";
     },
     getNextState: (_result, currentId) => ({
-      dossierId: currentId ?? formData.id ?? "",
+      dossierId: currentId ?? "",
       funeralLeader: formData.funeralLeader ?? "",
       funeralNumber: formData.funeralNumber ?? "",
     }),
   });
 
-  const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
-    coffinTypes: endpoints.coffins,
-    coffinLengths: endpoints.coffinlenghts,
-    caretakers: endpoints.caretakers,
+  const {
+    data,
+    loading: dropdownLoading,
+    errors: dropdownErrors,
+  } = useDropdownData({
+    insuranceParties: endpoints.insuranceCompanies,
   });
 
-  if (loading) return <div>Loading layout deceased data...</div>;
-  if (error) return <div className="text-red-600">{error}</div>;
+  const insurers =
+    data.insuranceParties?.filter((p: any) => p.isInsurance) ?? [];
+
+  const handleInsuranceChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const insuranceId = e.target.value;
+    const selectedName =
+      insurers.find((p: any) => p.id === insuranceId)?.label ?? "";
+
+    if (!insuranceId) {
+      setFormData((prev) => ({
+        ...prev,
+        selectedVerzekeraarId: "",
+        selectedVerzekeraar: "",
+        priceComponents: [],
+      }));
+      return;
+    }
+
+    try {
+      const components = await apiClient<PriceComponent[]>(
+        `${endpoints.invoiceDeceased}/templates?insurancePartyId=${insuranceId}`
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        selectedVerzekeraarId: insuranceId,
+        selectedVerzekeraar: selectedName,
+        priceComponents: components,
+      }));
+    } catch {
+      setFormData((prev) => ({
+        ...prev,
+        selectedVerzekeraarId: insuranceId,
+        selectedVerzekeraar: selectedName,
+        priceComponents: [],
+      }));
+    }
+  };
+
+  useEffect(() => {
+    const subtotal = formData.priceComponents.reduce(
+      (sum, pc) =>
+        sum + (Number(pc.bedrag) || 0) * (Number(pc.aantal) || 0),
+      0
+    );
+
+    const total = subtotal - (Number(formData.discountAmount) || 0);
+
+    setFormData((prev) => ({
+      ...prev,
+      subtotal,
+      total,
+    }));
+  }, [formData.priceComponents, formData.discountAmount, setFormData]);
+
+  const updatePriceComponent = (
+    idx: number,
+    key: keyof PriceComponent,
+    value: any
+  ) => {
+    setFormData((prev) => {
+      const updated = [...prev.priceComponents];
+      updated[idx] = {
+        ...updated[idx],
+        [key]:
+          key === "bedrag" || key === "aantal"
+            ? value === ""
+              ? ""
+              : Number(value)
+            : value,
+      };
+
+      return {
+        ...prev,
+        priceComponents: updated,
+      };
+    });
+  };
+
+  const addPriceComponent = () => {
+    setFormData((prev) => ({
+      ...prev,
+      priceComponents: [
+        ...prev.priceComponents,
+        { omschrijving: "", aantal: 1, bedrag: 0 },
+      ],
+    }));
+  };
+
+  const removePriceComponent = (idx: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      priceComponents: prev.priceComponents.filter((_, i) => i !== idx),
+    }));
+  };
+
+  const handleGenerateExcel = async () => {
+    const response = await fetch(
+      `${endpoints.invoiceDeceased}/generate-excel`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      }
+    );
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+  };
 
   return (
     <DashboardLayout>
       <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
-        <FuneralForm 
-          formData={formData} 
+        <FuneralForm
+          formData={formData}
           onChange={handleChange}
-          onNext={handleNext} 
+          onNext={handleNext}
           onBack={() =>
             goBack(location.pathname, {
-              dossierId: dossierId ?? formData.id ?? "",
+              dossierId: dossierId ?? "",
               funeralLeader: formData.funeralLeader ?? "",
               funeralNumber: formData.funeralNumber ?? "",
             })
           }
-          readOnly={true} 
+          readOnly={true}
           navigationActions={[
             { label: "Dashboard", onClick: () => navigate("/dashboard") },
             { label: "Overledene", onClick: () => navigate(`/deceased/${dossierId}`) },
             { label: "Opdrachtgever", onClick: () => navigate(`/deceased-information/${dossierId}`) },
             { label: "Verzekeringen", onClick: () => navigate(`/deceased-insurance/${dossierId}`) },
+            { label: "Opbaren", onClick: () => navigate(`/deceased-layout/${dossierId}`) },
             { label: "Condoleance", onClick: () => navigate(`/deceased-funeral/${dossierId}`) },
             { label: "Documenten", onClick: () => navigate(`/deceased-documents/${dossierId}`) },
-            { label: "Kostenbegroting ", onClick: () => navigate(`/deceased-invoice/${dossierId}`) },
             { label: "Diensten", onClick: () => navigate(`/deceased-services/${dossierId}`) },
           ]}
         />
 
-        <div className="grid grid-cols-1 gap-4">
-          <FormCard title="Opbaren Overledene">
-            <FormField label="Opbaring te" required name="layoutLocation" value={formData.layoutLocation} onChange={handleChange} />
-
-            <FormField label="Uitvaartkist" required>
-              {dropdownLoading.coffinTypes ? (
-                <div>Loading...</div>
-              ) : dropdownErrors.coffinTypes ? (
-                <div className="text-red-600">{dropdownErrors.coffinTypes}</div>
-              ) : (
-                <select name="coffinType" value={formData.coffinType} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                  <option value="">Selecteer Uitvaartkist...</option>
-                  {data.coffinTypes?.map((c: any) => <option key={c.id} value={c.code}>{c.code} - {c.description}</option>)}
-                </select>
-              )}
-            </FormField>
-
-            <FormField label="Omschrijving" required name="coffinDescription" multiline rows={6} value={formData.coffinDescription} onChange={handleChange} />
-
-            <FormField label="Lengte" required>
-              {dropdownLoading.coffinLengths ? (
-                <div>Loading...</div>
-              ) : dropdownErrors.coffinLengths ? (
-                <div className="text-red-600">{dropdownErrors.coffinLengths}</div>
-              ) : (
-                <select name="coffinLength" value={formData.coffinLength} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                  <option value="">Selecteer lengte...</option>
-                  {data.coffinLengths?.map((c: any) => <option key={c.id} value={c.code}>{c.description}</option>)}
-                </select>
-              )}
-            </FormField>
-            <FormRow cols={3}>            
-                <FormField label="Verzorger 1" required>
-                {dropdownLoading.caretakers ? (
-                    <div>Loading...</div>
-                ) : dropdownErrors.caretakers ? (
-                    <div className="text-red-600">{dropdownErrors.caretakers}</div>
-                ) : (
-                    <select name="firstCaregiver" value={formData.firstCaregiver} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                    <option value="">Selecteer Verzorger...</option>
-                    {data.caretakers?.map((c: any) => <option key={c.id} value={c.code}>{c.displayName}</option>)}
+        {loading ? (
+          <LoadingState
+            title="Gegevens laden"
+            message="Kostenbegroting wordt geladen..."
+          />
+        ) : error ? (
+          <ErrorState
+            title="Fout bij laden"
+            message={error}
+          />
+        ) : (
+          <FormCard title="Kostenbegroting Overledene">
+            <div className="mt-4 flex items-end justify-between gap-4">
+              <div className="w-64">
+                <FormField label="Verzekeraar">
+                  {dropdownLoading.insuranceParties ? (
+                    <div className="text-sm text-gray-500">Verzekeraars worden geladen...</div>
+                  ) : dropdownErrors.insuranceParties ? (
+                    <div className="text-sm text-red-600">
+                      {dropdownErrors.insuranceParties}
+                    </div>
+                  ) : (
+                    <select
+                      name="selectedVerzekeraarId"
+                      value={formData.selectedVerzekeraarId}
+                      onChange={handleInsuranceChange}
+                      className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
+                    >
+                      <option value="">Selecteer verzekeraar...</option>
+                      {insurers.map((p: any) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
                     </select>
-                )}
+                  )}
                 </FormField>
-                <FormField label="Start" name="firstCaregiverStartTime" value={formData.firstCaregiverStartTime} onChange={handleChange} />
-                <FormField label="Eind" name="firstCaregiverEndTime" value={formData.firstCaregiverEndTime} onChange={handleChange} />
-            </FormRow>
-            <FormRow cols={3}>
-                <FormField label="Verzorger 2" required>
-                {dropdownLoading.caretakers ? (
-                    <div>Loading...</div>
-                ) : dropdownErrors.caretakers ? (
-                    <div className="text-red-600">{dropdownErrors.caretakers}</div>
-                ) : (
-                    <select name="secondCaregiver" value={formData.secondCaregiver} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                    <option value="">Selecteer Verzorger...</option>
-                    {data.caretakers?.map((c: any) => <option key={c.id} value={c.code}>{c.label}</option>)}
-                    </select>
-                )}
-                </FormField>
-                <FormField label="Start" name="secondCaregiverStartTime" value={formData.secondCaregiverStartTime} onChange={handleChange} />
-                <FormField label="Eind" name="secondCaregiverEndTime" value={formData.secondCaregiverEndTime} onChange={handleChange} />
-            </FormRow>
-            <FormRow cols={3}>
-                <FormField label="Verzorger 3" required>
-                {dropdownLoading.caretakers ? (
-                    <div>Loading...</div>
-                ) : dropdownErrors.caretakers ? (
-                    <div className="text-red-600">{dropdownErrors.caretakers}</div>
-                ) : (
-                    <select name="thirdCaregiver" value={formData.thirdCaregiver} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                    <option value="">Selecteer Verzorger...</option>
-                    {data.caretakers?.map((c: any) => <option key={c.id} value={c.code}>{c.label}</option>)}
-                    </select>
-                )}
-                </FormField>
-                <FormField label="Start" name="thirdCaregiverStartTime" value={formData.thirdCaregiverStartTime} onChange={handleChange} />
-                <FormField label="Eind" name="thirdCaregiverEndTime" value={formData.thirdCaregiverEndTime} onChange={handleChange} />
-            </FormRow>
+              </div>
 
-            <FormField label="Koelvoorziening thuis">
-              <select name="coolingHome" value={formData.coolingHome} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
+              <button
+                onClick={handleGenerateExcel}
+                disabled={
+                  !formData.selectedVerzekeraarId ||
+                  !formData.isExcelButtonEnabled
+                }
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+              >
+                Excel Genereren
+              </button>
+            </div>
 
-            <FormField label="Kleding aanwezig">
-              <select name="clothingPresent" value={formData.clothingPresent} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
+            <div className="w-full mt-6">
+              <div className="flex gap-4 mb-2 font-semibold text-gray-700">
+                <div className="flex-1">Omschrijving</div>
+                <div className="w-20">Aantal</div>
+                <div className="w-20">Bedrag</div>
+                <div className="w-20">Acties</div>
+              </div>
 
-            <FormField label="Kleding retour">
-              <select name="clothingReturn" value={formData.clothingReturn} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
+              {formData.priceComponents.map((pc, idx) => (
+                <div
+                  key={idx}
+                  className="flex gap-4 mb-2 items-end w-full"
+                >
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={pc.omschrijving}
+                      onChange={(e) =>
+                        updatePriceComponent(
+                          idx,
+                          "omschrijving",
+                          e.target.value
+                        )
+                      }
+                      disabled={!formData.selectedVerzekeraarId}
+                      className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
+                    />
+                  </div>
 
-            <FormField label="Sieraden">
-              <select name="juwerly" value={formData.juwerly} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
+                  <div className="w-20">
+                    <input
+                      type="number"
+                      value={pc.aantal}
+                      onChange={(e) =>
+                        updatePriceComponent(
+                          idx,
+                          "aantal",
+                          e.target.value
+                        )
+                      }
+                      disabled={!formData.selectedVerzekeraarId}
+                      className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
+                    />
+                  </div>
 
-            <FormField label="Sieraden omschrijving" required name="juwerlyDescription" multiline rows={6} value={formData.juwerlyDescription} onChange={handleChange} />
+                  <div className="w-20">
+                    <input
+                      type="number"
+                      value={pc.bedrag}
+                      onChange={(e) =>
+                        updatePriceComponent(
+                          idx,
+                          "bedrag",
+                          e.target.value
+                        )
+                      }
+                      disabled={!formData.selectedVerzekeraarId}
+                      className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
+                    />
+                  </div>
 
-            <FormField label="Sieraden retour">
-              <select name="juwerlyReturn" value={formData.juwerlyReturn} onChange={handleChange} className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900">
-                <option value="">Selecteer een optie...</option>
-                <option value="ja">Ja</option>
-                <option value="nee">Nee</option>
-                <option value="onbekend">Onbekend</option>
-              </select>
-            </FormField>
+                  <div className="w-20">
+                    <button
+                      type="button"
+                      onClick={() => removePriceComponent(idx)}
+                      disabled={!formData.selectedVerzekeraarId}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm disabled:opacity-50"
+                    >
+                      Verwijder
+                    </button>
+                  </div>
+                </div>
+              ))}
 
-            <FormField label="Extra informatie" required name="additionalInformation" multiline rows={6} value={formData.additionalInformation} onChange={handleChange} />
+              <button
+                type="button"
+                onClick={addPriceComponent}
+                disabled={!formData.selectedVerzekeraarId}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50 mt-2"
+              >
+                Voeg regel toe
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-2">
+              <div>Subtotaal: € {formData.subtotal}</div>
+              <div>
+                Korting:{" "}
+                <input
+                  type="number"
+                  name="discountAmount"
+                  value={formData.discountAmount}
+                  onChange={handleChange}
+                  disabled={!formData.selectedVerzekeraarId}
+                  className="w-24 border-0 border-b border-gray-300 focus:ring-0"
+                />
+              </div>
+              <div className="font-semibold">
+                Totaal: € {formData.total}
+              </div>
+            </div>
           </FormCard>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );

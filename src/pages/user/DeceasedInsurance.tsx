@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { DashboardLayout, FormCard, FormField, FuneralForm } from "../../components";
+import {
+  DashboardLayout,
+  FormCard,
+  FormField,
+  FuneralForm,
+  LoadingState,
+  ErrorState,
+} from "../../components";
 import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 import { InsuranceEntry } from "../../types";
@@ -30,7 +37,7 @@ const groupEntries = (entries: InsuranceEntry[] = []): InsuranceGroup[] => {
     (entry) =>
       entry.insurancePartyId?.trim() ||
       entry.policyNumber?.trim() ||
-      entry.premium !== undefined && entry.premium !== null
+      (entry.premium !== undefined && entry.premium !== null)
   );
 
   if (validEntries.length === 0) return [emptyGroup()];
@@ -151,10 +158,7 @@ export default function DeceasedInsurance() {
 
   const insuranceParties = (data.insuranceParties || []).filter((p: any) => p.isInsurance);
 
-  const updateGroup = (
-    groupIndex: number,
-    updates: Partial<InsuranceGroup>
-  ) => {
+  const updateGroup = (groupIndex: number, updates: Partial<InsuranceGroup>) => {
     setInsuranceGroups((prev) =>
       prev.map((group, index) =>
         index === groupIndex ? { ...group, ...updates } : group
@@ -255,118 +259,127 @@ export default function DeceasedInsurance() {
           ]}
         />
 
-        {formLoading && <div>Gegevens laden...</div>}
-        {formError && <div className="text-red-600">{formError}</div>}
+        {formLoading ? (
+          <LoadingState
+            title="Gegevens laden"
+            message="Verzekeringsgegevens worden geladen..."
+          />
+        ) : formError ? (
+          <ErrorState
+            title="Fout bij laden"
+            message={formError}
+          />
+        ) : (
+          <FormCard title="Verzekeringen">
+            <div className="space-y-6">
+              {insuranceGroups.map((group, groupIndex) => (
+                <div key={groupIndex} className="border rounded p-4 space-y-4">
+                  <div className="flex items-end gap-4">
+                    <div className="flex-1">
+                      <FormField label={`Verzekering ${groupIndex + 1}`} required>
+                        {dropdownLoading.insuranceParties ? (
+                          <div className="text-sm text-gray-500">Verzekeraars worden geladen...</div>
+                        ) : dropdownErrors.insuranceParties ? (
+                          <div className="text-sm text-red-600">{dropdownErrors.insuranceParties}</div>
+                        ) : (
+                          <select
+                            value={group.insurancePartyId}
+                            onChange={(e) =>
+                              updateGroup(groupIndex, { insurancePartyId: e.target.value })
+                            }
+                            className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
+                          >
+                            <option value="">Selecteer verzekeraar…</option>
+                            {insuranceParties.map((p: any) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </FormField>
+                    </div>
 
-        <FormCard title="Verzekeringen">
-          <div className="space-y-6">
-            {insuranceGroups.map((group, groupIndex) => (
-              <div key={groupIndex} className="border rounded p-4 space-y-4">
-                <div className="flex items-end gap-4">
-                  <div className="flex-1">
-                    <FormField label={`Verzekering ${groupIndex + 1}`} required>
-                      {dropdownLoading.insuranceParties ? (
-                        <div>Loading...</div>
-                      ) : dropdownErrors.insuranceParties ? (
-                        <div className="text-red-600">{dropdownErrors.insuranceParties}</div>
-                      ) : (
-                        <select
-                          value={group.insurancePartyId}
-                          onChange={(e) =>
-                            updateGroup(groupIndex, { insurancePartyId: e.target.value })
-                          }
-                          className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
-                        >
-                          <option value="">Selecteer verzekeraar…</option>
-                          {insuranceParties.map((p: any) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </FormField>
+                    {insuranceGroups.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeInsuranceGroup(groupIndex)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm"
+                      >
+                        Verwijder verzekering
+                      </button>
+                    )}
                   </div>
 
-                  {insuranceGroups.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeInsuranceGroup(groupIndex)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm"
-                    >
-                      Verwijder verzekering
-                    </button>
-                  )}
-                </div>
+                  <div className="space-y-4">
+                    {group.policies.map((policy, policyIndex) => (
+                      <div
+                        key={policyIndex}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded bg-gray-50"
+                      >
+                        <FormField label="Polisnummer" required>
+                          <input
+                            type="text"
+                            value={policy.policyNumber}
+                            onChange={(e) =>
+                              updatePolicy(groupIndex, policyIndex, "policyNumber", e.target.value)
+                            }
+                            className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900 bg-transparent"
+                            placeholder="Polisnummer"
+                          />
+                        </FormField>
 
-                <div className="space-y-4">
-                  {group.policies.map((policy, policyIndex) => (
-                    <div
-                      key={policyIndex}
-                      className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded bg-gray-50"
-                    >
-                      <FormField label="Polisnummer" required>
-                        <input
-                          type="text"
-                          value={policy.policyNumber}
-                          onChange={(e) =>
-                            updatePolicy(groupIndex, policyIndex, "policyNumber", e.target.value)
-                          }
-                          className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900 bg-transparent"
-                          placeholder="Polisnummer"
-                        />
-                      </FormField>
+                        <FormField label="Premie (€)">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={policy.premium ?? ""}
+                            onChange={(e) =>
+                              updatePolicy(groupIndex, policyIndex, "premium", e.target.value)
+                            }
+                            className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900 bg-transparent"
+                            placeholder="0,00"
+                          />
+                        </FormField>
 
-                      <FormField label="Premie (€)">
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={policy.premium ?? ""}
-                          onChange={(e) =>
-                            updatePolicy(groupIndex, policyIndex, "premium", e.target.value)
-                          }
-                          className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900 bg-transparent"
-                          placeholder="0,00"
-                        />
-                      </FormField>
-
-                      <div className="flex items-end">
-                        {group.policies.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removePolicyFromGroup(groupIndex, policyIndex)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm"
-                          >
-                            Verwijder polis
-                          </button>
-                        )}
+                        <div className="flex items-end">
+                          {group.policies.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removePolicyFromGroup(groupIndex, policyIndex)}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm"
+                            >
+                              Verwijder polis
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => addPolicyToGroup(groupIndex)}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                  >
+                    Voeg polis toe
+                  </button>
                 </div>
+              ))}
+            </div>
 
-                <button
-                  type="button"
-                  onClick={() => addPolicyToGroup(groupIndex)}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-                >
-                  Voeg polis toe
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-4 mt-6">
-            <button
-              type="button"
-              onClick={addInsuranceGroup}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            >
-              Voeg verzekering toe
-            </button>
-          </div>
-        </FormCard>
+            <div className="flex gap-4 mt-6">
+              <button
+                type="button"
+                onClick={addInsuranceGroup}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              >
+                Voeg verzekering toe
+              </button>
+            </div>
+          </FormCard>
+        )}
       </div>
     </DashboardLayout>
   );

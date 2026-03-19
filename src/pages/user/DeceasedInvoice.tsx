@@ -5,6 +5,8 @@ import {
   FormCard,
   FuneralForm,
   FormField,
+  LoadingState,
+  ErrorState,
 } from "../../components";
 import {
   useDropdownData,
@@ -41,7 +43,7 @@ export default function DeceasedInvoice() {
     total: 0,
     isExcelButtonEnabled: true,
     funeralLeader: navState?.funeralLeader ?? "",
-    funeralNumber: navState?.funeralNumber ??  "",
+    funeralNumber: navState?.funeralNumber ?? "",
     invoiceDate: "",
   };
 
@@ -63,14 +65,14 @@ export default function DeceasedInvoice() {
     fetchUrl: dossierId
       ? `${endpoints.invoiceDeceased}/${dossierId}`
       : undefined,
-      allow404AsEmpty: true,
+    allow404AsEmpty: true,
   });
 
   const saveUrl = dossierId
     ? `${endpoints.invoiceDeceased}/${dossierId}`
     : endpoints.invoiceDeceased;
 
-  const {handleNext} = useSaveAndNext({
+  const { handleNext } = useSaveAndNext({
     formData,
     endpoint: saveUrl,
     id: dossierId as string | undefined,
@@ -85,6 +87,7 @@ export default function DeceasedInvoice() {
       funeralNumber: formData.funeralNumber ?? "",
     }),
   });
+
   const {
     data,
     loading: dropdownLoading,
@@ -134,10 +137,6 @@ export default function DeceasedInvoice() {
     }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                          CALCULATIONS (SUB / TOTAL)                         */
-  /* -------------------------------------------------------------------------- */
-
   useEffect(() => {
     const subtotal = formData.priceComponents.reduce(
       (sum, pc) =>
@@ -153,11 +152,6 @@ export default function DeceasedInvoice() {
       total,
     }));
   }, [formData.priceComponents, formData.discountAmount, setFormData]);
-
-
-  /* -------------------------------------------------------------------------- */
-  /*                              PRICE COMPONENTS                              */
-  /* -------------------------------------------------------------------------- */
 
   const updatePriceComponent = (
     idx: number,
@@ -200,10 +194,6 @@ export default function DeceasedInvoice() {
     }));
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                                EXCEL EXPORT                                 */
-  /* -------------------------------------------------------------------------- */
-
   const handleGenerateExcel = async () => {
     const response = await fetch(
       `${endpoints.invoiceDeceased}/generate-excel`,
@@ -220,18 +210,13 @@ export default function DeceasedInvoice() {
     window.open(url, "_blank");
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    RENDER                                   */
-  /* -------------------------------------------------------------------------- */
-
   return (
     <DashboardLayout>
       <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
-        {/* Funeral header */}
         <FuneralForm
           formData={formData}
           onChange={handleChange}
-          onNext={handleNext} 
+          onNext={handleNext}
           onBack={() =>
             goBack(location.pathname, {
               dossierId: dossierId ?? "",
@@ -252,151 +237,160 @@ export default function DeceasedInvoice() {
           ]}
         />
 
-        <FormCard title="Kostenbegroting Overledene">
-          {/* Verzekeraar + Excel */}
-          <div className="mt-4 flex items-end justify-between gap-4">
-            <div className="w-64">
-              <FormField label="Verzekeraar">
-                {dropdownLoading.insuranceParties ? (
-                  <div>Loading...</div>
-                ) : dropdownErrors.insuranceParties ? (
-                  <div className="text-red-600">
-                    {dropdownErrors.insuranceParties}
-                  </div>
-                ) : (
-                  <select
-                    name="selectedVerzekeraarId"
-                    value={formData.selectedVerzekeraarId}
-                    onChange={handleInsuranceChange}
-                    className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
-                  >
-                    <option value="">Selecteer verzekeraar...</option>
-                    {insurers.map((p: any) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </FormField>
-            </div>
-
-            <button
-              onClick={handleGenerateExcel}
-              disabled={
-                !formData.selectedVerzekeraarId ||
-                !formData.isExcelButtonEnabled
-              }
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-            >
-              Excel Genereren
-            </button>
-          </div>
-
-          {/* Price table */}
-          <div className="w-full mt-6">
-            <div className="flex gap-4 mb-2 font-semibold text-gray-700">
-              <div className="flex-1">Omschrijving</div>
-              <div className="w-20">Aantal</div>
-              <div className="w-20">Bedrag</div>
-              <div className="w-20">Acties</div>
-            </div>
-
-            {formData.priceComponents.map((pc, idx) => (
-              <div
-                key={idx}
-                className="flex gap-4 mb-2 items-end w-full"
-              >
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={pc.omschrijving}
-                    onChange={(e) =>
-                      updatePriceComponent(
-                        idx,
-                        "omschrijving",
-                        e.target.value
-                      )
-                    }
-                    disabled={!formData.selectedVerzekeraarId}
-                    className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
-                  />
-                </div>
-
-                <div className="w-20">
-                  <input
-                    type="number"
-                    value={pc.aantal}
-                    onChange={(e) =>
-                      updatePriceComponent(
-                        idx,
-                        "aantal",
-                        e.target.value
-                      )
-                    }
-                    disabled={!formData.selectedVerzekeraarId}
-                    className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
-                  />
-                </div>
-
-                <div className="w-20">
-                  <input
-                    type="number"
-                    value={pc.bedrag}
-                    onChange={(e) =>
-                      updatePriceComponent(
-                        idx,
-                        "bedrag",
-                        e.target.value
-                      )
-                    }
-                    disabled={!formData.selectedVerzekeraarId}
-                    className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
-                  />
-                </div>
-
-                <div className="w-20">
-                  <button
-                    type="button"
-                    onClick={() => removePriceComponent(idx)}
-                    disabled={!formData.selectedVerzekeraarId}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm disabled:opacity-50"
-                  >
-                    Verwijder
-                  </button>
-                </div>
+        {loading ? (
+          <LoadingState
+            title="Gegevens laden"
+            message="Kostenbegroting wordt geladen..."
+          />
+        ) : error ? (
+          <ErrorState
+            title="Fout bij laden"
+            message={error}
+          />
+        ) : (
+          <FormCard title="Kostenbegroting Overledene">
+            <div className="mt-4 flex items-end justify-between gap-4">
+              <div className="w-64">
+                <FormField label="Verzekeraar">
+                  {dropdownLoading.insuranceParties ? (
+                    <div className="text-sm text-gray-500">Verzekeraars worden geladen...</div>
+                  ) : dropdownErrors.insuranceParties ? (
+                    <div className="text-sm text-red-600">
+                      {dropdownErrors.insuranceParties}
+                    </div>
+                  ) : (
+                    <select
+                      name="selectedVerzekeraarId"
+                      value={formData.selectedVerzekeraarId}
+                      onChange={handleInsuranceChange}
+                      className="w-full border-0 border-b border-gray-300 rounded-none focus:ring-0 focus:border-gray-900"
+                    >
+                      <option value="">Selecteer verzekeraar...</option>
+                      {insurers.map((p: any) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </FormField>
               </div>
-            ))}
 
-            <button
-              type="button"
-              onClick={addPriceComponent}
-              disabled={!formData.selectedVerzekeraarId}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50 mt-2"
-            >
-              Voeg regel toe
-            </button>
-          </div>
+              <button
+                onClick={handleGenerateExcel}
+                disabled={
+                  !formData.selectedVerzekeraarId ||
+                  !formData.isExcelButtonEnabled
+                }
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+              >
+                Excel Genereren
+              </button>
+            </div>
 
-          {/* Totals */}
-          <div className="mt-6 space-y-2">
-            <div>Subtotaal: € {formData.subtotal}</div>
-            <div>
-              Korting:{" "}
-              <input
-                type="number"
-                name="discountAmount"
-                value={formData.discountAmount}
-                onChange={handleChange}
+            <div className="w-full mt-6">
+              <div className="flex gap-4 mb-2 font-semibold text-gray-700">
+                <div className="flex-1">Omschrijving</div>
+                <div className="w-20">Aantal</div>
+                <div className="w-20">Bedrag</div>
+                <div className="w-20">Acties</div>
+              </div>
+
+              {formData.priceComponents.map((pc, idx) => (
+                <div
+                  key={idx}
+                  className="flex gap-4 mb-2 items-end w-full"
+                >
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={pc.omschrijving}
+                      onChange={(e) =>
+                        updatePriceComponent(
+                          idx,
+                          "omschrijving",
+                          e.target.value
+                        )
+                      }
+                      disabled={!formData.selectedVerzekeraarId}
+                      className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="w-20">
+                    <input
+                      type="number"
+                      value={pc.aantal}
+                      onChange={(e) =>
+                        updatePriceComponent(
+                          idx,
+                          "aantal",
+                          e.target.value
+                        )
+                      }
+                      disabled={!formData.selectedVerzekeraarId}
+                      className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="w-20">
+                    <input
+                      type="number"
+                      value={pc.bedrag}
+                      onChange={(e) =>
+                        updatePriceComponent(
+                          idx,
+                          "bedrag",
+                          e.target.value
+                        )
+                      }
+                      disabled={!formData.selectedVerzekeraarId}
+                      className="w-full border-0 border-b border-gray-300 focus:ring-0 text-sm disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="w-20">
+                    <button
+                      type="button"
+                      onClick={() => removePriceComponent(idx)}
+                      disabled={!formData.selectedVerzekeraarId}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm disabled:opacity-50"
+                    >
+                      Verwijder
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addPriceComponent}
                 disabled={!formData.selectedVerzekeraarId}
-                className="w-24 border-0 border-b border-gray-300 focus:ring-0"
-              />
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50 mt-2"
+              >
+                Voeg regel toe
+              </button>
             </div>
-            <div className="font-semibold">
-              Totaal: € {formData.total}
+
+            <div className="mt-6 space-y-2">
+              <div>Subtotaal: € {formData.subtotal}</div>
+              <div>
+                Korting:{" "}
+                <input
+                  type="number"
+                  name="discountAmount"
+                  value={formData.discountAmount}
+                  onChange={handleChange}
+                  disabled={!formData.selectedVerzekeraarId}
+                  className="w-24 border-0 border-b border-gray-300 focus:ring-0"
+                />
+              </div>
+              <div className="font-semibold">
+                Totaal: € {formData.total}
+              </div>
             </div>
-          </div>
-        </FormCard>
+          </FormCard>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -6,6 +6,8 @@ import {
   FormCard,
   FuneralForm,
   DocumentEditorModal,
+  LoadingState,
+  ErrorState,
 } from "../../components";
 import { useFormHandler } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
@@ -31,8 +33,6 @@ function getFileName(response: Response, fallback: string): string {
   }
   return fallback;
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DeceasedDocuments() {
   const { dossierId } = useParams<{ dossierId: string }>();
@@ -69,7 +69,6 @@ export default function DeceasedDocuments() {
     allow404AsEmpty: true,
   });
 
-  // ── Cessie modal ──────────────────────────────────────────────────────────
   const [cessieModalOpen, setCessieModalOpen] = useState(false);
   const [cessieTemplate, setCessieTemplate] = useState<DocumentTemplate | null>(null);
   const [cessieAction, setCessieAction] = useState<CessieAction>("pdf");
@@ -77,15 +76,12 @@ export default function DeceasedDocuments() {
   const isCessie = (template: DocumentTemplate) =>
     template.title.toLowerCase().includes("cessie");
 
-  // ── Editor modal ──────────────────────────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<DocumentTemplate | null>(null);
 
-  // ── Per-template download loading state ───────────────────────────────────
   const [downloadingDocx, setDownloadingDocx] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null);
 
-  // ── Editor handlers ───────────────────────────────────────────────────────
   const openEditor = (template: DocumentTemplate) => {
     if (isCessie(template)) {
       setCessieTemplate(template);
@@ -137,7 +133,6 @@ export default function DeceasedDocuments() {
     }
   };
 
-  // ── Download handlers ─────────────────────────────────────────────────────
   const handlePrint = (template: DocumentTemplate) => {
     if (isCessie(template)) {
       setCessieTemplate(template);
@@ -197,10 +192,6 @@ export default function DeceasedDocuments() {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
-  if (loading) return <div>Loading documents...</div>;
-  if (error) return <div className="text-red-600">{error}</div>;
-
   return (
     <DashboardLayout>
       <div className="px-8 pb-8 max-w-8xl mx-auto space-y-6">
@@ -223,69 +214,83 @@ export default function DeceasedDocuments() {
           }
           readOnly={true}
           navigationActions={[
-            { label: "Dashboard",       onClick: () => navigate("/dashboard") },
-            { label: "Overledene",      onClick: () => navigate(`/deceased/${dossierId}`) },
-            { label: "Opdrachtgever",   onClick: () => navigate(`/deceased-information/${dossierId}`) },
-            { label: "Verzekeringen",   onClick: () => navigate(`/deceased-insurance/${dossierId}`) },
-            { label: "Opbaren",         onClick: () => navigate(`/deceased-layout/${dossierId}`) },
-            { label: "Condoleance",     onClick: () => navigate(`/deceased-funeral/${dossierId}`) },
+            { label: "Dashboard", onClick: () => navigate("/dashboard") },
+            { label: "Overledene", onClick: () => navigate(`/deceased/${dossierId}`) },
+            { label: "Opdrachtgever", onClick: () => navigate(`/deceased-information/${dossierId}`) },
+            { label: "Verzekeringen", onClick: () => navigate(`/deceased-insurance/${dossierId}`) },
+            { label: "Opbaren", onClick: () => navigate(`/deceased-layout/${dossierId}`) },
+            { label: "Condoleance", onClick: () => navigate(`/deceased-funeral/${dossierId}`) },
             { label: "Kostenbegroting", onClick: () => navigate(`/deceased-invoice/${dossierId}`) },
-            { label: "Diensten",        onClick: () => navigate(`/deceased-services/${dossierId}`) },
+            { label: "Diensten", onClick: () => navigate(`/deceased-services/${dossierId}`) },
           ]}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(formData.templates || [])
-            .sort((a, b) => a.title.localeCompare(b.title))
-            .map((template) => (
-              <FormCard key={template.id} title={template.title}>
-                <div className="flex gap-2 mt-4 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => openEditor(template)}
-                    className="px-4 py-2 rounded-xl border border-green-600 bg-green-600 text-white hover:bg-green-700 transition"
-                  >
-                    {template.dossierId ? "Bewerken" : "Openen"}
-                  </button>
-
-                  {template.dossierId && (
-                    <>
+        {loading ? (
+          <LoadingState
+            title="Documenten laden"
+            message="Documenten worden geladen..."
+          />
+        ) : error ? (
+          <ErrorState
+            title="Fout bij laden"
+            message={error}
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(formData.templates || [])
+                .sort((a, b) => a.title.localeCompare(b.title))
+                .map((template) => (
+                  <FormCard key={template.id} title={template.title}>
+                    <div className="flex gap-2 mt-4 flex-wrap">
                       <button
                         type="button"
-                        onClick={() => handlePrint(template)}
-                        className="px-4 py-2 rounded-xl border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200 transition"
+                        onClick={() => openEditor(template)}
+                        className="px-4 py-2 rounded-xl border border-green-600 bg-green-600 text-white hover:bg-green-700 transition"
                       >
-                        Printen
+                        {template.dossierId ? "Bewerken" : "Openen"}
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadPdf(template)}
-                        disabled={downloadingPdf === template.id}
-                        className="px-4 py-2 rounded-xl border border-red-500 bg-red-500 text-white hover:bg-red-600 disabled:opacity-60 transition"
-                      >
-                        {downloadingPdf === template.id ? "PDF..." : "PDF"}
-                      </button>
+                      {template.dossierId && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handlePrint(template)}
+                            className="px-4 py-2 rounded-xl border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200 transition"
+                          >
+                            Printen
+                          </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadDocx(template)}
-                        disabled={downloadingDocx === template.id}
-                        className="px-4 py-2 rounded-xl border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition"
-                      >
-                        {downloadingDocx === template.id ? "Word..." : "Word"}
-                      </button>
-                    </>
-                  )}
-                </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadPdf(template)}
+                            disabled={downloadingPdf === template.id}
+                            className="px-4 py-2 rounded-xl border border-red-500 bg-red-500 text-white hover:bg-red-600 disabled:opacity-60 transition"
+                          >
+                            {downloadingPdf === template.id ? "PDF downloaden..." : "PDF"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadDocx(template)}
+                            disabled={downloadingDocx === template.id}
+                            className="px-4 py-2 rounded-xl border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition"
+                          >
+                            {downloadingDocx === template.id ? "Word downloaden..." : "Word"}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </FormCard>
+                ))}
+            </div>
+
+            {(!formData.templates || formData.templates.length === 0) && (
+              <FormCard title="">
+                <div>No document templates found for this deceased.</div>
               </FormCard>
-            ))}
-        </div>
-
-        {(!formData.templates || formData.templates.length === 0) && (
-          <FormCard title="">
-            <div>No document templates found for this deceased.</div>
-          </FormCard>
+            )}
+          </>
         )}
 
         {cessieTemplate && (
