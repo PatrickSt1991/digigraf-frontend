@@ -19,6 +19,7 @@ export const endpoints = {
     maritalstatuses: `${API_BASE}/DossierUtils/maritalstatus`,
     coffins: `${API_BASE}/DossierUtils/coffins`,
     coffinlenghts: `${API_BASE}/DossierUtils/coffins-length`,
+    insurance:`${API_BASE}/Insurance`,
     insuranceCompanies: `${API_BASE}/Insurance/parties`,
     insuranceDeceased: `${API_BASE}/Insurance/policies`,
     layoutDeceased: `${API_BASE}/deceasedlayout`,

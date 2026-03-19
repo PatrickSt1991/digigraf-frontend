@@ -21,12 +21,38 @@ export interface InsuranceCompany {
     billingType: | 'Opdrachtgever' | 'Opdrachtgever & Derde partij' | 'Derde partij'
 }
 
-export interface InsuranceEntry {
+export type InsuranceEntry = {
+  id?: string;
+  dossierId?: string;
   insurancePartyId: string;
   policyNumber: string;
   premium?: number;
-}
+};
 
+export type InsuranceParty = {
+  id: string;
+  name: string;
+  isInsurance?: boolean;
+};
+
+export type PolicyGroup = {
+  insurancePartyId: string;
+  insurancePartyName: string;
+  policies: Array<{
+    policyNumber: string;
+    premium?: number;
+  }>;
+  totalPremium: number;
+};
+
+export type InsuranceGroup = { companyName: string; insurances: Insurance[] };
+
+export interface Insurance {
+  id: string;
+  companyName: string;
+  policyNumber?: string;
+  amount: number;
+}
 /* ===================== INSURANCE ===================== */
 
 export type CorrespondenceType = 'address' | 'mailbox';

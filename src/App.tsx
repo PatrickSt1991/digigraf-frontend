@@ -38,7 +38,7 @@ function App() {
         {/* Public */}
         <Route path="/login" element={<Login />} />
 
-        {/* User routes (all require authentication) */}
+        {/* User routes */}
         <Route path="/" element={<RequireUser><Dashboard /></RequireUser>} />
         <Route path="/dashboard" element={<RequireUser><Dashboard /></RequireUser>} />
         <Route path="/deceased/:dossierId?" element={<RequireUser><Deceased /></RequireUser>} />
@@ -52,7 +52,7 @@ function App() {
         <Route path="/upcoming" element={<RequireUser><UpcomingFunerals /></RequireUser>} />
         <Route path="/all-dossiers" element={<RequireUser><AllFunerals /></RequireUser>} />
 
-        {/* Admin routes */}
+        {/* Admin area access: everyone except medewerker */}
         <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
         <Route path="/admin/overledenen" element={<RequireAdmin><AdminOverledenen /></RequireAdmin>} />
         <Route path="/admin/employees" element={<RequireAdmin><AdminEmployee /></RequireAdmin>} />

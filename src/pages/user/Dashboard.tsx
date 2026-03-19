@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaSearch, FaCalendarAlt, FaUsers, FaUserShield } from "react-icons/fa";
 import { IconType } from "react-icons";
-import { DashboardLayout } from "../../components"
+import { DashboardLayout } from "../../components";
 import { AuthContext } from "../../context/AuthContext";
 import SearchModal from "../../modals/user/SearchModal";
 
@@ -17,8 +17,10 @@ export default function Dashboard() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const navigate = useNavigate();
   const auth = useContext(AuthContext);
+
   if (!auth) throw new Error("AuthContext not found");
-  const { isAdmin } = auth;
+
+  const { canAccessAdmin } = auth;
 
   const menuItems: MenuItem[] = [
     { label: "Dossier aanmaken", icon: FaUser, path: "/deceased", color: "bg-red-600 hover:bg-red-700" },
@@ -27,7 +29,7 @@ export default function Dashboard() {
     { label: "Uitvaart agenda", icon: FaCalendarAlt, path: "/upcoming", color: "bg-red-600 hover:bg-red-700" }
   ];
 
-  if (isAdmin) {
+  if (canAccessAdmin) {
     menuItems.push({
       label: "Beheer",
       icon: FaUserShield,
@@ -38,7 +40,6 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      {/* Welcome text */}
       <div className="text-center mb-6">
         <h2 className="text-3xl font-bold mb-2">Welkom terug bij DigiGraf</h2>
         <p className="text-gray-600 text-lg">
@@ -46,7 +47,6 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Menu grid */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-4 justify-center max-w-md mx-auto">
         {menuItems.map((item) => {
           const Icon = item.icon as React.ElementType;
@@ -68,7 +68,7 @@ export default function Dashboard() {
           );
         })}
       </div>
-      
+
       <SearchModal
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}

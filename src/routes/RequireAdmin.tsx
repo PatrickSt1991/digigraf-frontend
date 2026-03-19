@@ -6,7 +6,7 @@ export function RequireAdmin({ children }: { children: JSX.Element }) {
   const auth = useContext(AuthContext);
   if (!auth) throw new Error("AuthContext not found");
 
-  const { isAuthenticated, isAdmin, loading } = auth;
+  const { isAuthenticated, canAccessAdmin, loading } = auth;
   const location = useLocation();
 
   if (loading) {
@@ -17,8 +17,8 @@ export function RequireAdmin({ children }: { children: JSX.Element }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />; // redirect normal users to dashboard
+  if (!canAccessAdmin) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;

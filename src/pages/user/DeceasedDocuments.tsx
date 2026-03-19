@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import { DeceasedDocumentsFormData, DocumentTemplate, Section } from "../../types";
+import { DeceasedDocumentsFormData, DocumentTemplate, Section, CessieAction } from "../../types";
 import {
   DashboardLayout,
   FormCard,
@@ -10,6 +10,7 @@ import {
 import { useFormHandler } from "../../hooks";
 import { endpoints } from "../../api/apiConfig";
 import apiClient from "../../api/apiClient";
+import { InsuranceSelectionModal } from "../../modals/user/InsuranceSelectionModal";
 
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
@@ -68,6 +69,14 @@ export default function DeceasedDocuments() {
     allow404AsEmpty: true,
   });
 
+  // ── Cessie modal ──────────────────────────────────────────────────────────
+  const [cessieModalOpen, setCessieModalOpen] = useState(false);
+  const [cessieTemplate, setCessieTemplate] = useState<DocumentTemplate | null>(null);
+  const [cessieAction, setCessieAction] = useState<CessieAction>("pdf");
+
+  const isCessie = (template: DocumentTemplate) =>
+    template.title.toLowerCase().includes("cessie");
+
   // ── Editor modal ──────────────────────────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<DocumentTemplate | null>(null);
@@ -77,9 +86,21 @@ export default function DeceasedDocuments() {
   const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null);
 
   // ── Editor handlers ───────────────────────────────────────────────────────
-
   const openEditor = (template: DocumentTemplate) => {
+    if (isCessie(template)) {
+      setCessieTemplate(template);
+      setCessieAction("editor");
+      setCessieModalOpen(true);
+      return;
+    }
+
     setActiveTemplate(template);
+    setTimeout(() => setModalOpen(true), 0);
+  };
+
+  const openSelectedCessieEditor = (template: DocumentTemplate) => {
+    setActiveTemplate(template);
+    setCessieModalOpen(false);
     setTimeout(() => setModalOpen(true), 0);
   };
 
@@ -87,8 +108,9 @@ export default function DeceasedDocuments() {
     if (!activeTemplate) return;
 
     const updatedSections: Section[] = activeTemplate.sections.map((s) =>
-      s.label === "Body" ? { ...s, value: updatedBody } : s
+      s.label === "Body" || s.label === "body" ? { ...s, value: updatedBody } : s
     );
+
     const updatedTemplate: DocumentTemplate = {
       ...activeTemplate,
       sections: updatedSections,
@@ -116,19 +138,30 @@ export default function DeceasedDocuments() {
   };
 
   // ── Download handlers ─────────────────────────────────────────────────────
-
   const handlePrint = (template: DocumentTemplate) => {
+    if (isCessie(template)) {
+      setCessieTemplate(template);
+      setCessieAction("print");
+      setCessieModalOpen(true);
+      return;
+    }
+
     window.open(`${endpoints.documentsdeceased}/${template.id}/print`, "_blank");
   };
 
   const handleDownloadPdf = async (template: DocumentTemplate) => {
+    if (isCessie(template)) {
+      setCessieTemplate(template);
+      setCessieAction("pdf");
+      setCessieModalOpen(true);
+      return;
+    }
+
     setDownloadingPdf(template.id);
     try {
-      const response = await fetch(
-        `${endpoints.documentsdeceased}/${template.id}/pdf`,{
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${endpoints.documentsdeceased}/${template.id}/pdf`, {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("PDF genereren mislukt.");
       const blob = await response.blob();
       downloadBlob(blob, getFileName(response, `${template.title}.pdf`));
@@ -141,10 +174,16 @@ export default function DeceasedDocuments() {
   };
 
   const handleDownloadDocx = async (template: DocumentTemplate) => {
+    if (isCessie(template)) {
+      setCessieTemplate(template);
+      setCessieAction("docx");
+      setCessieModalOpen(true);
+      return;
+    }
+
     setDownloadingDocx(template.id);
     try {
-      
-      const response = await fetch(`${endpoints.documentsdeceased}/${template.id}/docx`,{
+      const response = await fetch(`${endpoints.documentsdeceased}/${template.id}/docx`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Word-document genereren mislukt.");
@@ -159,7 +198,6 @@ export default function DeceasedDocuments() {
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
-
   if (loading) return <div>Loading documents...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
 
@@ -248,6 +286,19 @@ export default function DeceasedDocuments() {
           <FormCard title="">
             <div>No document templates found for this deceased.</div>
           </FormCard>
+        )}
+
+        {cessieTemplate && (
+          <InsuranceSelectionModal
+            isOpen={cessieModalOpen}
+            dossierId={dossierId ?? ""}
+            templateId={cessieTemplate.id}
+            templateTitle={cessieTemplate.title}
+            action={cessieAction}
+            onClose={() => setCessieModalOpen(false)}
+            onOpenEditor={openSelectedCessieEditor}
+            key={cessieTemplate.id + cessieAction}
+          />
         )}
 
         <DocumentEditorModal

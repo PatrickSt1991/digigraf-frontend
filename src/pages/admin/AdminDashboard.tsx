@@ -1,67 +1,117 @@
-import { Link } from "react-router-dom";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { DashboardLayout } from "../../components";
-import { FaUsers, FaBuilding, FaFileInvoiceDollar, FaTruck, FaBox, FaScroll, FaMoneyBillWave, FaChartBar, FaCog } from "react-icons/fa";
+import {
+  FaUsers,
+  FaBuilding,
+  FaFileInvoiceDollar,
+  FaTruck,
+  FaBox,
+  FaScroll,
+  FaMoneyBillWave,
+  FaChartBar,
+  FaCog
+} from "react-icons/fa";
 import { IconType } from "react-icons";
 import { GiCoffin } from "react-icons/gi";
 import { endpoints } from "../../api/apiConfig";
-import { useEffect, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
+
+type AdminRole = "admin" | "uitvaartleider" | "financieel";
 
 interface AdminCard {
   title: string;
   description: string;
   path: string;
   icon: IconType;
-  category: 'relaties' | 'financieel' | 'diensten' | 'instellingen';
+  category: "relaties" | "financieel" | "diensten" | "instellingen";
+  allowedRoles: AdminRole[];
 }
 
 export default function AdminDashboard() {
+  const auth = useContext(AuthContext);
+  if (!auth) throw new Error("AuthContext not found");
+
+  const {
+    loading: authLoading,
+    canAccessAdmin,
+    isAdmin,
+    isUitvaartleider,
+    isFinancieel,
+  } = auth;
+
   const cards: AdminCard[] = [
-    // Relaties — people & organisations you work with
-    { title: "Werknemers", description: "Voeg nieuwe werknemers toe of bewerk bestaande.", path: "/admin/employees", icon: FaUsers, category: 'relaties' },
-    { title: "Verzekeraars & Verenigingen", description: "Voeg nieuwe verzekeraars & verenigingen toe of bewerk bestaande.", path: "/admin/insurance", icon: FaBuilding, category: 'relaties' },
-    { title: "Leveranciers", description: "Voeg nieuwe leveranciers toe of bewerk bestaande.", path: "/admin/suppliers", icon: FaTruck, category: 'relaties' },
-    // Diensten — configurable service offerings
-    { title: "Uitvaartkisten", description: "Voeg nieuwe uitvaartkisten toe of bewerk bestaande.", path: "/admin/coffins", icon: GiCoffin, category: 'diensten' },
-    { title: "Asbestemming", description: "Voeg nieuwe asbestemmingen toe of bewerk bestaande.", path: "/admin/ashes", icon: FaBox, category: 'diensten' },
-    { title: "Rouwbrieven", description: "Voeg nieuwe rouwbrieven toe of bewerk bestaande.", path: "/admin/letters", icon: FaScroll, category: 'diensten' },
-    { title: "Documenten", description: "Voeg nieuwe documenten toe of bewerk bestaande.", path: "/admin/documents", icon: FaScroll, category: 'diensten' },
-    // Financieel — pricing, invoicing & reporting
-    { title: "Prijsafspraken", description: "Voeg nieuwe prijsafspraken toe of bewerk bestaande.", path: "/admin/pricecomponents", icon: FaMoneyBillWave, category: 'financieel' },
-    { title: "Financieel", description: "Bekijk en exporteer financiële gegevens van overledenen.", path: "/admin/financial", icon: FaFileInvoiceDollar, category: 'financieel' },
-    { title: "Rapportages", description: "Bekijk en exporteer rapportages.", path: "/admin/reports", icon: FaChartBar, category: 'financieel' },
-    // Instellingen — system configuration
-    { title: "Algemene Instellingen", description: "Systeem instellingen beheren.", path: "/admin/licenses", icon: FaCog, category: 'instellingen' },
+    { title: "Werknemers", description: "Voeg nieuwe werknemers toe of bewerk bestaande.", path: "/admin/employees", icon: FaUsers, category: "relaties", allowedRoles: ["admin", "uitvaartleider", "financieel"] },
+    { title: "Verzekeraars & Verenigingen", description: "Voeg nieuwe verzekeraars & verenigingen toe of bewerk bestaande.", path: "/admin/insurance", icon: FaBuilding, category: "relaties", allowedRoles: ["admin", "uitvaartleider"] },
+    { title: "Leveranciers", description: "Voeg nieuwe leveranciers toe of bewerk bestaande.", path: "/admin/suppliers", icon: FaTruck, category: "relaties", allowedRoles: ["admin", "uitvaartleider"] },
+
+    { title: "Uitvaartkisten", description: "Voeg nieuwe uitvaartkisten toe of bewerk bestaande.", path: "/admin/coffins", icon: GiCoffin, category: "diensten", allowedRoles: ["admin", "uitvaartleider"] },
+    { title: "Asbestemming", description: "Voeg nieuwe asbestemmingen toe of bewerk bestaande.", path: "/admin/ashes", icon: FaBox, category: "diensten", allowedRoles: ["admin", "uitvaartleider"] },
+    { title: "Rouwbrieven", description: "Voeg nieuwe rouwbrieven toe of bewerk bestaande.", path: "/admin/letters", icon: FaScroll, category: "diensten", allowedRoles: ["admin", "uitvaartleider"] },
+    { title: "Documenten", description: "Voeg nieuwe documenten toe of bewerk bestaande.", path: "/admin/documents", icon: FaScroll, category: "diensten", allowedRoles: ["admin", "uitvaartleider"] },
+
+    { title: "Prijsafspraken", description: "Voeg nieuwe prijsafspraken toe of bewerk bestaande.", path: "/admin/pricecomponents", icon: FaMoneyBillWave, category: "financieel", allowedRoles: ["admin", "uitvaartleider", "financieel"] },
+    { title: "Financieel", description: "Bekijk en exporteer financiële gegevens van overledenen.", path: "/admin/financial", icon: FaFileInvoiceDollar, category: "financieel", allowedRoles: ["admin", "financieel"] },
+    { title: "Rapportages", description: "Bekijk en exporteer rapportages.", path: "/admin/reports", icon: FaChartBar, category: "financieel", allowedRoles: ["admin", "financieel"] },
+
+    { title: "Algemene Instellingen", description: "Systeem instellingen beheren.", path: "/admin/licenses", icon: FaCog, category: "instellingen", allowedRoles: ["admin"] },
   ];
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'relaties':     return 'from-blue-500 to-blue-600';
-      case 'diensten':     return 'from-purple-500 to-purple-600';
-      case 'financieel':   return 'from-green-500 to-green-600';
-      case 'instellingen': return 'from-gray-500 to-gray-600';
-      default:             return 'from-blue-500 to-blue-600';
+      case "relaties":
+        return "from-blue-500 to-blue-600";
+      case "diensten":
+        return "from-purple-500 to-purple-600";
+      case "financieel":
+        return "from-green-500 to-green-600";
+      case "instellingen":
+        return "from-gray-500 to-gray-600";
+      default:
+        return "from-blue-500 to-blue-600";
     }
   };
 
   const getCategoryBadgeColor = (category: string) => {
     switch (category) {
-      case 'relaties':     return 'bg-blue-100 text-blue-800';
-      case 'diensten':     return 'bg-purple-100 text-purple-800';
-      case 'financieel':   return 'bg-green-100 text-green-800';
-      case 'instellingen': return 'bg-gray-100 text-gray-800';
-      default:             return 'bg-blue-100 text-blue-800';
+      case "relaties":
+        return "bg-blue-100 text-blue-800";
+      case "diensten":
+        return "bg-purple-100 text-purple-800";
+      case "financieel":
+        return "bg-green-100 text-green-800";
+      case "instellingen":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-blue-100 text-blue-800";
     }
   };
 
   const getCategoryName = (category: string) => {
     switch (category) {
-      case 'relaties':     return 'Relaties';
-      case 'diensten':     return 'Diensten';
-      case 'financieel':   return 'Financieel';
-      case 'instellingen': return 'Instellingen';
-      default:             return 'Algemeen';
+      case "relaties":
+        return "Relaties";
+      case "diensten":
+        return "Diensten";
+      case "financieel":
+        return "Financieel";
+      case "instellingen":
+        return "Instellingen";
+      default:
+        return "Algemeen";
     }
   };
+
+  const visibleCards = useMemo(() => {
+    if (isAdmin) return cards;
+    if (isUitvaartleider) {
+      return cards.filter((card) => card.allowedRoles.includes("uitvaartleider"));
+    }
+    if (isFinancieel) {
+      return cards.filter((card) => card.allowedRoles.includes("financieel"));
+    }
+    return [];
+  }, [isAdmin, isUitvaartleider, isFinancieel]);
 
   const [systemHealth, setSystemHealth] = useState<string>("Laden...");
 
@@ -83,11 +133,22 @@ export default function AdminDashboard() {
     checkHealth();
   }, []);
 
+  if (authLoading) {
+    return (
+      <DashboardLayout>
+        <div className="px-8 py-8">Laden...</div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!canAccessAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="px-8 py-8 max-w-7xl mx-auto space-y-8">
-          {/* Header Section */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -97,7 +158,7 @@ export default function AdminDashboard() {
               <div className="hidden md:flex items-center space-x-4">
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Laatst bijgewerkt</div>
-                  <div className="text-sm font-medium text-gray-900">{new Date().toLocaleDateString('nl-NL')}</div>
+                  <div className="text-sm font-medium text-gray-900">{new Date().toLocaleDateString("nl-NL")}</div>
                 </div>
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
                   {(() => {
@@ -109,20 +170,17 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Admin Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {cards.map((card) => {
+            {visibleCards.map((card) => {
               const Icon = card.icon as unknown as React.ComponentType<{ size?: number; className?: string }>;
               return (
                 <div
                   key={card.title}
                   className="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 overflow-hidden flex flex-col"
                 >
-                  {/* Card Header with Gradient */}
                   <div className={`h-2 bg-gradient-to-r ${getCategoryColor(card.category)}`}></div>
 
                   <div className="p-6 flex flex-col flex-grow">
-                    {/* Category Badge */}
                     <div className="flex items-center justify-between mb-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryBadgeColor(card.category)}`}>
                         {getCategoryName(card.category)}
@@ -132,7 +190,6 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* Card Content */}
                     <div className="flex-grow">
                       <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors">
                         {card.title}
@@ -142,7 +199,6 @@ export default function AdminDashboard() {
                       </p>
                     </div>
 
-                    {/* Action Button */}
                     <Link
                       to={card.path}
                       className={`inline-flex items-center justify-center w-full px-4 py-3 bg-gradient-to-r ${getCategoryColor(card.category)} text-white font-medium rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 text-sm mt-auto`}
@@ -158,7 +214,6 @@ export default function AdminDashboard() {
             })}
           </div>
 
-          {/* Quick Stats Section */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Systeem Overzicht</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">

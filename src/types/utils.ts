@@ -62,3 +62,5 @@ export interface SearchResult {
   total: number;
   searchedOldDB: boolean;
 }
+
+export type CessieAction = "editor" | "print" | "pdf" | "docx";
