@@ -731,7 +731,14 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
                   title="Insert table"
                   active={tablePickerOpen}
                   onMouseDown={runCommand(() => {
-                    setTablePickerOpen((value) => !value);
+                    setTablePickerOpen((value) => {
+                      const next = !value;
+                      if (next) {
+                        setTableRows(0);
+                        setTableCols(0);
+                      }
+                      return next;
+                    });
                     setLinkMenuOpen(false);
                   })}
                 >
@@ -739,37 +746,64 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
                 </ToolbarButton>
 
                 {tablePickerOpen && (
-                  <div className="absolute left-0 top-10 z-20 rounded-lg border border-gray-200 bg-white p-3 shadow-xl">
-                    <div className="grid grid-cols-8 gap-1">
-                      {Array.from({ length: TABLE_PICKER_SIZE * TABLE_PICKER_SIZE }).map((_, index) => {
-                        const row = Math.floor(index / TABLE_PICKER_SIZE) + 1;
-                        const col = (index % TABLE_PICKER_SIZE) + 1;
-                        const active = row <= tableRows && col <= tableCols;
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Close table picker"
+                      className="fixed inset-0 z-10 cursor-default"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        setTablePickerOpen(false);
+                        setTableRows(0);
+                        setTableCols(0);
+                      }}
+                    />
 
-                        return (
-                          <button
-                            key={`${row}-${col}`}
-                            type="button"
-                            className={[
-                              "h-5 w-5 rounded-sm border",
-                              active ? "border-blue-500 bg-blue-200" : "border-gray-300 bg-white hover:bg-gray-100",
-                            ].join(" ")}
-                            onMouseEnter={() => {
-                              setTableRows(clampTableValue(row));
-                              setTableCols(clampTableValue(col));
-                            }}
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                              insertTable(row, col);
-                            }}
-                          />
-                        );
-                      })}
+                    <div className="absolute left-0 top-10 z-20 w-[220px] rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+                      <div
+                        className="grid gap-1"
+                        style={{
+                          gridTemplateColumns: `repeat(${TABLE_PICKER_SIZE}, ${CELL_SIZE}px)`,
+                        }}
+                      >
+                        {Array.from({ length: TABLE_PICKER_SIZE * TABLE_PICKER_SIZE }).map((_, index) => {
+                          const row = Math.floor(index / TABLE_PICKER_SIZE) + 1;
+                          const col = (index % TABLE_PICKER_SIZE) + 1;
+                          const active = row <= tableRows && col <= tableCols;
+
+                          return (
+                            <button
+                              key={`${row}-${col}`}
+                              type="button"
+                              aria-label={`Insert ${row} by ${col} table`}
+                              className={[
+                                "h-[18px] w-[18px] rounded-[3px] border transition-colors",
+                                active
+                                  ? "border-blue-500 bg-blue-100"
+                                  : "border-gray-300 bg-white hover:border-blue-300 hover:bg-blue-50",
+                              ].join(" ")}
+                              onMouseEnter={() => {
+                                setTableRows(clampTableValue(row));
+                                setTableCols(clampTableValue(col));
+                              }}
+                              onMouseDown={(event) => {
+                                event.preventDefault();
+                                insertTable(row, col);
+                                setTableRows(0);
+                                setTableCols(0);
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-3 border-t border-gray-100 pt-2 text-center text-sm text-gray-600">
+                        {tableRows > 0 && tableCols > 0
+                          ? `${tableRows} × ${tableCols}`
+                          : "Tabel invoegen"}
+                      </div>
                     </div>
-                    <div className="mt-2 text-xs text-gray-600">
-                      {tableRows > 0 && tableCols > 0 ? `${tableRows} x ${tableCols}` : "Select table size"}
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
 
