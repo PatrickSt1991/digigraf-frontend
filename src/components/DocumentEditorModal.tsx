@@ -1,22 +1,24 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BubbleMenu } from "@tiptap/react/menus";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import TextAlign from "@tiptap/extension-text-align";
-import { TextStyle } from "@tiptap/extension-text-style";
+import { EditorContent, useEditor } from "@tiptap/react";
 import Color from "@tiptap/extension-color";
+import FontFamily from "@tiptap/extension-font-family";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
-import { Table } from "@tiptap/extension-table";
-import { TableRow } from "@tiptap/extension-table-row";
-import { TableHeader } from "@tiptap/extension-table-header";
-import { TableCell } from "@tiptap/extension-table-cell";
-import FontFamily from "@tiptap/extension-font-family";
 import Placeholder from "@tiptap/extension-placeholder";
-import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
+import TextAlign from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
 import { FontSize } from "@tiptap/extension-text-style/font-size";
+import Underline from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
+import { Table } from "@tiptap/extension-table";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableRow } from "@tiptap/extension-table-row";
+import { adminEndpoints } from "../api/apiConfig";
+import apiClient from "../api/apiClient";
 import { useResizable } from "../hooks/useResizable";
 
 export type AdminDocumentSavePayload = {
@@ -24,6 +26,18 @@ export type AdminDocumentSavePayload = {
   header: string;
   body: string;
   footer: string;
+};
+
+type DocumentAsset = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  createdAtUtc: string;
+};
+
+type DocumentAssetsResponse = {
+  assets?: DocumentAsset[];
 };
 
 type BaseDocumentEditorModalProps = {
@@ -58,6 +72,8 @@ type ToolbarButtonProps = {
   className?: string;
 };
 
+type AssetTarget = "header" | "footer" | null;
+
 const FONT_FAMILIES = [
   "Arial",
   "Calibri",
@@ -70,8 +86,8 @@ const FONT_FAMILIES = [
 const FONT_SIZES = ["10pt", "11pt", "12pt", "14pt", "16pt", "18pt", "24pt", "32pt"];
 const TEXT_COLORS = ["#000000", "#2E74B5", "#C00000", "#00B050", "#7030A0", "#44546A"];
 const HIGHLIGHT_COLORS = ["#FFF2CC", "#FFE699", "#FFD966", "#C6E0B4", "#BDD7EE", "#F4CCCC"];
-const TABLE_PICKER_SIZE = 8
-const CELL_SIZE = 18
+const TABLE_PICKER_SIZE = 8;
+const CELL_SIZE = 18;
 
 function ToolbarButton({
   onMouseDown,
@@ -88,9 +104,9 @@ function ToolbarButton({
       disabled={disabled}
       onMouseDown={onMouseDown}
       className={[
-        "inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm transition-colors select-none",
+        "inline-flex h-8 min-w-8 select-none items-center justify-center rounded-md px-2 text-sm transition-colors",
         active
-          ? "bg-blue-100 text-blue-700 font-semibold"
+          ? "bg-blue-100 font-semibold text-blue-700"
           : "text-gray-700 hover:bg-gray-100",
         disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
         className ?? "",
@@ -109,14 +125,116 @@ function clampTableValue(value: number) {
   return Math.max(1, Math.min(TABLE_PICKER_SIZE, value));
 }
 
-export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
-  props
-) => {
+function formatBytes(bytes: number) {
+  if (!bytes || bytes < 1024) return `${bytes || 0} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function insertAtCursor(
+  textarea: HTMLTextAreaElement | null,
+  value: string,
+  insert: string
+) {
+  if (!textarea) {
+    return `${value}${value && !value.endsWith("\n") ? "\n" : ""}${insert}`;
+  }
+
+  const start = textarea.selectionStart ?? value.length;
+  const end = textarea.selectionEnd ?? value.length;
+
+  return value.slice(0, start) + insert + value.slice(end);
+}
+
+function getDocumentAssetUrl(id: string) {
+  return adminEndpoints.documentContent(id);
+}
+
+function buildImageHtml(asset: DocumentAsset) {
+  return `<img src="${getDocumentAssetUrl(asset.id)}" alt="${asset.fileName.replace(/"/g, "&quot;")}" style="max-width: 100%; height: auto;" />`;
+}
+
+function buildHeaderSnippet(asset: DocumentAsset) {
+  return `<table style="width:100%; border-collapse:collapse;">
+  <tbody>
+    <tr>
+      <td style="width:220px; vertical-align:middle; border:none; padding:0;">
+        <img src="${getDocumentAssetUrl(asset.id)}" alt="${asset.fileName.replace(/"/g, "&quot;")}" style="max-width:200px; height:auto;" />
+      </td>
+      <td style="vertical-align:bottom; text-align:right; border:none; padding:0 0 6px 0;">
+        <p style="margin:0; color:#666;">Dossier nummer:</p>
+      </td>
+    </tr>
+  </tbody>
+</table>`;
+}
+
+function buildFooterSnippet(asset: DocumentAsset) {
+  return `<table style="width:100%; border-collapse:collapse;">
+  <tbody>
+    <tr>
+      <td style="width:120px; vertical-align:middle; border:none; padding:0;">
+        <img src="${getDocumentAssetUrl(asset.id)}" alt="${asset.fileName.replace(/"/g, "&quot;")}" style="max-width:90px; height:auto;" />
+      </td>
+      <td style="vertical-align:middle; border:none; padding:0 12px; color:#666; font-size:10pt;">
+        <p style="margin:0;">Eefting Uitvaartverzorging</p>
+        <p style="margin:0;">begrafenissen en crematies</p>
+      </td>
+      <td style="width:24px; border:none; padding:0; text-align:right;">
+        <img src="${getDocumentAssetUrl(asset.id)}" alt="" style="max-width:24px; height:auto; opacity:.3;" />
+      </td>
+    </tr>
+  </tbody>
+</table>`;
+}
+
+type AdminSectionProps = {
+  title: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  summary: string;
+  children: React.ReactNode;
+};
+
+function AdminSection({
+  title,
+  isOpen,
+  onToggle,
+  summary,
+  children,
+}: AdminSectionProps) {
+  return (
+    <div className="shrink-0 border-b bg-white">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-4 px-6 py-3 text-left hover:bg-gray-50"
+      >
+        <div className="min-w-0">
+          <div className="text-sm font-medium text-gray-800">{title}</div>
+          <div className="truncate text-xs text-gray-500">{summary}</div>
+        </div>
+        <div className="shrink-0 text-xs font-medium text-gray-500">
+          {isOpen ? "Inklappen" : "Uitklappen"}
+        </div>
+      </button>
+
+      {isOpen && <div className="border-t px-6 py-4">{children}</div>}
+    </div>
+  );
+}
+
+export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) => {
   const { isOpen, onClose, title, initialContent, header, footer } = props;
   const adminMode = props.adminMode === true;
 
   const modalRef = useRef<HTMLDivElement | null>(null);
   const loadedInitialContentRef = useRef<string | null>(null);
+
+  const headerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const footerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const headerUploadInputRef = useRef<HTMLInputElement | null>(null);
+  const footerUploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const [documentTitle, setDocumentTitle] = useState(title ?? "");
   const [headerContent, setHeaderContent] = useState(header ?? "");
@@ -126,6 +244,17 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
   const [tablePickerOpen, setTablePickerOpen] = useState(false);
   const [tableRows, setTableRows] = useState(0);
   const [tableCols, setTableCols] = useState(0);
+
+  const [assets, setAssets] = useState<DocumentAsset[]>([]);
+  const [assetsLoading, setAssetsLoading] = useState(false);
+  const [assetsError, setAssetsError] = useState<string | null>(null);
+  const [assetPanelTarget, setAssetPanelTarget] = useState<AssetTarget>(null);
+  const [uploadingTarget, setUploadingTarget] = useState<AssetTarget>(null);
+
+  const [headerOpen, setHeaderOpen] = useState(false);
+  const [footerOpen, setFooterOpen] = useState(false);
+  const [showHeaderPreview, setShowHeaderPreview] = useState(false);
+  const [showFooterPreview, setShowFooterPreview] = useState(false);
 
   const { targetRef, startResizing } = useResizable({
     minHeight: 400,
@@ -188,6 +317,25 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
 
   const isInsideTable = !!editor?.isActive("table");
 
+  const sortedAssets = useMemo(
+    () =>
+      [...assets].sort((a, b) => {
+        const byDate =
+          new Date(b.createdAtUtc).getTime() - new Date(a.createdAtUtc).getTime();
+        if (byDate !== 0) return byDate;
+        return a.fileName.localeCompare(b.fileName);
+      }),
+    [assets]
+  );
+
+  const headerSummary = headerContent.trim()
+    ? `${headerContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90)}${headerContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length > 90 ? "…" : ""}`
+    : "Geen header ingesteld";
+
+  const footerSummary = footerContent.trim()
+    ? `${footerContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90)}${footerContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length > 90 ? "…" : ""}`
+    : "Geen footer ingesteld";
+
   useEffect(() => {
     setDocumentTitle(title ?? "");
   }, [title]);
@@ -218,8 +366,39 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
       setTablePickerOpen(false);
       setTableRows(0);
       setTableCols(0);
+      setAssetPanelTarget(null);
+      setAssetsError(null);
+      setHeaderOpen(false);
+      setFooterOpen(false);
+      setShowHeaderPreview(false);
+      setShowFooterPreview(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !adminMode) return;
+
+    const loadAssets = async () => {
+      try {
+        setAssetsLoading(true);
+        setAssetsError(null);
+
+        const data = await apiClient<DocumentAssetsResponse>(
+          adminEndpoints.documentAssets
+        );
+
+        setAssets(data.assets ?? []);
+      } catch (err) {
+        setAssetsError(
+          (err as Error).message ?? "Kon document assets niet laden."
+        );
+      } finally {
+        setAssetsLoading(false);
+      }
+    };
+
+    loadAssets();
+  }, [adminMode, isOpen]);
 
   const currentFontFamily =
     (editor?.getAttributes("textStyle")?.fontFamily as string | undefined) ||
@@ -258,7 +437,9 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
   const openLinkMenu = () => {
     if (!editor) return;
     const currentHref = editor.getAttributes("link")?.href;
-    setLinkUrl(typeof currentHref === "string" && currentHref ? currentHref : "https://");
+    setLinkUrl(
+      typeof currentHref === "string" && currentHref ? currentHref : "https://"
+    );
     setLinkMenuOpen(true);
   };
 
@@ -279,6 +460,91 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
     if (!editor) return;
     editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run();
     setTablePickerOpen(false);
+  };
+
+  const refreshAssets = async () => {
+    const data = await apiClient<DocumentAssetsResponse>(
+      adminEndpoints.documentAssets
+    );
+    setAssets(data.assets ?? []);
+  };
+
+  const insertIntoHeader = (html: string) => {
+    setHeaderContent((current) =>
+      insertAtCursor(headerTextareaRef.current, current, html)
+    );
+    setHeaderOpen(true);
+    setAssetPanelTarget("header");
+  };
+
+  const insertIntoFooter = (html: string) => {
+    setFooterContent((current) =>
+      insertAtCursor(footerTextareaRef.current, current, html)
+    );
+    setFooterOpen(true);
+    setAssetPanelTarget("footer");
+  };
+
+  const insertAsset = (
+    asset: DocumentAsset,
+    target: AssetTarget,
+    mode: "image" | "header" | "footer"
+  ) => {
+    const html =
+      mode === "header"
+        ? buildHeaderSnippet(asset)
+        : mode === "footer"
+          ? buildFooterSnippet(asset)
+          : buildImageHtml(asset);
+
+    if (target === "header") {
+      insertIntoHeader(html);
+    }
+
+    if (target === "footer") {
+      insertIntoFooter(html);
+    }
+  };
+
+  const handleUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    target: AssetTarget
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !target) return;
+
+    try {
+      setUploadingTarget(target);
+      setAssetsError(null);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(adminEndpoints.documentAssets, {
+        credentials: "include",
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+      }
+
+      const uploaded: DocumentAsset = await response.json();
+
+      await refreshAssets();
+
+      if (target === "header") {
+        insertIntoHeader(buildImageHtml(uploaded));
+      } else {
+        insertIntoFooter(buildImageHtml(uploaded));
+      }
+    } catch (err) {
+      setAssetsError((err as Error).message ?? "Uploaden van asset mislukt.");
+    } finally {
+      setUploadingTarget(null);
+      event.target.value = "";
+    }
   };
 
   if (!isOpen || !editor) return null;
@@ -441,6 +707,25 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
         .tiptap-editor .tiptap-prosemirror ul[data-type='taskList'] li > div {
           flex: 1 1 auto;
         }
+
+        .document-html-preview {
+          background: #fff;
+        }
+
+        .document-html-preview img {
+          max-width: 100%;
+          height: auto;
+        }
+
+        .document-html-preview table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        .document-html-preview td,
+        .document-html-preview th {
+          vertical-align: top;
+        }
       `}</style>
 
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -477,14 +762,151 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
           </div>
 
           {adminMode ? (
-            <div className="shrink-0 border-b bg-white px-6 py-3">
-              <label className="mb-1 block text-xs font-medium text-gray-600">Header</label>
+            <AdminSection
+              title="Header"
+              isOpen={headerOpen}
+              onToggle={() => {
+                setHeaderOpen((v) => !v);
+                if (assetPanelTarget === "header" && headerOpen) {
+                  setAssetPanelTarget(null);
+                }
+              }}
+              summary={headerSummary}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <label className="block text-xs font-medium text-gray-600">
+                  Header HTML
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={headerUploadInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml"
+                    className="hidden"
+                    onChange={(e) => handleUpload(e, "header")}
+                  />
+                  <button
+                    type="button"
+                    className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() => headerUploadInputRef.current?.click()}
+                    disabled={uploadingTarget === "header"}
+                  >
+                    {uploadingTarget === "header" ? "Uploaden..." : "Afbeelding uploaden"}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() =>
+                      setAssetPanelTarget((current) =>
+                        current === "header" ? null : "header"
+                      )
+                    }
+                  >
+                    {assetPanelTarget === "header" ? "Assets sluiten" : "Assets kiezen"}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() => setShowHeaderPreview((v) => !v)}
+                  >
+                    {showHeaderPreview ? "Preview verbergen" : "Preview tonen"}
+                  </button>
+                </div>
+              </div>
+
               <textarea
+                ref={headerTextareaRef}
                 value={headerContent}
                 onChange={(e) => setHeaderContent(e.target.value)}
-                className="min-h-[88px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
+                className="min-h-[120px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
               />
-            </div>
+
+              {assetPanelTarget === "header" && (
+                <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-800">
+                      Header assets
+                    </span>
+                    <button
+                      type="button"
+                      className="rounded-md border border-gray-300 px-3 py-1 text-xs text-gray-700 hover:bg-white"
+                      onClick={() => refreshAssets()}
+                    >
+                      Vernieuwen
+                    </button>
+                  </div>
+
+                  {assetsLoading && (
+                    <div className="text-sm text-gray-500">Assets laden...</div>
+                  )}
+
+                  {!assetsLoading && assetsError && (
+                    <div className="text-sm text-red-600">{assetsError}</div>
+                  )}
+
+                  {!assetsLoading && !assetsError && sortedAssets.length === 0 && (
+                    <div className="text-sm text-gray-500">
+                      Nog geen document assets gevonden.
+                    </div>
+                  )}
+
+                  {!assetsLoading && !assetsError && sortedAssets.length > 0 && (
+                    <div className="grid max-h-64 grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
+                      {sortedAssets.map((asset) => (
+                        <div
+                          key={asset.id}
+                          className="rounded-lg border border-gray-200 bg-white p-3"
+                        >
+                          <div className="mb-2 h-28 overflow-hidden rounded border bg-gray-50">
+                            <img
+                              src={getDocumentAssetUrl(asset.id)}
+                              alt={asset.fileName}
+                              className="h-full w-full object-contain"
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <div className="truncate text-sm font-medium text-gray-900">
+                              {asset.fileName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {formatBytes(asset.size)}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              className="rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                              onClick={() => insertAsset(asset, "header", "image")}
+                            >
+                              Voeg afbeelding toe
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-md border border-blue-300 bg-blue-50 px-2.5 py-1 text-xs text-blue-700 hover:bg-blue-100"
+                              onClick={() => insertAsset(asset, "header", "header")}
+                            >
+                              Header snippet
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {showHeaderPreview && (
+                <div className="mt-3">
+                  <div className="mb-1 text-xs font-medium text-gray-500">Preview</div>
+                  <div
+                    className="document-html-preview min-h-[80px] rounded-lg border border-gray-200 bg-white px-4 py-3"
+                    dangerouslySetInnerHTML={{ __html: headerContent || "<div></div>" }}
+                  />
+                </div>
+              )}
+            </AdminSection>
           ) : (
             header && (
               <div
@@ -498,7 +920,9 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
             <div className="flex flex-wrap items-center gap-y-2">
               <select
                 value={currentFontFamily}
-                onChange={(e) => editor.chain().focus().setFontFamily(e.target.value).run()}
+                onChange={(e) =>
+                  editor.chain().focus().setFontFamily(e.target.value).run()
+                }
                 className="h-8 rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-700"
               >
                 {FONT_FAMILIES.map((font) => (
@@ -510,7 +934,9 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
 
               <select
                 value={currentFontSize}
-                onChange={(e) => editor.chain().focus().setFontSize(e.target.value).run()}
+                onChange={(e) =>
+                  editor.chain().focus().setFontSize(e.target.value).run()
+                }
                 className="ml-2 h-8 rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-700"
               >
                 {FONT_SIZES.map((size) => (
@@ -525,21 +951,27 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
               <ToolbarButton
                 title="Bold"
                 active={editor.isActive("bold")}
-                onMouseDown={runCommand(() => editor.chain().focus().toggleBold().run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleBold().run()
+                )}
               >
                 <strong>B</strong>
               </ToolbarButton>
               <ToolbarButton
                 title="Italic"
                 active={editor.isActive("italic")}
-                onMouseDown={runCommand(() => editor.chain().focus().toggleItalic().run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleItalic().run()
+                )}
               >
                 <em>I</em>
               </ToolbarButton>
               <ToolbarButton
                 title="Underline"
                 active={editor.isActive("underline")}
-                onMouseDown={runCommand(() => editor.chain().focus().toggleUnderline().run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleUnderline().run()
+                )}
               >
                 <span className="underline">U</span>
               </ToolbarButton>
@@ -547,7 +979,11 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
                 title="Highlight"
                 active={editor.isActive("highlight")}
                 onMouseDown={runCommand(() =>
-                  editor.chain().focus().toggleHighlight({ color: "#FFF2CC" }).run()
+                  editor
+                    .chain()
+                    .focus()
+                    .toggleHighlight({ color: "#FFF2CC" })
+                    .run()
                 )}
               >
                 ✦
@@ -556,7 +992,15 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
               <Divider />
 
               <select
-                value={editor.isActive("heading", { level: 1 }) ? "h1" : editor.isActive("heading", { level: 2 }) ? "h2" : editor.isActive("heading", { level: 3 }) ? "h3" : "p"}
+                value={
+                  editor.isActive("heading", { level: 1 })
+                    ? "h1"
+                    : editor.isActive("heading", { level: 2 })
+                      ? "h2"
+                      : editor.isActive("heading", { level: 3 })
+                        ? "h3"
+                        : "p"
+                }
                 onChange={(e) => {
                   const value = e.target.value;
                   const chain = editor.chain().focus();
@@ -576,28 +1020,36 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
               <ToolbarButton
                 title="Bullets"
                 active={editor.isActive("bulletList")}
-                onMouseDown={runCommand(() => editor.chain().focus().toggleBulletList().run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleBulletList().run()
+                )}
               >
                 • List
               </ToolbarButton>
               <ToolbarButton
                 title="Numbered list"
                 active={editor.isActive("orderedList")}
-                onMouseDown={runCommand(() => editor.chain().focus().toggleOrderedList().run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleOrderedList().run()
+                )}
               >
                 1. List
               </ToolbarButton>
               <ToolbarButton
                 title="Task list"
                 active={editor.isActive("taskList")}
-                onMouseDown={runCommand(() => editor.chain().focus().toggleTaskList().run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleTaskList().run()
+                )}
               >
                 ☑ Task
               </ToolbarButton>
               <ToolbarButton
                 title="Quote"
                 active={editor.isActive("blockquote")}
-                onMouseDown={runCommand(() => editor.chain().focus().toggleBlockquote().run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleBlockquote().run()
+                )}
               >
                 “ ”
               </ToolbarButton>
@@ -607,28 +1059,36 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
               <ToolbarButton
                 title="Align left"
                 active={editor.isActive({ textAlign: "left" })}
-                onMouseDown={runCommand(() => editor.chain().focus().setTextAlign("left").run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().setTextAlign("left").run()
+                )}
               >
                 ⬅
               </ToolbarButton>
               <ToolbarButton
                 title="Align center"
                 active={editor.isActive({ textAlign: "center" })}
-                onMouseDown={runCommand(() => editor.chain().focus().setTextAlign("center").run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().setTextAlign("center").run()
+                )}
               >
                 ↔
               </ToolbarButton>
               <ToolbarButton
                 title="Align right"
                 active={editor.isActive({ textAlign: "right" })}
-                onMouseDown={runCommand(() => editor.chain().focus().setTextAlign("right").run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().setTextAlign("right").run()
+                )}
               >
                 ➡
               </ToolbarButton>
               <ToolbarButton
                 title="Justify"
                 active={editor.isActive({ textAlign: "justify" })}
-                onMouseDown={runCommand(() => editor.chain().focus().setTextAlign("justify").run())}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().setTextAlign("justify").run()
+                )}
               >
                 ☰
               </ToolbarButton>
@@ -680,7 +1140,9 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
 
                 {linkMenuOpen && (
                   <div className="absolute left-0 top-10 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl">
-                    <label className="mb-1 block text-xs font-medium text-gray-600">Link URL</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Link URL
+                    </label>
                     <input
                       autoFocus
                       type="url"
@@ -766,7 +1228,9 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
                           gridTemplateColumns: `repeat(${TABLE_PICKER_SIZE}, ${CELL_SIZE}px)`,
                         }}
                       >
-                        {Array.from({ length: TABLE_PICKER_SIZE * TABLE_PICKER_SIZE }).map((_, index) => {
+                        {Array.from({
+                          length: TABLE_PICKER_SIZE * TABLE_PICKER_SIZE,
+                        }).map((_, index) => {
                           const row = Math.floor(index / TABLE_PICKER_SIZE) + 1;
                           const col = (index % TABLE_PICKER_SIZE) + 1;
                           const active = row <= tableRows && col <= tableCols;
@@ -825,62 +1289,134 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
 
             {isInsideTable && (
               <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-2">
-                <span className="mr-2 text-xs font-medium uppercase tracking-wide text-gray-500">Table</span>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().addColumnBefore().run())}>+ Col L</ToolbarButton>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().addColumnAfter().run())}>+ Col R</ToolbarButton>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().deleteColumn().run())}>Del Col</ToolbarButton>
+                <span className="mr-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Table
+                </span>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().addColumnBefore().run()
+                  )}
+                >
+                  + Col L
+                </ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().addColumnAfter().run()
+                  )}
+                >
+                  + Col R
+                </ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().deleteColumn().run()
+                  )}
+                >
+                  Del Col
+                </ToolbarButton>
                 <Divider />
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().addRowBefore().run())}>+ Row ↑</ToolbarButton>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().addRowAfter().run())}>+ Row ↓</ToolbarButton>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().deleteRow().run())}>Del Row</ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().addRowBefore().run()
+                  )}
+                >
+                  + Row ↑
+                </ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().addRowAfter().run()
+                  )}
+                >
+                  + Row ↓
+                </ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().deleteRow().run()
+                  )}
+                >
+                  Del Row
+                </ToolbarButton>
                 <Divider />
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().mergeCells().run())}>Merge</ToolbarButton>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().splitCell().run())}>Split</ToolbarButton>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().toggleHeaderRow().run())}>Header Row</ToolbarButton>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().toggleHeaderColumn().run())}>Header Col</ToolbarButton>
-                <ToolbarButton onMouseDown={runCommand(() => editor.chain().focus().deleteTable().run())}>Delete Table</ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().mergeCells().run()
+                  )}
+                >
+                  Merge
+                </ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().splitCell().run()
+                  )}
+                >
+                  Split
+                </ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().toggleHeaderRow().run()
+                  )}
+                >
+                  Header Row
+                </ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().toggleHeaderColumn().run()
+                  )}
+                >
+                  Header Col
+                </ToolbarButton>
+                <ToolbarButton
+                  onMouseDown={runCommand(() =>
+                    editor.chain().focus().deleteTable().run()
+                  )}
+                >
+                  Delete Table
+                </ToolbarButton>
               </div>
             )}
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {editor && (
-              <BubbleMenu
-                editor={editor}
-                options={{ placement: 'top' }}
-                updateDelay={100}
-                className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
+            <BubbleMenu
+              editor={editor}
+              options={{ placement: "top" }}
+              updateDelay={100}
+              className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
+            >
+              <ToolbarButton
+                title="Bold"
+                active={editor.isActive("bold")}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleBold().run()
+                )}
               >
-                <ToolbarButton
-                  title="Bold"
-                  active={editor.isActive("bold")}
-                  onMouseDown={runCommand(() => editor.chain().focus().toggleBold().run())}
-                >
-                  <strong>B</strong>
-                </ToolbarButton>
-                <ToolbarButton
-                  title="Italic"
-                  active={editor.isActive("italic")}
-                  onMouseDown={runCommand(() => editor.chain().focus().toggleItalic().run())}
-                >
-                  <em>I</em>
-                </ToolbarButton>
-                <ToolbarButton
-                  title="Underline"
-                  active={editor.isActive("underline")}
-                  onMouseDown={runCommand(() => editor.chain().focus().toggleUnderline().run())}
-                >
-                  <span className="underline">U</span>
-                </ToolbarButton>
-                <ToolbarButton
-                  title="Link"
-                  active={editor.isActive("link")}
-                  onMouseDown={runCommand(openLinkMenu)}
-                >
-                  🔗
-                </ToolbarButton>
-              </BubbleMenu>
-            )}
+                <strong>B</strong>
+              </ToolbarButton>
+              <ToolbarButton
+                title="Italic"
+                active={editor.isActive("italic")}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleItalic().run()
+                )}
+              >
+                <em>I</em>
+              </ToolbarButton>
+              <ToolbarButton
+                title="Underline"
+                active={editor.isActive("underline")}
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().toggleUnderline().run()
+                )}
+              >
+                <span className="underline">U</span>
+              </ToolbarButton>
+              <ToolbarButton
+                title="Link"
+                active={editor.isActive("link")}
+                onMouseDown={runCommand(openLinkMenu)}
+              >
+                🔗
+              </ToolbarButton>
+            </BubbleMenu>
 
             <div className="document-editor-scroll min-h-0 flex-1">
               <div className="document-editor-page">
@@ -894,13 +1430,154 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (
           </div>
 
           {adminMode ? (
-            <div className="shrink-0 border-t bg-gray-50 px-6 py-3">
-              <label className="mb-1 block text-xs font-medium text-gray-600">Footer</label>
-              <textarea
-                value={footerContent}
-                onChange={(e) => setFooterContent(e.target.value)}
-                className="min-h-[88px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
-              />
+            <div className="border-t">
+              <AdminSection
+                title="Footer"
+                isOpen={footerOpen}
+                onToggle={() => {
+                  setFooterOpen((v) => !v);
+                  if (assetPanelTarget === "footer" && footerOpen) {
+                    setAssetPanelTarget(null);
+                  }
+                }}
+                summary={footerSummary}
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <label className="block text-xs font-medium text-gray-600">
+                    Footer HTML
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={footerUploadInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => handleUpload(e, "footer")}
+                    />
+                    <button
+                      type="button"
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-white"
+                      onClick={() => footerUploadInputRef.current?.click()}
+                      disabled={uploadingTarget === "footer"}
+                    >
+                      {uploadingTarget === "footer" ? "Uploaden..." : "Afbeelding uploaden"}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-white"
+                      onClick={() =>
+                        setAssetPanelTarget((current) =>
+                          current === "footer" ? null : "footer"
+                        )
+                      }
+                    >
+                      {assetPanelTarget === "footer" ? "Assets sluiten" : "Assets kiezen"}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-white"
+                      onClick={() => setShowFooterPreview((v) => !v)}
+                    >
+                      {showFooterPreview ? "Preview verbergen" : "Preview tonen"}
+                    </button>
+                  </div>
+                </div>
+
+                <textarea
+                  ref={footerTextareaRef}
+                  value={footerContent}
+                  onChange={(e) => setFooterContent(e.target.value)}
+                  className="min-h-[120px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
+                />
+
+                {assetPanelTarget === "footer" && (
+                  <div className="mt-3 rounded-xl border border-gray-200 bg-white p-3">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-800">
+                        Footer assets
+                      </span>
+                      <button
+                        type="button"
+                        className="rounded-md border border-gray-300 px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                        onClick={() => refreshAssets()}
+                      >
+                        Vernieuwen
+                      </button>
+                    </div>
+
+                    {assetsLoading && (
+                      <div className="text-sm text-gray-500">Assets laden...</div>
+                    )}
+
+                    {!assetsLoading && assetsError && (
+                      <div className="text-sm text-red-600">{assetsError}</div>
+                    )}
+
+                    {!assetsLoading && !assetsError && sortedAssets.length === 0 && (
+                      <div className="text-sm text-gray-500">
+                        Nog geen document assets gevonden.
+                      </div>
+                    )}
+
+                    {!assetsLoading && !assetsError && sortedAssets.length > 0 && (
+                      <div className="grid max-h-64 grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
+                        {sortedAssets.map((asset) => (
+                          <div
+                            key={asset.id}
+                            className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+                          >
+                            <div className="mb-2 h-28 overflow-hidden rounded border bg-white">
+                              <img
+                                src={getDocumentAssetUrl(asset.id)}
+                                alt={asset.fileName}
+                                className="h-full w-full object-contain"
+                              />
+                            </div>
+
+                            <div className="mb-3">
+                              <div className="truncate text-sm font-medium text-gray-900">
+                                {asset.fileName}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {formatBytes(asset.size)}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                className="rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-700 hover:bg-white"
+                                onClick={() => insertAsset(asset, "footer", "image")}
+                              >
+                                Voeg afbeelding toe
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-md border border-blue-300 bg-blue-50 px-2.5 py-1 text-xs text-blue-700 hover:bg-blue-100"
+                                onClick={() => insertAsset(asset, "footer", "footer")}
+                              >
+                                Footer snippet
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showFooterPreview && (
+                  <div className="mt-3">
+                    <div className="mb-1 text-xs font-medium text-gray-500">
+                      Preview
+                    </div>
+                    <div
+                      className="document-html-preview min-h-[80px] rounded-lg border border-gray-200 bg-white px-4 py-3"
+                      dangerouslySetInnerHTML={{ __html: footerContent || "<div></div>" }}
+                    />
+                  </div>
+                )}
+              </AdminSection>
             </div>
           ) : (
             footer && (

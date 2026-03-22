@@ -20,3 +20,23 @@ export type DeceasedDocumentsFormData = {
   funeralNumber: string;
   templates?: DocumentTemplate[];
 };
+
+export type AdminDocumentSavePayload = {
+  title: string;
+  header: string;
+  body: string;
+  footer: string;
+};
+
+export type DocumentAsset = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  createdAtUtc: string;
+  url: string;
+};
+
+export type DocumentAssetsResponse = {
+  assets?: DocumentAsset[];
+};

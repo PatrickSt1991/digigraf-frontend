@@ -8,18 +8,11 @@ import {
 } from "react-icons/fa";
 
 import { DashboardLayout, DocumentEditorModal } from "../../components";
-import { DocumentTemplate, Section } from "../../types";
+import { AdminDocumentSavePayload, DocumentTemplate, Section } from "../../types";
 import { endpoints } from "../../api/apiConfig";
 import apiClient from "../../api/apiClient";
 
 type AdminTab = "overview" | "add" | "edit";
-
-type AdminDocumentSavePayload = {
-  title: string;
-  header: string;
-  body: string;
-  footer: string;
-};
 
 const createEmptyTemplate = (): DocumentTemplate => ({
   id: "",

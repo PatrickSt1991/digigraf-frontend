@@ -105,6 +105,8 @@ export const adminEndpoints = {
 
   documentsdefault: `${API_BASE}/DocumentTemplates/defaults`,
   documentsdefaultById: (id: string) => `${API_BASE}/DocumentTemplates/defaults/${id}`,
+  documentAssets: `${API_BASE}/DocumentAssets`,
+  documentContent: (id: string) => `${API_BASE}/DocumentAssets/${id}/content`,
 
   company: `${API_BASE}/company`,
   reports: `${API_BASE}/reports`,
