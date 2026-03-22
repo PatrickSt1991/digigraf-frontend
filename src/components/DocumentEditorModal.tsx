@@ -158,11 +158,12 @@ function buildHeaderSnippet(asset: DocumentAsset) {
   return `<table style="width:100%; border-collapse:collapse;">
   <tbody>
     <tr>
-      <td style="width:220px; vertical-align:middle; border:none; padding:0;">
-        <img src="${getDocumentAssetUrl(asset.id)}" alt="${asset.fileName.replace(/"/g, "&quot;")}" style="max-width:200px; height:auto;" />
-      </td>
-      <td style="vertical-align:bottom; text-align:right; border:none; padding:0 0 6px 0;">
-        <p style="margin:0; color:#666;">Dossier nummer:</p>
+      <td style="border:none; padding:18px 0 22px 0; text-align:center;">
+        <img 
+          src="${getDocumentAssetUrl(asset.id)}"
+          alt="${asset.fileName.replace(/"/g, "&quot;")}" 
+          style="display:inline-block; max-width:380px; width:100%; height:auto;" 
+        />
       </td>
     </tr>
   </tbody>
