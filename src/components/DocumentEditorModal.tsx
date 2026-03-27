@@ -17,6 +17,43 @@ import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableRow } from "@tiptap/extension-table-row";
+
+const bgColorAttr = {
+  backgroundColor: {
+    default: null,
+    parseHTML: (element: HTMLElement) => element.style.backgroundColor || null,
+    renderHTML: (attributes: Record<string, unknown>) =>
+      attributes.backgroundColor
+        ? { style: `background-color: ${attributes.backgroundColor}` }
+        : {},
+  },
+};
+
+const CustomTableCell = TableCell.extend({
+  addAttributes() {
+    return { ...this.parent?.(), ...bgColorAttr };
+  },
+});
+
+const CustomTableHeader = TableHeader.extend({
+  addAttributes() {
+    return { ...this.parent?.(), ...bgColorAttr };
+  },
+});
+
+const CustomTableRow = TableRow.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      height: {
+        default: null,
+        parseHTML: (element) => element.style.height || null,
+        renderHTML: (attributes) =>
+          attributes.height ? { style: `height: ${attributes.height}` } : {},
+      },
+    };
+  },
+});
 import { adminEndpoints } from "../api/apiConfig";
 import apiClient from "../api/apiClient";
 import { useResizable } from "../hooks/useResizable";
@@ -83,9 +120,23 @@ const FONT_FAMILIES = [
   "Inter",
 ];
 
-const FONT_SIZES = ["10pt", "11pt", "12pt", "14pt", "16pt", "18pt", "24pt", "32pt"];
+const FONT_SIZES = ["6pt", "7pt", "8pt", "9pt", "10pt", "11pt", "12pt", "14pt", "16pt", "18pt", "24pt", "32pt"];
 const TEXT_COLORS = ["#000000", "#2E74B5", "#C00000", "#00B050", "#7030A0", "#44546A"];
 const HIGHLIGHT_COLORS = ["#FFF2CC", "#FFE699", "#FFD966", "#C6E0B4", "#BDD7EE", "#F4CCCC"];
+const CELL_BG_COLORS = [
+  null,
+  "#ffffff", "#f8fafc", "#e2e8f0",
+  "#dbeafe", "#dcfce7", "#fef9c3", "#fee2e2", "#f3e8ff", "#ffedd5",
+];
+const ROW_HEIGHTS: { label: string; value: string | null }[] = [
+  { label: "Automatisch", value: null },
+  { label: "Klein", value: "30px" },
+  { label: "Normaal", value: "45px" },
+  { label: "Gemiddeld", value: "65px" },
+  { label: "Groot", value: "90px" },
+  { label: "Extra groot", value: "130px" },
+];
+
 const TABLE_PICKER_SIZE = 8;
 const CELL_SIZE = 18;
 
@@ -245,6 +296,7 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
   const [tablePickerOpen, setTablePickerOpen] = useState(false);
   const [tableRows, setTableRows] = useState(0);
   const [tableCols, setTableCols] = useState(0);
+  const [rowHeightInput, setRowHeightInput] = useState("");
 
   const [assets, setAssets] = useState<DocumentAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(false);
@@ -277,6 +329,8 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
       extensions: [
         StarterKit.configure({
           heading: { levels: [1, 2, 3] },
+          link: false,
+          underline: false,
         }),
         Underline,
         TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -300,9 +354,9 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
           resizable: true,
           allowTableNodeSelection: true,
         }),
-        TableRow,
-        TableHeader,
-        TableCell,
+        CustomTableRow,
+        CustomTableHeader,
+        CustomTableCell,
       ],
       content: initialContent || "<p></p>",
       immediatelyRender: false,
@@ -310,13 +364,15 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
         attributes: {
           class: "tiptap-prosemirror",
           spellcheck: "true",
+          style: "color: #000000;",
         },
       },
     },
     []
   );
 
-  const isInsideTable = !!editor?.isActive("table");
+  const isInsideTable =
+    !!editor?.isActive("tableCell") || !!editor?.isActive("tableHeader");
 
   const sortedAssets = useMemo(
     () =>
@@ -401,6 +457,27 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
     loadAssets();
   }, [adminMode, isOpen]);
 
+  useEffect(() => {
+    if (!editor) return;
+    const sync = () => {
+      const { $from } = editor.state.selection;
+      for (let d = $from.depth; d >= 0; d--) {
+        if ($from.node(d).type.name === "tableRow") {
+          const h = $from.node(d).attrs.height as string | null;
+          setRowHeightInput(h ?? "");
+          return;
+        }
+      }
+      setRowHeightInput("");
+    };
+    editor.on("selectionUpdate", sync);
+    editor.on("update", sync);
+    return () => {
+      editor.off("selectionUpdate", sync);
+      editor.off("update", sync);
+    };
+  }, [editor]);
+
   const currentFontFamily =
     (editor?.getAttributes("textStyle")?.fontFamily as string | undefined) ||
     "Arial";
@@ -455,6 +532,24 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
     }
 
     setLinkMenuOpen(false);
+  };
+
+  const setCellBgColor = (color: string | null) => {
+    if (!editor) return;
+    const { state } = editor;
+    const { $from } = state.selection;
+    for (let d = $from.depth; d >= 0; d--) {
+      const node = $from.node(d);
+      if (node.type.name === "tableCell" || node.type.name === "tableHeader") {
+        editor.view.dispatch(
+          state.tr.setNodeMarkup($from.before(d), undefined, {
+            ...node.attrs,
+            backgroundColor: color,
+          })
+        );
+        return;
+      }
+    }
   };
 
   const insertTable = (rows: number, cols: number) => {
@@ -661,7 +756,7 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
         .tiptap-editor .tiptap-prosemirror td {
           border: 1px solid #cbd5e1;
           min-width: 64px;
-          padding: 8px 10px;
+          padding: 4px 8px;
           vertical-align: top;
           position: relative;
         }
@@ -1052,46 +1147,74 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
                   editor.chain().focus().toggleBlockquote().run()
                 )}
               >
-                “ ”
+                " "
+              </ToolbarButton>
+              <ToolbarButton
+                title="Horizontal rule"
+                onMouseDown={runCommand(() =>
+                  editor.chain().focus().setHorizontalRule().run()
+                )}
+              >
+                ―
               </ToolbarButton>
 
               <Divider />
 
               <ToolbarButton
-                title="Align left"
+                title="Links uitlijnen"
                 active={editor.isActive({ textAlign: "left" })}
                 onMouseDown={runCommand(() =>
                   editor.chain().focus().setTextAlign("left").run()
                 )}
               >
-                ⬅
+                <svg width="15" height="13" viewBox="0 0 15 13" fill="currentColor">
+                  <rect x="0" y="0"  width="15" height="2" rx="1"/>
+                  <rect x="0" y="4"  width="10" height="2" rx="1"/>
+                  <rect x="0" y="8"  width="13" height="2" rx="1"/>
+                  <rect x="0" y="12" width="8"  height="1" rx="0.5"/>
+                </svg>
               </ToolbarButton>
               <ToolbarButton
-                title="Align center"
+                title="Centreren"
                 active={editor.isActive({ textAlign: "center" })}
                 onMouseDown={runCommand(() =>
                   editor.chain().focus().setTextAlign("center").run()
                 )}
               >
-                ↔
+                <svg width="15" height="13" viewBox="0 0 15 13" fill="currentColor">
+                  <rect x="0"   y="0"  width="15" height="2" rx="1"/>
+                  <rect x="2.5" y="4"  width="10" height="2" rx="1"/>
+                  <rect x="1"   y="8"  width="13" height="2" rx="1"/>
+                  <rect x="3.5" y="12" width="8"  height="1" rx="0.5"/>
+                </svg>
               </ToolbarButton>
               <ToolbarButton
-                title="Align right"
+                title="Rechts uitlijnen"
                 active={editor.isActive({ textAlign: "right" })}
                 onMouseDown={runCommand(() =>
                   editor.chain().focus().setTextAlign("right").run()
                 )}
               >
-                ➡
+                <svg width="15" height="13" viewBox="0 0 15 13" fill="currentColor">
+                  <rect x="0"  y="0"  width="15" height="2" rx="1"/>
+                  <rect x="5"  y="4"  width="10" height="2" rx="1"/>
+                  <rect x="2"  y="8"  width="13" height="2" rx="1"/>
+                  <rect x="7"  y="12" width="8"  height="1" rx="0.5"/>
+                </svg>
               </ToolbarButton>
               <ToolbarButton
-                title="Justify"
+                title="Uitvullen"
                 active={editor.isActive({ textAlign: "justify" })}
                 onMouseDown={runCommand(() =>
                   editor.chain().focus().setTextAlign("justify").run()
                 )}
               >
-                ☰
+                <svg width="15" height="13" viewBox="0 0 15 13" fill="currentColor">
+                  <rect x="0" y="0"  width="15" height="2" rx="1"/>
+                  <rect x="0" y="4"  width="15" height="2" rx="1"/>
+                  <rect x="0" y="8"  width="15" height="2" rx="1"/>
+                  <rect x="0" y="12" width="10" height="1" rx="0.5"/>
+                </svg>
               </ToolbarButton>
 
               <Divider />
@@ -1291,53 +1414,83 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
             {isInsideTable && (
               <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-2">
                 <span className="mr-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Table
+                  Tabel
                 </span>
                 <ToolbarButton
+                  title="Kolom voor invoegen"
+                  disabled={!editor.can().addColumnBefore()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().addColumnBefore().run()
                   )}
                 >
-                  + Col L
+                  ←Col+
                 </ToolbarButton>
                 <ToolbarButton
+                  title="Kolom na invoegen"
+                  disabled={!editor.can().addColumnAfter()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().addColumnAfter().run()
                   )}
                 >
-                  + Col R
+                  Col+→
                 </ToolbarButton>
                 <ToolbarButton
+                  title="Kolom verwijderen"
+                  disabled={!editor.can().deleteColumn()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().deleteColumn().run()
                   )}
                 >
-                  Del Col
+                  Col−
                 </ToolbarButton>
                 <Divider />
                 <ToolbarButton
+                  title="Rij boven invoegen"
+                  disabled={!editor.can().addRowBefore()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().addRowBefore().run()
                   )}
                 >
-                  + Row ↑
+                  ↑Row+
                 </ToolbarButton>
                 <ToolbarButton
+                  title="Rij onder invoegen"
+                  disabled={!editor.can().addRowAfter()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().addRowAfter().run()
                   )}
                 >
-                  + Row ↓
+                  Row+↓
                 </ToolbarButton>
                 <ToolbarButton
+                  title="Rij verwijderen"
+                  disabled={!editor.can().deleteRow()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().deleteRow().run()
                   )}
                 >
-                  Del Row
+                  Row−
                 </ToolbarButton>
+                <select
+                  title="Rijhoogte"
+                  value={rowHeightInput}
+                  className="ml-1 h-8 rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-700"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setRowHeightInput(val);
+                    editor.chain().focus().updateAttributes("tableRow", { height: val || null }).run();
+                  }}
+                >
+                  {ROW_HEIGHTS.map(({ label, value }) => (
+                    <option key={value ?? ""} value={value ?? ""}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
                 <Divider />
                 <ToolbarButton
+                  title="Cellen samenvoegen"
+                  disabled={!editor.can().mergeCells()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().mergeCells().run()
                   )}
@@ -1345,32 +1498,66 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
                   Merge
                 </ToolbarButton>
                 <ToolbarButton
+                  title="Cel splitsen"
+                  disabled={!editor.can().splitCell()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().splitCell().run()
                   )}
                 >
                   Split
                 </ToolbarButton>
+                <Divider />
                 <ToolbarButton
+                  title="Headerrij in-/uitschakelen"
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().toggleHeaderRow().run()
                   )}
                 >
-                  Header Row
+                  Header rij
                 </ToolbarButton>
                 <ToolbarButton
+                  title="Headerkolom in-/uitschakelen"
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().toggleHeaderColumn().run()
                   )}
                 >
-                  Header Col
+                  Header kolom
                 </ToolbarButton>
+                <Divider />
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-gray-500">Achtergrond</span>
+                  <div className="flex items-center gap-0.5 rounded-md border border-gray-200 px-1 py-1">
+                    {CELL_BG_COLORS.map((color) => (
+                      <button
+                        key={color ?? "none"}
+                        type="button"
+                        title={color ? color : "Geen achtergrond"}
+                        className="h-5 w-5 rounded border border-gray-300 transition-colors hover:border-blue-400"
+                        style={{ backgroundColor: color ?? "transparent" }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setCellBgColor(color);
+                        }}
+                      >
+                        {color === null && (
+                          <svg viewBox="0 0 20 20" className="h-full w-full text-gray-400" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <line x1="3" y1="3" x2="17" y2="17"/>
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Divider />
                 <ToolbarButton
+                  title="Tabel verwijderen"
+                  disabled={!editor.can().deleteTable()}
                   onMouseDown={runCommand(() =>
                     editor.chain().focus().deleteTable().run()
                   )}
+                  className="text-red-600 hover:bg-red-50"
                 >
-                  Delete Table
+                  Tabel verwijderen
                 </ToolbarButton>
               </div>
             )}
