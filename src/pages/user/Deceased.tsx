@@ -7,7 +7,7 @@ import {
   LoadingState,
   ErrorState,
 } from "../../components";
-import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
+import { useDropdownData, useFormHandler, useSaveAndNext, useAddressLookup } from "../../hooks";
 import { calculateAge } from "../../utils/calculateAge";
 import { endpoints } from "../../api/apiConfig";
 import { DossierDto } from "../../types";
@@ -19,6 +19,7 @@ export default function Deceased() {
 
   const {
     formData,
+    setFormData,
     handleChange,
     handleDateChange,
     goBack,
@@ -93,6 +94,40 @@ export default function Deceased() {
     salutations: endpoints.salutation,
     bodyFindings: endpoints.bodyfindings,
     origins: endpoints.origins,
+  });
+
+  const { isLoading: deceasedAddressLoading, lookupError: deceasedAddressError } = useAddressLookup({
+    postalCode: formData.deceased?.postalCode ?? "",
+    houseNumber: formData.deceased?.houseNumber ?? "",
+    suffix: formData.deceased?.houseNumberAddition ?? "",
+    onResult: (result) => {
+      setFormData((prev) => ({
+        ...prev,
+        deceased: {
+          ...prev.deceased,
+          street: prev.deceased?.street || result.street,
+          city: prev.deceased?.city || result.city,
+          county: prev.deceased?.county || result.county,
+        },
+      }));
+    },
+  });
+
+  const { isLoading: deathAddressLoading, lookupError: deathAddressError } = useAddressLookup({
+    postalCode: formData.deathInfo?.postalCodeOfDeath ?? "",
+    houseNumber: formData.deathInfo?.houseNumberOfDeath ?? "",
+    suffix: formData.deathInfo?.houseNumberAdditionOfDeath ?? "",
+    onResult: (result) => {
+      setFormData((prev) => ({
+        ...prev,
+        deathInfo: {
+          ...prev.deathInfo,
+          streetOfDeath: prev.deathInfo?.streetOfDeath || result.street,
+          cityOfDeath: prev.deathInfo?.cityOfDeath || result.city,
+          countyOfDeath: prev.deathInfo?.countyOfDeath || result.county,
+        },
+      }));
+    },
   });
 
   const currentDossierId = dossierId?.toString().trim() || "";
@@ -254,6 +289,12 @@ export default function Deceased() {
                 onChange={handleChange}
               />
 
+              {(deceasedAddressLoading || deceasedAddressError) && (
+                <p className={`text-sm ${deceasedAddressError ? "text-red-500" : "text-gray-500"}`}>
+                  {deceasedAddressLoading ? "Adres ophalen..." : deceasedAddressError}
+                </p>
+              )}
+
               <FormField
                 label="Straat"
                 required
@@ -343,6 +384,12 @@ export default function Deceased() {
                 value={formData.deathInfo?.houseNumberAdditionOfDeath ?? ""}
                 onChange={handleChange}
               />
+
+              {(deathAddressLoading || deathAddressError) && (
+                <p className={`text-sm ${deathAddressError ? "text-red-500" : "text-gray-500"}`}>
+                  {deathAddressLoading ? "Adres ophalen..." : deathAddressError}
+                </p>
+              )}
 
               <FormField
                 label="Straat"

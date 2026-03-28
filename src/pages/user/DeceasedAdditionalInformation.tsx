@@ -7,7 +7,7 @@ import {
   LoadingState,
   ErrorState,
 } from "../../components";
-import { useDropdownData, useFormHandler, useSaveAndNext } from "../../hooks";
+import { useDropdownData, useFormHandler, useSaveAndNext, useAddressLookup } from "../../hooks";
 import { calculateAge } from "../../utils/calculateAge";
 import { endpoints } from "../../api/apiConfig";
 
@@ -25,6 +25,7 @@ export default function AdditionalInformationDeceased() {
 
   const {
     formData,
+    setFormData,
     handleChange,
     handleDateChange,
     goBack,
@@ -91,6 +92,20 @@ export default function AdditionalInformationDeceased() {
       funeralLeader: formData.funeralLeader ?? "",
       funeralNumber: formData.funeralNumber ?? "",
     }),
+  });
+
+  const { isLoading: addressLoading, lookupError: addressError } = useAddressLookup({
+    postalCode: formData.postalCode ?? "",
+    houseNumber: formData.housenumber ?? "",
+    suffix: formData.housenumberAddition ?? "",
+    onResult: (result) => {
+      setFormData((prev) => ({
+        ...prev,
+        street: prev.street || result.street,
+        city: prev.city || result.city,
+        county: prev.county || result.county,
+      }));
+    },
   });
 
   const { data, loading: dropdownLoading, errors: dropdownErrors } = useDropdownData({
@@ -230,11 +245,18 @@ export default function AdditionalInformationDeceased() {
 
               <FormField label="Achternaam" name="lastname" value={formData.lastname} onChange={handleChange} />
               <FormField label="Voornaam" required name="firstname" value={formData.firstname} onChange={handleChange} />
-              <FormField label="Geboortedatum" type="date" name="dob" value={formData.dob} onChange={handleDateChange} />
-              <FormField label="Leeftijd" name="age" value={formData.age} onChange={handleChange} />
+              <FormField label="Geboortedatum" type="date" name="dob" value={formData?.dob} onChange={handleDateChange} />
+              <FormField label="Leeftijd" name="age" value={formData?.age ? String(calculateAge(formData.dob)) : ""} onChange={handleChange} />
               <FormField label="Postcode" required name="postalCode" value={formData.postalCode} onChange={handleChange} />
               <FormField label="Huisnummer" name="housenumber" value={formData.housenumber} onChange={handleChange} />
               <FormField label="Toevoeging" name="housenumberAddition" value={formData.housenumberAddition} onChange={handleChange} />
+
+              {(addressLoading || addressError) && (
+                <p className={`text-sm ${addressError ? "text-red-500" : "text-gray-500"}`}>
+                  {addressLoading ? "Adres ophalen..." : addressError}
+                </p>
+              )}
+
               <FormField label="Straat" required name="street" value={formData.street} onChange={handleChange} />
               <FormField label="Plaats" required name="city" value={formData.city} onChange={handleChange} />
               <FormField label="Gemeente" name="county" value={formData.county} onChange={handleChange} />
