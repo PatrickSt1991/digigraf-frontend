@@ -308,6 +308,7 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
   const [footerOpen, setFooterOpen] = useState(false);
   const [showHeaderPreview, setShowHeaderPreview] = useState(false);
   const [showFooterPreview, setShowFooterPreview] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   const { targetRef, startResizing } = useResizable({
     minHeight: 400,
@@ -1784,6 +1785,15 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
             >
               Annuleren
             </button>
+            {adminMode && (
+              <button
+                type="button"
+                onClick={() => setShowPrintPreview(true)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+              >
+                Afdrukvoorbeeld
+              </button>
+            )}
             <button
               type="button"
               onClick={handleSave}
@@ -1803,6 +1813,79 @@ export const DocumentEditorModal: React.FC<DocumentEditorModalProps> = (props) =
           />
         </div>
       </div>
+
+      {showPrintPreview && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-gray-200">
+          <div className="flex shrink-0 items-center justify-between border-b bg-white px-6 py-3 shadow-sm">
+            <span className="text-sm font-semibold text-gray-800">
+              Afdrukvoorbeeld — {documentTitle}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const printFrame = document.getElementById(
+                    "__print_preview_frame__"
+                  ) as HTMLIFrameElement | null;
+                  printFrame?.contentWindow?.print();
+                }}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              >
+                Afdrukken
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPrintPreview(false)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+              >
+                Sluiten
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-1 items-start justify-center overflow-auto py-8">
+            <iframe
+              id="__print_preview_frame__"
+              title="Afdrukvoorbeeld"
+              className="h-[297mm] w-[210mm] shrink-0 bg-white shadow-xl"
+              srcDoc={`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<base href="${window.location.origin}/" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #000; background: #fff; }
+  .header { padding: 18px 25.4mm 10px; }
+  .body { padding: 0 25.4mm 20px; }
+  .footer { padding: 10px 25.4mm 18px; }
+  img { max-width: 100%; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 0.8em; }
+  td, th { padding: 5px 8px; vertical-align: top; border: none; }
+  tr { border-bottom: 1px solid #d1d5db; }
+  thead tr { border-bottom: 2px solid #9ca3af; font-weight: 600; }
+  ul, ol { padding-left: 1.5em; margin-bottom: 0.6em; }
+  p { margin-bottom: 0.6em; }
+  p:last-child { margin-bottom: 0; }
+  h1 { font-size: 16pt; font-weight: 700; margin-bottom: 0.5em; }
+  h2 { font-size: 13pt; font-weight: 600; margin-bottom: 0.4em; }
+  h3 { font-size: 11pt; font-weight: 600; margin-bottom: 0.3em; }
+  strong { font-weight: 600; }
+  @media print {
+    body { margin: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="header">${headerContent}</div>
+  <div class="body">${editor?.getHTML() ?? ""}</div>
+  <div class="footer">${footerContent}</div>
+</body>
+</html>`}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };
