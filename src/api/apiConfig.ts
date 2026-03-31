@@ -109,5 +109,6 @@ export const adminEndpoints = {
   documentContent: (id: string) => `${API_BASE}/DocumentAssets/${id}/content`,
 
   company: `${API_BASE}/company`,
+  accessDatabases: `${API_BASE}/Settings/access-databases`,
   reports: `${API_BASE}/reports`,
 };

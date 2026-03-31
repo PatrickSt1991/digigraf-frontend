@@ -2,6 +2,7 @@ export type EmployeeStatus = 'active' | 'inactive';
 
 export interface AdminEmployee {
   id: string;
+  hasLogin: boolean;
   loginIsActive: boolean | null;
   status: EmployeeStatus;
 
@@ -16,7 +17,7 @@ export interface AdminEmployee {
 
   email: string;
   mobile?: string;
-  roleId: string;
+  roleId: string | null;
   startDate?: string;
 }
 

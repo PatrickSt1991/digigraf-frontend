@@ -11,3 +11,13 @@ export interface CompanySettings {
   btwNumber: string;
   termsAndConditions: string;
 }
+
+export interface AccessDbEntry {
+  name: string;
+  filePath: string;
+  tableName: string;
+  lastNameColumn: string;
+  firstNameColumn: string;
+  birthDateColumn: string;
+  funeralNumberColumn: string;
+}

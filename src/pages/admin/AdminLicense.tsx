@@ -5,14 +5,14 @@ import {
   FaShieldAlt, FaCheckCircle, FaTimesCircle, FaUpload, FaKey,
   FaExclamationTriangle, FaCalendarAlt, FaArrowLeft, FaUsers,
   FaAward, FaBuilding, FaFileContract, FaSave, FaGlobe,
-  FaPhone, FaEnvelope, FaMapMarkerAlt,
+  FaPhone, FaEnvelope, FaMapMarkerAlt, FaDatabase, FaPlus, FaTrash,
 } from "react-icons/fa";
 import { getLicenseInfo, uploadLicenseFile, activateLicenseKey } from "../../api/licenseApi";
-import { getCompanySettings, saveCompanySettings } from "../../api/adminApi";
+import { getCompanySettings, saveCompanySettings, getAccessDatabases, saveAccessDatabases } from "../../api/adminApi";
 import { LicenseInfo } from "../../types/license";
-import { CompanySettings } from '../../types';
+import { CompanySettings, AccessDbEntry } from '../../types';
 
-type Tab = "license" | "company" | "terms";
+type Tab = "license" | "company" | "terms" | "databases";
 
 const LicenseManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("license");
@@ -42,6 +42,11 @@ const LicenseManagement: React.FC = () => {
   const [companyLoading, setCompanyLoading] = useState(true);
   const [savingCompany, setSavingCompany] = useState(false);
 
+  // ── Access DB state ────────────────────────────────────────────────────────
+  const [databases, setDatabases] = useState<AccessDbEntry[]>([]);
+  const [dbLoading, setDbLoading] = useState(true);
+  const [savingDatabases, setSavingDatabases] = useState(false);
+
   // ── Shared message ─────────────────────────────────────────────────────────
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -54,6 +59,7 @@ const LicenseManagement: React.FC = () => {
   useEffect(() => {
     fetchLicense();
     fetchCompany();
+    fetchDatabases();
   }, []);
 
   const fetchLicense = async () => {
@@ -101,6 +107,17 @@ const LicenseManagement: React.FC = () => {
     finally { setUploading(false); }
   };
 
+  const fetchDatabases = async () => {
+    try {
+      setDbLoading(true);
+      setDatabases(await getAccessDatabases());
+    } catch {
+      // first-time, no data yet
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
   // ── Company handler ────────────────────────────────────────────────────────
   const handleSaveCompany = async () => {
     try {
@@ -114,6 +131,29 @@ const LicenseManagement: React.FC = () => {
   const updateCompany = (field: keyof CompanySettings, value: string) =>
     setCompany((prev) => ({ ...prev, [field]: value }));
 
+  // ── Access DB handlers ─────────────────────────────────────────────────────
+  const emptyDbEntry = (): AccessDbEntry => ({
+    name: "", filePath: "", tableName: "", lastNameColumn: "",
+    firstNameColumn: "", birthDateColumn: "", funeralNumberColumn: "",
+  });
+
+  const addDatabase = () => setDatabases((prev) => [...prev, emptyDbEntry()]);
+
+  const removeDatabase = (index: number) =>
+    setDatabases((prev) => prev.filter((_, i) => i !== index));
+
+  const updateDatabase = (index: number, field: keyof AccessDbEntry, value: string) =>
+    setDatabases((prev) => prev.map((db, i) => i === index ? { ...db, [field]: value } : db));
+
+  const handleSaveDatabases = async () => {
+    try {
+      setSavingDatabases(true);
+      await saveAccessDatabases(databases);
+      showMessage("success", "Databases opgeslagen");
+    } catch { showMessage("error", "Opslaan mislukt"); }
+    finally { setSavingDatabases(false); }
+  };
+
   // ── Derived license values ─────────────────────────────────────────────────
   const usagePercentage = licenseInfo ? (licenseInfo.currentUsers / licenseInfo.maxUsers) * 100 : 0;
   const isNearLimit = usagePercentage >= 80 && licenseInfo?.isValid;
@@ -121,9 +161,10 @@ const LicenseManagement: React.FC = () => {
 
   // ── Tab config ─────────────────────────────────────────────────────────────
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "license",  label: "Licentie",           icon: <FaShieldAlt /> },
-    { id: "company",  label: "Bedrijfsgegevens",    icon: <FaBuilding /> },
-    { id: "terms",    label: "Algemene Voorwaarden", icon: <FaFileContract /> },
+    { id: "license",   label: "Licentie",            icon: <FaShieldAlt /> },
+    { id: "company",   label: "Bedrijfsgegevens",     icon: <FaBuilding /> },
+    { id: "terms",     label: "Algemene Voorwaarden", icon: <FaFileContract /> },
+    { id: "databases", label: "Oude Databases",       icon: <FaDatabase /> },
   ];
 
   return (
@@ -489,6 +530,136 @@ const LicenseManagement: React.FC = () => {
                       >
                         <FaSave />
                         {savingCompany ? "Opslaan..." : "Voorwaarden opslaan"}
+                      </button>
+                      {message && (
+                        <p className={`text-sm ${message.type === "success" ? "text-green-600" : "text-red-600"}`}>{message.text}</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              )}
+
+              {/* ══ DATABASES TAB ════════════════════════════════════════════ */}
+              {activeTab === "databases" && (
+                dbLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500" />
+                  </div>
+                ) : (
+                  <div className="max-w-3xl space-y-6">
+                    <p className="text-gray-500 text-sm">
+                      Configureer de MS Access databases die doorzocht worden bij "Zoek in oude databases".
+                      Voeg het bestandspad en de exacte kolomnamen in zoals ze in de Access database staan.
+                    </p>
+
+                    {databases.map((db, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-gray-700">Database {index + 1}</h3>
+                          <button
+                            onClick={() => removeDatabase(index)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Verwijder database"
+                          >
+                            <FaTrash size={14} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Naam <span className="text-red-500">*</span></label>
+                            <input
+                              type="text"
+                              value={db.name}
+                              onChange={(e) => updateDatabase(index, "name", e.target.value)}
+                              placeholder="bv. Archief 1990-2005"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Bestandspad <span className="text-red-500">*</span></label>
+                            <input
+                              type="text"
+                              value={db.filePath}
+                              onChange={(e) => updateDatabase(index, "filePath", e.target.value)}
+                              placeholder="C:\Databases\archief.mdb"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none font-mono"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Tabelnaam <span className="text-red-500">*</span></label>
+                          <input
+                            type="text"
+                            value={db.tableName}
+                            onChange={(e) => updateDatabase(index, "tableName", e.target.value)}
+                            placeholder="bv. tblOverledenen"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none font-mono"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Kolom achternaam <span className="text-red-500">*</span></label>
+                            <input
+                              type="text"
+                              value={db.lastNameColumn}
+                              onChange={(e) => updateDatabase(index, "lastNameColumn", e.target.value)}
+                              placeholder="bv. Achternaam"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Kolom voornaam <span className="text-red-500">*</span></label>
+                            <input
+                              type="text"
+                              value={db.firstNameColumn}
+                              onChange={(e) => updateDatabase(index, "firstNameColumn", e.target.value)}
+                              placeholder="bv. Voornaam"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Kolom geboortedatum</label>
+                            <input
+                              type="text"
+                              value={db.birthDateColumn}
+                              onChange={(e) => updateDatabase(index, "birthDateColumn", e.target.value)}
+                              placeholder="bv. Geboortedatum"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Kolom uitvaartnummer</label>
+                            <input
+                              type="text"
+                              value={db.funeralNumberColumn}
+                              onChange={(e) => updateDatabase(index, "funeralNumberColumn", e.target.value)}
+                              placeholder="bv. UitvaartNummer"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={addDatabase}
+                      className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-dashed border-gray-300 hover:border-gray-400 rounded-lg px-4 py-3 w-full justify-center transition"
+                    >
+                      <FaPlus size={12} />
+                      Database toevoegen
+                    </button>
+
+                    <div className="flex items-center gap-4 pt-2">
+                      <button
+                        onClick={handleSaveDatabases}
+                        disabled={savingDatabases}
+                        className="flex items-center gap-2 bg-gray-600 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 disabled:opacity-50 font-medium"
+                      >
+                        <FaSave />
+                        {savingDatabases ? "Opslaan..." : "Databases opslaan"}
                       </button>
                       {message && (
                         <p className={`text-sm ${message.type === "success" ? "text-green-600" : "text-red-600"}`}>{message.text}</p>

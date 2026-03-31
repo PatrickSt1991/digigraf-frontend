@@ -1,20 +1,21 @@
 import { adminEndpoints, endpoints } from "./apiConfig";
 import apiClient from "./apiClient";
-import { AdminEmployee, 
-  AsbestemmingDto, 
-  CoffinsDto, 
-  EmployeeDto, 
-  RouwbriefDto, 
-  RoleDto, 
-  InsurancePartyDto, 
-  InsurancePolicyDto, 
-  SupplierDto, 
-  SupplierTypeDto, 
-  InsurancePriceComponentDto, 
+import { AdminEmployee,
+  AsbestemmingDto,
+  CoffinsDto,
+  EmployeeDto,
+  RouwbriefDto,
+  RoleDto,
+  InsurancePartyDto,
+  InsurancePolicyDto,
+  SupplierDto,
+  SupplierTypeDto,
+  InsurancePriceComponentDto,
   FinancialRowDto,
   InvoiceFormData,
   FinancialQuery,
-  CompanySettings
+  CompanySettings,
+  AccessDbEntry
 } from "../types";
 
 export async function getEmployeeRoles(): Promise<RoleDto[]> {
@@ -552,3 +553,18 @@ export const generateOpdrachtgeverInvoice = (dossierId: string) =>
 
 export const generateVerenigingInvoice = (dossierId: string) =>
   downloadInvoiceFile(dossierId, 'vereniging');
+
+export const getAccessDatabases = async (): Promise<AccessDbEntry[]> => {
+  const res = await fetch(adminEndpoints.accessDatabases);
+  if (!res.ok) throw new Error("Ophalen mislukt");
+  return res.json();
+};
+
+export const saveAccessDatabases = async (data: AccessDbEntry[]): Promise<void> => {
+  const res = await fetch(adminEndpoints.accessDatabases, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Opslaan mislukt");
+};

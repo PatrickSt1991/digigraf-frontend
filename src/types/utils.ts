@@ -57,10 +57,19 @@ export interface SearchCriteria {
   oldDB: boolean;
 }
 
+export interface OldDBResult {
+  databaseName: string;
+  firstName?: string;
+  lastName?: string;
+  birthDate?: string;
+  funeralNumber?: string;
+}
+
 export interface SearchResult {
   results: DossierDto[];
   total: number;
   searchedOldDB: boolean;
+  oldDBResults?: OldDBResult[];
 }
 
 export type CessieAction = "editor" | "print" | "pdf" | "docx";

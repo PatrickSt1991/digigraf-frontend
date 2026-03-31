@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FaSearch, FaSpinner } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { searchDossiers } from "../../api/dossierApi";
-import { DossierDto } from "../../types";
+import { DossierDto, OldDBResult } from "../../types";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -23,6 +23,7 @@ export default function SearchModal({ isOpen, onClose, onSelect }: SearchModalPr
 
   const [searchState, setSearchState] = useState<SearchState>("idle");
   const [results, setResults] = useState<DossierDto[]>([]);
+  const [oldDBResults, setOldDBResults] = useState<OldDBResult[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
 
   if (!isOpen) return null;
@@ -33,6 +34,7 @@ export default function SearchModal({ isOpen, onClose, onSelect }: SearchModalPr
 
     setSearchState("loading");
     setResults([]);
+    setOldDBResults([]);
     setErrorMsg("");
 
     try {
@@ -42,7 +44,8 @@ export default function SearchModal({ isOpen, onClose, onSelect }: SearchModalPr
           : { funeralNumber: funeralNumber.trim(), archive, oldDB }
       );
 
-      setResults(data);
+      setResults(data.results);
+      setOldDBResults(data.oldDBResults ?? []);
       setSearchState("done");
     } catch (e: any) {
       setErrorMsg(e.message || "Onbekende fout");
@@ -65,6 +68,7 @@ export default function SearchModal({ isOpen, onClose, onSelect }: SearchModalPr
   const handleClose = () => {
     setSearchState("idle");
     setResults([]);
+    setOldDBResults([]);
     setErrorMsg("");
     setLastName("");
     setBirthDate("");
@@ -181,7 +185,7 @@ export default function SearchModal({ isOpen, onClose, onSelect }: SearchModalPr
             </div>
           )}
 
-          {searchState === "done" && results.length === 0 && (
+          {searchState === "done" && results.length === 0 && oldDBResults.length === 0 && (
             <div className="text-sm text-gray-500 text-center py-8">
               Geen dossiers gevonden.
             </div>
@@ -215,6 +219,34 @@ export default function SearchModal({ isOpen, onClose, onSelect }: SearchModalPr
                         </span>
                       </div>
                     </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {searchState === "done" && oldDBResults.length > 0 && (
+            <div className="mt-4">
+              <p className="text-xs text-gray-400 mb-2">
+                {oldDBResults.length} resultaat{oldDBResults.length !== 1 ? "en" : ""} gevonden in oude databases
+              </p>
+              <ul className="divide-y divide-amber-100 border border-amber-200 rounded overflow-hidden">
+                {oldDBResults.map((r, i) => (
+                  <li key={i} className="px-4 py-3 flex justify-between items-center gap-4">
+                    <div>
+                      <p className="font-medium text-gray-800">
+                        {[r.firstName, r.lastName].filter(Boolean).join(" ") || "—"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {r.birthDate ? `geb. ${formatDate(r.birthDate)}` : ""}
+                        {r.funeralNumber ? ` · ${r.funeralNumber}` : ""}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                        {r.databaseName}
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>

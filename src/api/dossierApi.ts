@@ -3,7 +3,7 @@ import apiClient from "./apiClient";
 import { DossierDto, FuneralLeaderDto, SearchCriteria, SearchResult } from "../types";
 
 // Search dossiers based on criteria
-export async function searchDossiers(criteria: SearchCriteria): Promise<DossierDto[]> {
+export async function searchDossiers(criteria: SearchCriteria): Promise<SearchResult> {
   const params = new URLSearchParams();
   if (criteria.lastName) params.set("lastName", criteria.lastName);
   if (criteria.birthDate) params.set("birthDate", criteria.birthDate);
@@ -11,10 +11,9 @@ export async function searchDossiers(criteria: SearchCriteria): Promise<DossierD
   params.set("archive", String(criteria.archive));
   params.set("oldDB", String(criteria.oldDB));
 
-  const response = await apiClient<SearchResult>(`${endpoints.searchDossier}?${params.toString()}`, {
+  return apiClient<SearchResult>(`${endpoints.searchDossier}?${params.toString()}`, {
     method: "GET",
   });
-  return response.results;
 }
 
 // Create new dossier

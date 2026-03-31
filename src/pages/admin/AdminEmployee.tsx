@@ -105,27 +105,27 @@ const EmployeeManagement: React.FC = () => {
 
     email: employee.email,
     mobile: employee.mobile,
-    roleId: employee.roleId,
+    roleId: employee.roleId ?? '',
     startDate: employee.startDate ?? null,
   });
 
 const getStatusBadge = (loginIsActive: boolean | null) => {
-  const isActive = loginIsActive === true;
+  if (loginIsActive === null) {
+    return (
+      <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+        <span className="w-2 h-2 rounded-full bg-gray-400" />
+        Geen login
+      </span>
+    );
+  }
 
   return (
     <span
       className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium
-        ${isActive
-          ? 'bg-green-100 text-green-800'
-          : 'bg-red-100 text-red-800'
-        }`}
+        ${loginIsActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
     >
-      <span
-        className={`w-2 h-2 rounded-full
-          ${isActive ? 'bg-green-500' : 'bg-red-500'}
-        `}
-      />
-      {isActive ? 'Actief' : 'Inactief'}
+      <span className={`w-2 h-2 rounded-full ${loginIsActive ? 'bg-green-500' : 'bg-red-500'}`} />
+      {loginIsActive ? 'Actief' : 'Inactief'}
     </span>
   );
 };
@@ -478,9 +478,18 @@ const EmployeeForm = ({
   useEffect(() => {
     if (!employee) return;
 
+    // When a login exists, sync the form status with loginIsActive so
+    // it matches the badge in the overview. When there's no login at all,
+    // keep the employee's own status as-is.
+    const derivedStatus: EmployeeStatus =
+      employee.hasLogin
+        ? employee.loginIsActive ? 'active' : 'inactive'
+        : employee.status;
+
     setForm(prev => ({
       ...prev,
       ...employee,
+      status: derivedStatus,
       roleId: employee.roleId ?? '',
     }));
   }, [employee, roles]);
@@ -687,9 +696,9 @@ const EmployeeForm = ({
               Rol *
             </label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
               value={form.roleId ?? ''}
-              disabled={roles.length === 0}
+              disabled={roles.length === 0 || !employee?.hasLogin}
               onChange={(e) =>
                 setForm({ ...form, roleId: e.target.value })
               }
@@ -702,6 +711,11 @@ const EmployeeForm = ({
                 </option>
               ))}
             </select>
+            {employee && !employee.hasLogin && (
+              <p className="text-xs text-amber-600 mt-1">
+                Maak eerst een login aan via het overzicht om een rol toe te wijzen.
+              </p>
+            )}
           </div>
 
           <div>
