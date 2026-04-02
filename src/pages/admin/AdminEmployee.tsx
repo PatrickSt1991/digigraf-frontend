@@ -11,6 +11,7 @@ import {
   FaUser,
   FaChartLine,
   FaArrowLeft,
+  FaKey,
 } from 'react-icons/fa';
 
 import { DashboardLayout } from '../../components';
@@ -21,6 +22,7 @@ import {
   RoleDto,
 } from '../../types';
 import {
+  adminResetPassword,
   blockLogin,
   createEmployee,
   getEmployeeRoles,
@@ -175,6 +177,32 @@ const getStatusBadge = (loginIsActive: boolean | null) => {
       ...e,
       loginIsActive: true,
     }));
+  };
+
+  const [resetTarget, setResetTarget] = useState<AdminEmployee | null>(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetSubmitting, setResetSubmitting] = useState(false);
+
+  const handleResetPassword = async () => {
+    if (!resetTarget) return;
+    if (resetPassword !== resetConfirm) {
+      setResetError('Wachtwoorden komen niet overeen.');
+      return;
+    }
+    setResetSubmitting(true);
+    setResetError(null);
+    try {
+      await adminResetPassword(resetTarget.id, resetPassword);
+      setResetTarget(null);
+      setResetPassword('');
+      setResetConfirm('');
+    } catch (err: any) {
+      setResetError(err.message ?? 'Wachtwoord reset mislukt.');
+    } finally {
+      setResetSubmitting(false);
+    }
   };
 
   /* -------------------------------------------------------------------------- */
@@ -363,23 +391,44 @@ const getStatusBadge = (loginIsActive: boolean | null) => {
                                 setActiveTab('edit');
                               }}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Bewerken"
                             >
                               <FaEdit size={16} />
                             </button>
+
+                            {e.hasLogin && (
+                              <button
+                                onClick={() => {
+                                  setResetTarget(e);
+                                  setResetPassword('');
+                                  setResetConfirm('');
+                                  setResetError(null);
+                                }}
+                                className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                title="Wachtwoord resetten"
+                              >
+                                {(() => {
+                                  const KeyIcon = FaKey as unknown as React.ComponentType<{ size?: number }>;
+                                  return <KeyIcon size={16} />;
+                                })()}
+                              </button>
+                            )}
 
                             {e.loginIsActive && (
                               <button
                                 onClick={() => handleBlockLogin(e)}
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Login blokkeren"
                               >
                                 <FaTrash />
                               </button>
                             )}
 
-                            {!e.loginIsActive && (
+                            {e.hasLogin && !e.loginIsActive && (
                               <button
                                 onClick={() => handleUnblockLogin(e)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Login deblokkeren"
                               >
                                 <FaUser size={16} />
                               </button>
@@ -452,6 +501,61 @@ const getStatusBadge = (loginIsActive: boolean | null) => {
           )}
         </div>
       </div>
+      {/* ---- Reset password modal ---- */}
+      {resetTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900">Wachtwoord resetten</h2>
+            <p className="text-sm text-gray-500">
+              Nieuw wachtwoord instellen voor <span className="font-medium text-gray-700">{resetTarget.fullName}</span>
+            </p>
+
+            {resetError && (
+              <div className="bg-red-100 text-red-700 text-sm p-2 rounded">
+                {resetError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nieuw wachtwoord</label>
+                <input
+                  type="password"
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  autoFocus
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bevestig wachtwoord</label>
+                <input
+                  type="password"
+                  value={resetConfirm}
+                  onChange={(e) => setResetConfirm(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setResetTarget(null)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleResetPassword}
+                disabled={resetSubmitting || !resetPassword}
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {resetSubmitting ? 'Bezig...' : 'Wachtwoord wijzigen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

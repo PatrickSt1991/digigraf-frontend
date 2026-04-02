@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Login } from "./pages";
+import { Login, Register, ForgotPassword } from "./pages";
 import {
   Dashboard,
   Deceased,
@@ -37,6 +37,8 @@ function App() {
       <Routes>
         {/* Public */}
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* User routes */}
         <Route path="/" element={<RequireUser><Dashboard /></RequireUser>} />

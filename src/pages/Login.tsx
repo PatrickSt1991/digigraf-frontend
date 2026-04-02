@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import dgLogo from "../assets/dg.svg";
 import { AuthContext } from "../context/AuthContext";
 import { loginUser } from "../api/authenticateApi";
@@ -147,6 +147,15 @@ export default function Login() {
         >
           {submitting ? "Logging in..." : "Login"}
         </button>
+
+        <div className="flex justify-between text-sm text-gray-500">
+          <Link to="/forgot-password" className="text-blue-600 hover:underline">
+            Wachtwoord vergeten?
+          </Link>
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Aanmelden
+          </Link>
+        </div>
       </form>
 
       <p className="mt-6 text-gray-500 text-sm">

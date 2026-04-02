@@ -4,6 +4,8 @@ export const API_BASE = `${API}/api`;
 export const endpoints = {
     health: `${API}/health`,
     authentication: `${API_BASE}/Auth`,
+    selfRegister: `${API_BASE}/Auth/self-register`,
+    forgotPassword: `${API_BASE}/Auth/forgot-password`,
     deceased: `${API_BASE}/deceased`,
     additional: `${API_BASE}/clientinfo`,
     funeral: `${API_BASE}/deceasedfuneral`,
@@ -87,6 +89,7 @@ export const adminEndpoints = {
   createLogin: (id: string) => `${API_BASE}/employee/createLogin/${id}`,
   blockLogin: (id: string) => `${API_BASE}/employee/blockLogin/${id}`,
   unblockLogin: (id: string) => `${API_BASE}/employee/unblockLogin/${id}`,
+  resetPassword: (id: string) => `${API_BASE}/employee/resetPassword/${id}`,
 
   financialFacturen: `${API_BASE}/financial/facturen`,
   financialBloemen: `${API_BASE}/financial/bloemen`,

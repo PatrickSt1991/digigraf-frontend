@@ -48,6 +48,13 @@ export async function unblockLogin(employeeId: string): Promise<void> {
   });
 }
 
+export async function adminResetPassword(employeeId: string, newPassword: string): Promise<void> {
+  await apiClient<void>(adminEndpoints.resetPassword(employeeId), {
+    method: "POST",
+    body: { newPassword },
+  });
+}
+
 export async function createEmployee(
   employee: EmployeeDto
 ): Promise<EmployeeDto> {
